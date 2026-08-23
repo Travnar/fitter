@@ -1,0 +1,82 @@
+﻿## Interface: 121000, 120007
+## Title: Fitter
+## Notes: Expands the outfit system with mounts, pets, hunter pets, zones, titles, toys, hearthstones and emotes.
+## Notes-esMX: Amplía el sistema de conjuntos con monturas, mascotas, mascotas de cazador, zonas, títulos, juguetes, piedras de hogar y gestos.
+## Author: Travnar
+## Version: 2.1.1
+## SavedVariables: FitterSaved
+## SavedVariablesPerCharacter: FitterCharacterSaved
+## LoadSavedVariablesFirst: 1
+## IconTexture: Interface\AddOns\Fitter\FitterIcon
+
+Localization\Localization.lua
+Localization\enUS.lua
+Localization\esMX.lua
+
+Bindings_Frames.xml
+
+# Static data tables (pure data; loaded first so modules can alias them).
+Constants\Zones.lua
+Constants\Toys.lua
+Constants\Hearthstones.lua
+Constants\Mounts.lua
+Constants\PetExpansions.lua
+Constants\Emotes.lua
+
+# Leaf feature modules.
+Title.lua
+Pet.lua
+HunterPet.lua
+Toy.lua
+Mount.lua
+Emote.lua
+Macro.lua
+Macro\Mount.lua
+Macro\Hearthstone.lua
+Macro\Update.lua
+Zones.lua
+
+# Bootstrap / event dispatch.
+Core.lua
+
+# Transmog UI (uses everything above).
+UI\Transmog.lua
+UI\Transmog_Loadouts.lua
+UI\Transmog_MountSlots.lua
+UI\Transmog_Titles.lua
+UI\Transmog_Mounts.lua
+UI\Transmog_Hearthstones.lua
+UI\Transmog_Toys.lua
+UI\Transmog_ZoneSituations.lua
+UI\Transmog_Zones.lua
+UI\Transmog_Emotes.lua
+UI\Transmog_PagedShared.lua
+UI\Transmog_MountPageController.lua
+UI\Transmog_FlyingPaged.lua
+UI\Transmog_GroundPaged.lua
+UI\Transmog_AquaticPaged.lua
+UI\Transmog_PetPaged.lua
+UI\Transmog_HunterPets.lua
+UI\Options.lua
+UI\Options_AccountWide.lua
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
