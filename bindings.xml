@@ -1,0 +1,8 @@
+<Bindings>
+  <Binding name="CLICK FitterMountButton:LeftButton" category="Fitter">
+  </Binding>
+  <Binding name="CLICK FitterHearthstoneButton:LeftButton" category="Fitter">
+  </Binding>
+  <Binding name="CLICK FitterOutfitUpdateButton:LeftButton" category="Fitter">
+  </Binding>
+</Bindings>
