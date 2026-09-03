@@ -12,6 +12,7 @@
 Localization\Localization.lua
 Localization\enUS.lua
 Localization\esMX.lua
+Localization\ruRU.lua
 
 Bindings_Frames.xml
 
