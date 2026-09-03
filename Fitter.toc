@@ -13,6 +13,7 @@ Localization\Localization.lua
 Localization\enUS.lua
 Localization\esMX.lua
 Localization\zhCN.lua
+Localization\ruRU.lua
 
 Bindings_Frames.xml
 
@@ -31,6 +32,7 @@ HunterPet.lua
 Toy.lua
 Mount.lua
 Emote.lua
+Housing.lua
 Macro.lua
 Macro\Mount.lua
 Macro\Hearthstone.lua

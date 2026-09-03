@@ -135,6 +135,7 @@ local function ResolveHearthstoneMacro()
     end
 
     local uses = {}
+    local modifierTeleports = {}
     for _, condition in ipairs({
         {key = "ShiftHearthstoneCondition", macro = "mod:shift"},
         {key = "CtrlHearthstoneCondition", macro = "mod:ctrl"},
@@ -144,12 +145,26 @@ local function ResolveHearthstoneMacro()
         if type(conditionItemID) == "number" and PlayerHasToy(conditionItemID) then
             uses[#uses + 1] = "[" .. condition.macro .. "] "
                 .. GetHearthstoneAction(conditionItemID)
+        elseif type(conditionItemID) == "string" and ns.Housing then
+            local action = ns.Housing.GetMacroAction(conditionItemID)
+            if action then
+                modifierTeleports[#modifierTeleports + 1] = action:gsub(
+                    "^/click ", "/click [" .. condition.macro .. "] ")
+                modifierTeleports[#modifierTeleports + 1] =
+                    "/stopmacro [" .. condition.macro .. "]"
+            end
         end
     end
     uses[#uses + 1] = GetHearthstoneAction(itemID)
     local tooltip = showTooltip and hasExplicitSelection
         and "#showtooltip\n" or ""
-    body = tooltip .. "/use " .. table.concat(uses, "; ")
+    local useLine = "/use " .. table.concat(uses, "; ")
+    if #modifierTeleports > 0 then
+        body = tooltip .. table.concat(modifierTeleports, "\n")
+            .. "\n" .. useLine
+    else
+        body = tooltip .. useLine
+    end
     if not hasExplicitSelection then
         -- Empty means random, but its presentation should
         -- remain stable across bag, cooldown, and outfit macro refreshes.
