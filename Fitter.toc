@@ -30,6 +30,7 @@ HunterPet.lua
 Toy.lua
 Mount.lua
 Emote.lua
+Housing.lua
 Macro.lua
 Macro\Mount.lua
 Macro\Hearthstone.lua

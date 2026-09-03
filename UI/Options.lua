@@ -392,6 +392,11 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         for _, option in ipairs(ns.Constants.HEARTHSTONE_CONDITIONS) do
             if value == (option.id or "None") then return option.label end
         end
+        if ns.Housing then
+            for _, option in ipairs(ns.Housing.GetConditions()) do
+                if value == option.key then return option.label end
+            end
+        end
         return "None"
     end
     local function MakeHearthstoneConditionDropdown(modifier, y)
@@ -424,13 +429,28 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
                         option.id or "None")
                 end
             end
+            if ns.Housing then
+                for _, option in ipairs(ns.Housing.GetConditions()) do
+                    rootDescription:CreateRadio(option.label,
+                        function(value)
+                            return FitterSaved and FitterSaved[key] == value
+                        end,
+                        function(value)
+                            FitterSaved[key] = value
+                            dropdown:OverrideText(
+                                GetHearthstoneConditionLabel(value))
+                            OnHearthstoneSettingChanged()
+                        end,
+                        option.key)
+                end
+            end
         end)
 
         local function ShowConditionTooltip(owner)
             GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
             GameTooltip:SetText(string.format(L["%s Condition"], modifier), 1, 1, 1)
             GameTooltip:AddLine(
-                "Choose the teleport toy Fitter uses when you hold " .. modifier
+                "Choose the teleport Fitter uses when you hold " .. modifier
                 .. " while using the hearthstone macro or key binding.",
                 1, 0.82, 0, true)
             GameTooltip:Show()
