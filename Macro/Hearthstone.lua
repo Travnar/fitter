@@ -131,7 +131,7 @@ local function ResolveHearthstoneMacro()
     if itemID == Macro.DEFAULT_HEARTHSTONE_ITEM_ID then
         itemIcon = C_Item.GetItemIconByID(itemID)
     else
-        _, _, itemIcon = C_ToyBox.GetToyInfo(itemID)
+        itemIcon = select(3, C_ToyBox.GetToyInfo(itemID))
     end
 
     local uses = {}
