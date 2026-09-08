@@ -83,6 +83,7 @@ ns.Constants.MAJOR_ZONES = {
     {name = "Isle of Thunder",             mapID = 504,  situation = "world", icon = "achievement_raid_thunder_king"},
     {name = "Timeless Isle",               mapID = 554,  situation = "world", icon = "timelesscoin_yellow"},
 
+    {name = "Darkmoon Faire",              mapID = 407,  situation = "world", icon = "inv_misc_cape_darkmoonfaire_c_01"},
     {name = "Mount Hyjal",                 mapID = 198,  situation = "world", icon = "achievement_zone_mount hyjal"},
     {name = "Vashj'ir",                    mapID = 203,  situation = "world", icon = "achievement_zone_vashjir"},
     {name = "Deepholm",                    mapID = 207,  situation = "world", icon = "achievement_zone_deepholm"},
