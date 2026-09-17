@@ -128,7 +128,7 @@ function UI_Transmog:PopulateMountList(mountType)
     end
 
     for _, mountID in ipairs(mountIDs) do
-        local name, _, icon, _, isUsable, _, _, _, _, shouldHideOnChar, isCollected = C_MountJournal.GetMountInfoByID(mountID)
+        local name, _, icon, _, _, _, _, _, _, shouldHideOnChar, isCollected = C_MountJournal.GetMountInfoByID(mountID)
 
         if (isCollected or showNotCollected) and not shouldHideOnChar then
 
@@ -165,17 +165,9 @@ function UI_Transmog:PopulateMountList(mountType)
             end
 
 
-            -- GetMountUsabilityByID reports false for otherwise valid mounts
-            -- during combat.  This page configures an outfit rather than
-            -- summoning immediately, so retain the complete catalogue in
-            -- combat instead of filtering every flying/ground mount out.
-            if shouldInclude and isCollected and mountType ~= "Aquatic"
-                and not isAllTerrain and not InCombatLockdown() then
-                local canUse, useError = C_MountJournal.GetMountUsabilityByID(mountID, false)
-                if not canUse then
-                    shouldInclude = false
-                end
-            end
+            -- Outfit configuration must remain available inside areas that prevent mount summoning such as
+            -- indoors and in combat. Check current summon usability only
+            -- when summoning, not when building this catalogue.
 
 
             if shouldInclude and searchString ~= "" then
@@ -212,9 +204,7 @@ function UI_Transmog:PopulateMountList(mountType)
     UI_Transmog._PagedShared.SortFavoritesFirst(
         mounts, "id", FitterSaved and FitterSaved.FavoriteMounts or {})
 
-    -- Re-evaluate situational usability after combat rather than preserving a
-    -- catalogue built while that API could not provide meaningful results.
-    if cacheKey and not InCombatLockdown() then
+    if cacheKey then
         s.mountListCache[cacheKey] = mounts
     end
 
