@@ -1033,6 +1033,10 @@ function UI_Transmog:ClearMountPreview()
     local charPreview = TransmogFrame and TransmogFrame.CharacterPreview
     local sourceScene = charPreview and charPreview.ModelScene
     if sourceScene then
+        if s.characterPreviewAlpha ~= nil then
+            sourceScene:SetAlpha(s.characterPreviewAlpha)
+            s.characterPreviewAlpha = nil
+        end
         sourceScene:Show()
         local playerActor = sourceScene.GetPlayerActor and sourceScene:GetPlayerActor()
         if playerActor and playerActor.SetRequestedScale then
@@ -1069,6 +1073,8 @@ function UI_Transmog:ClearMountPreview()
     end
 
     if s.mountedCharacterScene then
+        s.mountedCharacterScene:OnMouseUp("LeftButton")
+        s.mountedCharacterScene:OnMouseUp("RightButton")
         s.mountedCharacterScene:Hide()
         if s.mountedCharacterScene.ClearScene then
             s.mountedCharacterScene:ClearScene()
@@ -1255,13 +1261,30 @@ function UI_Transmog:PreviewSelectedMount(mountID)
 
     local previewScene = s.mountedCharacterScene
     if not previewScene then
-        previewScene = CreateFrame("ModelScene", nil, charPreview,
-            "ModelSceneMixinTemplate")
+        previewScene = CreateFrame("ModelScene", nil, sourceScene,
+            "PanningModelSceneMixinTemplate")
         previewScene:SetAllPoints(sourceScene)
-        previewScene:SetFrameLevel(sourceScene:GetFrameLevel())
-        previewScene:EnableMouse(true)
-        previewScene:EnableMouseWheel(true)
+        previewScene:SetIgnoreParentAlpha(true)
+        previewScene:EnableMouse(false)
+        previewScene:EnableMouseWheel(false)
+        previewScene:Hide()
         s.mountedCharacterScene = previewScene
+
+        -- Keep Blizzard's working input surface in place across mount, pet,
+        -- and normal previews. The child scene only renders the mounted
+        -- player; the original scene receives and dispatches mouse input.
+        for _, script in ipairs({"OnMouseDown", "OnMouseUp", "OnMouseWheel",
+            "OnEnter", "OnLeave"}) do
+            local original = sourceScene:GetScript(script)
+            local mountedHandler = previewScene:GetScript(script)
+            sourceScene:SetScript(script, function(self, ...)
+                if s.previewMountID and previewScene:IsShown() then
+                    if mountedHandler then mountedHandler(previewScene, ...) end
+                elseif original then
+                    original(self, ...)
+                end
+            end)
+        end
     end
 
     previewScene:TransitionToModelSceneID(modelSceneID,
@@ -1276,14 +1299,23 @@ function UI_Transmog:PreviewSelectedMount(mountID)
     mountActor:SetModelByCreatureDisplayID(displayID)
     if spellVisualKitID then mountActor:SetSpellVisualKit(spellVisualKitID) end
 
+    local function ShowMountedPreview()
+        -- A child defaults to one level above its parent, which can cover
+        -- equipment slots. Render at Blizzard's original preview level.
+        previewScene:SetFrameLevel(sourceScene:GetFrameLevel())
+        s.characterPreviewAlpha = sourceScene:GetAlpha()
+        sourceScene:SetAlpha(0)
+        if sourceScene.ControlFrame then sourceScene.ControlFrame:Hide() end
+        s.previewMountID = mountID
+        previewScene:Show()
+    end
+
     -- Transformation mounts (for example, Sandstone Drake) replace the player
     -- instead of carrying a rider.  Their native mount-journal scene actor is
     -- therefore the complete preview; attaching a player would either fail or
     -- leave only the regular character visible.
     if isSelfMount or disablePlayerMountPreview then
-        sourceScene:Hide()
-        previewScene:Show()
-        s.previewMountID = mountID
+        ShowMountedPreview()
         return
     end
 
@@ -1297,9 +1329,7 @@ function UI_Transmog:PreviewSelectedMount(mountID)
         return
     end
 
-    sourceScene:Hide()
-    previewScene:Show()
-    s.previewMountID = mountID
+    ShowMountedPreview()
 
     -- SetModelByUnit in AttachPlayerToMount is asynchronous. Once ready, copy
     -- the pending transmog choices from the hidden source actor onto the rider.
