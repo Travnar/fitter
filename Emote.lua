@@ -329,7 +329,8 @@ local function GetTooltipConsumptionTypes(auraIndex, spellID)
     local eating, drinking = false, false
     for _, line in ipairs(tooltip and tooltip.lines or {}) do
         local text
-        if type(line.leftText) == "string" then
+        if type(line.leftText) == "string"
+            and CanAccessValue(line.leftText) then
             local textOK, lowered = pcall(string.lower, line.leftText)
             if textOK then text = lowered end
         end
@@ -420,13 +421,15 @@ function Emote.OnPlayerTargetChanged()
     if not HasAnyCondition("TARGET_FRIENDLY_PLAYER", "TARGET_HOSTILE_NPC",
         "TARGET_FRIENDLY_NPC") then return end
     if not UnitExists("target") then return end
+    local reaction = UnitReaction("player", "target")
+    if not CanAccessValue(reaction) then reaction = nil end
     if UnitIsPlayer("target") and UnitIsFriend("player", "target") then
         Emote.Trigger("TARGET_FRIENDLY_PLAYER")
     elseif not UnitIsPlayer("target") then
         if UnitCanAttack("player", "target") then
             Emote.Trigger("TARGET_HOSTILE_NPC")
         elseif UnitIsFriend("player", "target")
-            or (UnitReaction("player", "target") or 0) >= 5 then
+            or (reaction or 0) >= 5 then
             Emote.Trigger("TARGET_FRIENDLY_NPC")
         end
     end
@@ -508,7 +511,11 @@ function Emote.OnAurasChanged(updateInfo)
     -- Incremental UNIT_AURA updates are commonly emitted for unrelated buffs.
     -- An added aura might be food or drink, while an update/removal matters only
     -- when it belongs to a consumption aura found by the previous scan.
-    if updateInfo and not updateInfo.isFullUpdate
+    if updateInfo and not CanAccessValue(updateInfo.isFullUpdate) then
+        -- The payload is secret (combat). Food and drink cannot begin here, so
+        -- only rescan when an active consumption aura may have been removed.
+        if not (state.eating or state.drinking) then return end
+    elseif updateInfo and not updateInfo.isFullUpdate
         and not (updateInfo.addedAuras and #updateInfo.addedAuras > 0)
         and not ContainsConsumptionAura(updateInfo.updatedAuraInstanceIDs)
         and not ContainsConsumptionAura(updateInfo.removedAuraInstanceIDs) then
