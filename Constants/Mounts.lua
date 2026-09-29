@@ -23,10 +23,17 @@ ns.Constants.MOUNT_CONDITIONS = {
     {label = "G-99 Breakneck", alwaysAvailable = true},
     {label = "Grand Expedition Yak"},
     {label = "Mighty Caravan Brutosaur"},
-    {label = "Gilded Brutosaur"},
+    {label = "Trader's Gilded Brutosaur"},
     {label = "Grizzly Hills Packmaster"},
     {label = "Traveler's Tundra Mammoth"},
     {label = "Ground Mount", alwaysAvailable = true},
+}
+
+-- Former condition labels, mapped to their current label so saved settings carry over.
+ns.Constants.RENAMED_MOUNT_CONDITIONS = {
+    ["Ground Expedition Yak"] = "Grand Expedition Yak",
+    ["Reins of the Mighty Caravan Brutosaur"] = "Mighty Caravan Brutosaur",
+    ["Gilded Brutosaur"] = "Trader's Gilded Brutosaur",
 }
 
 -- Blizzard's mount type for mounts that can run, fly, and swim at mount speed.

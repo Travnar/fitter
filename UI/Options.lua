@@ -14,12 +14,15 @@ local function EnsureDefaults()
     if FitterSaved.ShiftHearthstoneCondition == nil then FitterSaved.ShiftHearthstoneCondition = "None" end
     if FitterSaved.AltHearthstoneCondition == nil then FitterSaved.AltHearthstoneCondition = "None" end
     if FitterSaved.CtrlHearthstoneCondition == nil then FitterSaved.CtrlHearthstoneCondition = "None" end
-    local renamedMountConditions = {
-        ["Ground Expedition Yak"] = "Grand Expedition Yak",
-        ["Reins of the Mighty Caravan Brutosaur"] = "Mighty Caravan Brutosaur",
-    }
+    -- Carry renamed labels over, and reset any other saved condition that no longer matches an option.
+    local renamedMountConditions = ns.Constants.RENAMED_MOUNT_CONDITIONS
+    local validMountConditions = {}
+    for _, optionData in ipairs(ns.Constants.MOUNT_CONDITIONS) do
+        validMountConditions[optionData.label] = true
+    end
     for _, key in ipairs({"ShiftMountCondition", "CtrlMountCondition", "AltMountCondition"}) do
-        FitterSaved[key] = renamedMountConditions[FitterSaved[key]] or FitterSaved[key]
+        local value = renamedMountConditions[FitterSaved[key]] or FitterSaved[key]
+        FitterSaved[key] = validMountConditions[value] and value or "None"
     end
     -- Migrate the former single Ground Mount option once.
     if FitterSaved.GroundMountModifier and FitterSaved.GroundMountModifier ~= "None" then
