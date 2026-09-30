@@ -12,6 +12,17 @@ UI_Transmog._s = s
 
 local Fitter = ns.Fitter
 
+-- For non-interactive frames (models, scenes) created on demand while
+-- TransmogFrame is open.  Gamepad SmartNavigation hooks CreateFrame and
+-- rebuilds the open panel's navigation data inside our execution, tainting
+-- it; creating unparented and attaching with SetParent skips that rebuild.
+-- Buttons must NOT use this: navigation would never learn about them.
+function UI_Transmog._CreateDetachedFrame(frameType, name, parent, template)
+    local frame = CreateFrame(frameType, name, nil, template)
+    frame:SetParent(parent)
+    return frame
+end
+
 function UI_Transmog:GetViewedOutfitID()
     local api = C_TransmogOutfitInfo
     return api and api.GetCurrentlyViewedOutfitID
@@ -562,6 +573,8 @@ function UI_Transmog:Initialize()
     
     self:RefreshFeatureVisibility()
 
+    self:PrebuildPages()
+
     TransmogFrame:HookScript("OnHide", function()
         UI_Transmog:Cleanup()
 
@@ -572,6 +585,33 @@ function UI_Transmog:Initialize()
             end)
         end
     end)
+end
+
+-- Build every page's frames up front rather than on first view.  Pages that
+-- create frames while TransmogFrame is open taint gamepad SmartNavigation
+-- (see _CreateDetachedFrame); Initialize runs before the panel is first
+-- shown, so frames created here are safe.  OnShow handlers still refresh.
+function UI_Transmog:PrebuildPages()
+    local function Build(method, flag)
+        if s[flag] or type(self[method]) ~= "function" then return end
+        s[flag] = self[method](self) ~= false
+    end
+    Build("InitializeAdditionalTab", "additionalTabInitialized")
+    Build("InitializeZonesView", "zonesViewInitialized")
+    Build("InitializeEmotesView", "emotesViewInitialized")
+    if ns.Features.FlyingMounts then
+        Build("InitializeFlyingPaged", "flyingPagedInitialized")
+    end
+    Build("InitializeGroundPaged", "groundPagedInitialized")
+    if ns.Features.AquaticMounts then
+        Build("InitializeAquaticPaged", "aquaticPagedInitialized")
+    end
+    Build("InitializePetPaged", "petPagedInitialized")
+    if s.hunterPetFrame then
+        Build("InitializeHunterPets", "hunterPetInitialized")
+    end
+    Build("InitializeHearthstonePaged", "hearthstonePagedInitialized")
+    Build("InitializeToyPaged", "toyPagedInitialized")
 end
 
 function UI_Transmog:RefreshFeatureVisibility()

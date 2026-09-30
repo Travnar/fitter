@@ -398,6 +398,14 @@ function Fitter:OnEvent(event, ...)
             InitializeSettings()
             Fitter:RefreshFeatureEvents()
             InitializeStealthDriver()
+            -- Build the transmog UI as soon as Blizzard_Transmog loads, before
+            -- TransmogFrame is first shown.  Gamepad SmartNavigation hooks
+            -- CreateFrame and rebuilds an open panel's navigation data inside
+            -- the caller's execution, so creating our frames while the panel
+            -- is open taints that data and later blocks protected gamepad
+            -- calls when the panel closes.  Created beforehand, they are
+            -- picked up by SmartNavigation's own (secure) rebuild on show.
+            EventUtil.ContinueOnAddOnLoaded("Blizzard_Transmog", InitializeTransmogUI)
             C_Timer.After(2, function()
                 if worldGeneration ~= state.worldGeneration then return end
                 ns.Zones.UpdateCache()

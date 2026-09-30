@@ -63,7 +63,10 @@ local function CreateEntry(controller, index)
     local row = math.floor((index - 1) / 5)
     local width, height, gap = 114, 146, 3
     local startX = -((5 * width + 4 * gap - width) / 2)
-    local container = CreateFrame("Frame", nil, frameParent)
+    -- A Button, not a Frame: gamepad SmartNavigation calls GetScript on
+    -- non-button frames' OnMouseDown/OnMouseUp while building navigation
+    -- data, and our handler returned there taints it.
+    local container = CreateFrame("Button", nil, frameParent)
     container:SetSize(width, height)
     container:SetPoint("TOP", frameParent, "TOP",
         startX + col * (width + gap), -175 - row * (height + gap))
@@ -458,7 +461,8 @@ function Controller:UpdateDisplay()
             if mount.isPlayerModel then
                 entry.model:Hide()
                 if not entry.playerModel then
-                    entry.playerModel = CreateFrame("PlayerModel", nil, entry.container)
+                    entry.playerModel = UI_Transmog._CreateDetachedFrame(
+                        "PlayerModel", nil, entry.container)
                     entry.playerModel:SetPoint("TOPLEFT", 8, -8)
                     entry.playerModel:SetPoint("BOTTOMRIGHT", -8, 8)
                 end

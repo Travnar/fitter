@@ -419,6 +419,34 @@ local function CleanupMountSlot(slotFrame)
     slotFrame:SetScale(1)
 end
 
+-- SetupSlots releases every slot, Blizzard re-acquires its own, then our hook
+-- acquires ours.  If the pool has to grow at that point it creates frames
+-- inside our execution while TransmogFrame is open, which taints gamepad
+-- SmartNavigation (see UI_Transmog._CreateDetachedFrame).  Grow it now,
+-- before the frame is first shown, to cover Blizzard's slots plus ours.
+local PREWARM_MARGIN = 8
+local function PrewarmSlotPool(charPreview)
+    local pool = charPreview.CharacterAppearanceSlotFramePool
+    if not pool or TransmogFrame:IsShown() then return end
+    local needed = PREWARM_MARGIN
+    for _ in pairs(s.mountSlotDefs or {}) do needed = needed + 1 end
+    local groups = C_TransmogOutfitInfo.GetSlotGroupInfo()
+    if groups then
+        for _, groupData in ipairs(groups) do
+            needed = needed + #groupData.appearanceSlotInfo
+        end
+    else
+        needed = needed + 24
+    end
+    local acquired = {}
+    for i = 1, needed do
+        acquired[i] = pool:Acquire()
+    end
+    for _, frame in ipairs(acquired) do
+        pool:Release(frame)
+    end
+end
+
 local function RebuildMountSlots()
     local charPreview = TransmogFrame and TransmogFrame.CharacterPreview
     if not charPreview or not s.mountSlotDefs then return end
@@ -447,6 +475,7 @@ UI_Transmog._MountSlots = {
     Acquire              = AcquireMountSlot,
     Cleanup              = CleanupMountSlot,
     Rebuild              = RebuildMountSlots,
+    PrewarmPool          = PrewarmSlotPool,
 }
 
 -- Moved from UI_Transmog.lua to keep that file under 500 lines.
@@ -768,6 +797,7 @@ function UI_Transmog:InitializeMountIcons()
         end
     end
 
+    UI_Transmog._MountSlots.PrewarmPool(charPreview)
     RebuildMountSlots()
     PatchForeignCustomSlots()
     PatchStandardSlotPreviews()
@@ -1281,8 +1311,8 @@ function UI_Transmog:PreviewSelectedMount(mountID)
 
     local previewScene = s.mountedCharacterScene
     if not previewScene then
-        previewScene = CreateFrame("ModelScene", nil, sourceScene,
-            "PanningModelSceneMixinTemplate")
+        previewScene = UI_Transmog._CreateDetachedFrame("ModelScene", nil,
+            sourceScene, "PanningModelSceneMixinTemplate")
         previewScene:SetAllPoints(sourceScene)
         previewScene:SetIgnoreParentAlpha(true)
         previewScene:EnableMouse(false)
@@ -1292,18 +1322,23 @@ function UI_Transmog:PreviewSelectedMount(mountID)
 
         -- Keep Blizzard's working input surface in place across mount, pet,
         -- and normal previews. The child scene only renders the mounted
-        -- player; the original scene receives and dispatches mouse input.
+        -- player; the original scene receives mouse input and forwards it.
+        -- HookScript, not SetScript: gamepad SmartNavigation calls
+        -- GetScript("OnMouseDown"/"OnMouseUp") on non-button frames while
+        -- building navigation data, and an addon-set handler returned there
+        -- taints it (blocking protected gamepad calls when the panel
+        -- closes).  Hooks don't replace what GetScript returns.  The
+        -- original handler also runs, but only moves the hidden actor.
         for _, script in ipairs({"OnMouseDown", "OnMouseUp", "OnMouseWheel",
             "OnEnter", "OnLeave"}) do
-            local original = sourceScene:GetScript(script)
             local mountedHandler = previewScene:GetScript(script)
-            sourceScene:SetScript(script, function(self, ...)
-                if s.previewMountID and previewScene:IsShown() then
-                    if mountedHandler then mountedHandler(previewScene, ...) end
-                elseif original then
-                    original(self, ...)
-                end
-            end)
+            if mountedHandler then
+                sourceScene:HookScript(script, function(_, ...)
+                    if s.previewMountID and previewScene:IsShown() then
+                        mountedHandler(previewScene, ...)
+                    end
+                end)
+            end
         end
     end
 
