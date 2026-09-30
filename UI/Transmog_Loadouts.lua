@@ -157,9 +157,13 @@ local function ShowLoadoutTooltip(owner, elementData)
         0.65, 0.65, 0.65)
     GameTooltip:AddLine(" ")
 
-    AddTooltipSetting(L["Flying"], MountSummary(data, "Flying"))
+    if ns.Features.FlyingMounts then
+        AddTooltipSetting(L["Flying"], MountSummary(data, "Flying"))
+    end
     AddTooltipSetting(L["Ground"], MountSummary(data, "Ground"))
-    AddTooltipSetting(L["Aquatic"], MountSummary(data, "Aquatic"))
+    if ns.Features.AquaticMounts then
+        AddTooltipSetting(L["Aquatic"], MountSummary(data, "Aquatic"))
+    end
 
     local pets
     if data.PetNoPet then

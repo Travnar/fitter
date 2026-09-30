@@ -247,6 +247,12 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
     flyingContainer:SetSize(SW, SH)
     flyingContainer:Hide()  -- hidden until enabled
 
+    -- Clients without flying/aquatic mounts (e.g. WoW Forever) hide those
+    -- sections; Ground moves up into the Flying row's position.
+    local hasFlying = ns.Features.FlyingMounts
+    local hasAquatic = ns.Features.AquaticMounts
+    flyingRow:SetShown(hasFlying)
+
     flyingCheckbox:SetScript("OnClick", function(self)
         local enabled = self:GetChecked()
         if FitterSaved then FitterSaved.AccountWideFlyingEnabled = enabled end
@@ -294,17 +300,24 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
     aquaticContainer:SetPoint("TOPLEFT", aquaticRow, "BOTTOMLEFT", 0, -12)
     aquaticContainer:SetSize(SW, SH)
     aquaticContainer:Hide()
+    aquaticRow:SetShown(hasAquatic)
 
     -- Height of the Account Wide section from its start (YS) to the bottom of the last
     -- visible element, plus padding. Used to resize the content scroll frame.
     local function CalcAWHeight()
-        local flyBottom = flyingContainer:IsShown() and (64 + SH) or 54
-        local gndOffset = flyingContainer:IsShown() and 13 or 8
-        local gndBottom = flyBottom + gndOffset + 26
+        local gndBottom = 54
+        if hasFlying then
+            local flyBottom = flyingContainer:IsShown() and (64 + SH) or 54
+            local gndOffset = flyingContainer:IsShown() and 13 or 8
+            gndBottom = flyBottom + gndOffset + 26
+        end
         local groundBottom = groundContainer:IsShown() and (gndBottom + 12 + SH) or gndBottom
-        local aquaticBottom = groundBottom + (groundContainer:IsShown() and 13 or 8) + 26
-        local awBottom = aquaticContainer:IsShown()
-            and (aquaticBottom + 12 + SH) or aquaticBottom
+        local awBottom = groundBottom
+        if hasAquatic then
+            local aquaticBottom = groundBottom + (groundContainer:IsShown() and 13 or 8) + 26
+            awBottom = aquaticContainer:IsShown()
+                and (aquaticBottom + 12 + SH) or aquaticBottom
+        end
         return awBottom + 20
     end
 
@@ -312,7 +325,9 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
     UpdateGroundPosition = function()
         groundRow:ClearAllPoints()
         groundRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
-        if flyingContainer:IsShown() then
+        if not hasFlying then
+            groundRow:SetPoint("TOPLEFT", frame, "TOPLEFT", X + 20, -(YS + 32))
+        elseif flyingContainer:IsShown() then
             groundRow:SetPoint("TOPLEFT", flyingContainer, "BOTTOMLEFT", 0, -13)
         else
             groundRow:SetPoint("TOPLEFT", flyingRow, "BOTTOMLEFT", 0, -8)
@@ -353,9 +368,9 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
     -- Return the refresh function that Options.lua calls on OnRefresh/OnShow
     return function()
         if not FitterSaved then return end
-        local flyEnabled = FitterSaved.AccountWideFlyingEnabled
+        local flyEnabled = hasFlying and FitterSaved.AccountWideFlyingEnabled
         local gndEnabled = FitterSaved.AccountWideGroundEnabled
-        local aquaticEnabled = FitterSaved.AccountWideAquaticEnabled
+        local aquaticEnabled = hasAquatic and FitterSaved.AccountWideAquaticEnabled
         flyingCheckbox:SetChecked(flyEnabled)
         groundCheckbox:SetChecked(gndEnabled)
         aquaticCheckbox:SetChecked(aquaticEnabled)

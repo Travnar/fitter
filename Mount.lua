@@ -127,13 +127,32 @@ local function PickFromTypePool(category)
     return PickRandomUsableMount(CollectMountPool(filterFn, category))
 end
 
+local CATEGORY_FEATURES = {
+    Flying = "FlyingMounts",
+    Aquatic = "AquaticMounts",
+}
+
 local function GetMountCategoryOrder()
+    local order
     if IsAquaticContext() then
-        if IsFlyableArea() then return {"Aquatic", "Flying", "Ground"} end
-        return {"Aquatic", "Ground", "Flying"}
+        if IsFlyableArea() then
+            order = {"Aquatic", "Flying", "Ground"}
+        else
+            order = {"Aquatic", "Ground", "Flying"}
+        end
+    elseif IsFlyableArea() then
+        order = {"Flying", "Ground"}
+    else
+        order = {"Ground", "Flying"}
     end
-    if IsFlyableArea() then return {"Flying", "Ground"} end
-    return {"Ground", "Flying"}
+    -- Drop categories the client does not support (e.g. WoW Forever).
+    for i = #order, 1, -1 do
+        local feature = CATEGORY_FEATURES[order[i]]
+        if feature and not ns.Features[feature] then
+            table.remove(order, i)
+        end
+    end
+    return order
 end
 
 local function GetAccountWideMounts(category, excludeSoar)
@@ -185,7 +204,8 @@ local function SelectNextMount(excludeSoar, outfitIDOverride)
     local activeOutfitID = outfitIDOverride or C_TransmogOutfitInfo.GetActiveOutfitID()
 
     if not activeOutfitID or activeOutfitID == 0 then
-        local category = IsFlyableArea() and "Flying" or "Ground"
+        local category = ns.Features.FlyingMounts and IsFlyableArea()
+            and "Flying" or "Ground"
         return PickFromTypePool(category)
     end
 

@@ -208,7 +208,7 @@ ns.Constants.EXPANSION_ZONES = {
     { key = "cata", label = L["Cataclysm"], mapIDs = {198, 203, 207, 249, 241, 245, 199, 217} },
     { key = "wrath", label = L["Wrath of the Lich King"], mapIDs = {125, 113, 114, 117, 118, 120, 123, 379} },
     { key = "bc", label = L["Burning Crusade"], mapIDs = {100, 102, 108, 107, 105, 109, 104, 110, 122, 94, 95} },
-    { key = "classic", label = L["Classic"], mapIDs = {84, 87, 89, 103, 85, 88, 90, 37, 27, 57, 97, 1, 8, 7, 50, 210, 18, 40, 48, 62, 10, 21, 63, 77, 47, 56, 14, 25, 26, 22, 23, 15, 32, 36, 17, 42, 106, 80, 69} },
+    { key = "classic", label = L["Classic"], mapIDs = {84, 87, 89, 103, 85, 88, 90, 37, 27, 57, 97, 1, 8, 7, 50, 210, 18, 40, 48, 62, 10, 21, 63, 77, 47, 56, 14, 25, 26, 22, 23, 15, 32, 36, 17, 42, 106, 80, 69, 49, 65, 64, 66, 70, 71, 78, 83, 81} },
 }
 
 ns.Constants.CONTINENT_ZONES = {
@@ -234,6 +234,103 @@ ns.Constants.CONTINENT_ZONES = {
     }},
     { key = "elementalplanes", label = L["Elemental Planes"], mapIDs = {207} },
 }
+
+-- WoW Forever only has the original (1.x) world and uses the Classic Era
+-- uiMapIDs (e.g. Stormwind City is 1453, not 84). Keep just those zones and
+-- translate their IDs. Filtered in place before anything below (or other
+-- files) reads the tables.
+if ns.IsForever then
+    -- Retail mapID -> Classic Era mapID.
+    local FOREVER_MAP_IDS = {
+        -- Cities
+        [84] = 1453, -- Stormwind City
+        [85] = 1454, -- Orgrimmar
+        [87] = 1455, -- Ironforge
+        [88] = 1456, -- Thunder Bluff
+        [89] = 1457, -- Darnassus
+        [90] = 1458, -- Undercity
+        -- Eastern Kingdoms
+        [8]  = 1435, -- Swamp of Sorrows
+        [14] = 1417, -- Arathi Highlands
+        [15] = 1418, -- Badlands
+        [17] = 1419, -- Blasted Lands
+        [18] = 1420, -- Tirisfal Glades
+        [21] = 1421, -- Silverpine Forest
+        [22] = 1422, -- Western Plaguelands
+        [23] = 1423, -- Eastern Plaguelands
+        [25] = 1424, -- Hillsbrad Foothills
+        [26] = 1425, -- The Hinterlands
+        [27] = 1426, -- Dun Morogh
+        [32] = 1427, -- Searing Gorge
+        [36] = 1428, -- Burning Steppes
+        [37] = 1429, -- Elwynn Forest
+        [40] = 1436, -- Westfall
+        [42] = 1430, -- Deadwind Pass
+        [47] = 1431, -- Duskwood
+        [48] = 1432, -- Loch Modan
+        [49] = 1433, -- Redridge Mountains
+        [50] = 1434, -- Northern Stranglethorn -> Stranglethorn Vale
+        [210] = 1434, -- The Cape of Stranglethorn -> Stranglethorn Vale
+        [56] = 1437, -- Wetlands
+        -- Kalimdor
+        [1]  = 1411, -- Durotar
+        [7]  = 1412, -- Mulgore
+        [10] = 1413, -- The Barrens
+        [57] = 1438, -- Teldrassil
+        [62] = 1439, -- Darkshore
+        [63] = 1440, -- Ashenvale
+        [64] = 1441, -- Thousand Needles
+        [65] = 1442, -- Stonetalon Mountains
+        [66] = 1443, -- Desolace
+        [69] = 1444, -- Feralas
+        [70] = 1445, -- Dustwallow Marsh
+        [71] = 1446, -- Tanaris
+        [77] = 1448, -- Felwood
+        [78] = 1449, -- Un'Goro Crater
+        [80] = 1450, -- Moonglade
+        [81] = 1451, -- Silithus
+        [83] = 1452, -- Winterspring
+    }
+    local STRANGLETHORN_VALE = 1434
+
+    -- Translate zones, dropping unsupported ones and the duplicate
+    -- Stranglethorn half (first one wins).
+    local zones = ns.Constants.MAJOR_ZONES
+    local kept, seen = {}, {}
+    for _, zone in ipairs(zones) do
+        local mapID = FOREVER_MAP_IDS[zone.mapID]
+        if mapID and not seen[mapID] then
+            seen[mapID] = true
+            zone.mapID = mapID
+            if mapID == STRANGLETHORN_VALE then
+                zone.name = "Stranglethorn Vale"
+            end
+            kept[#kept + 1] = zone
+        end
+    end
+    wipe(zones)
+    for i, zone in ipairs(kept) do zones[i] = zone end
+
+    -- Translate each group's mapIDs and drop groups left empty.
+    for _, groups in ipairs({ns.Constants.BIOME_GROUPS,
+        ns.Constants.EXPANSION_ZONES, ns.Constants.CONTINENT_ZONES}) do
+        for g = #groups, 1, -1 do
+            local translated, inGroup = {}, {}
+            for _, retailID in ipairs(groups[g].mapIDs) do
+                local mapID = FOREVER_MAP_IDS[retailID]
+                if mapID and not inGroup[mapID] then
+                    inGroup[mapID] = true
+                    translated[#translated + 1] = mapID
+                end
+            end
+            if #translated == 0 then
+                table.remove(groups, g)
+            else
+                groups[g].mapIDs = translated
+            end
+        end
+    end
+end
 
 local zoneSituationMap = {}
 for _, zoneData in ipairs(ns.Constants.MAJOR_ZONES) do

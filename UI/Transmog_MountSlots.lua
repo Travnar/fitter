@@ -422,9 +422,13 @@ end
 local function RebuildMountSlots()
     local charPreview = TransmogFrame and TransmogFrame.CharacterPreview
     if not charPreview or not s.mountSlotDefs then return end
-    s.flyingSlotFrame  = AcquireMountSlot(charPreview, s.mountSlotDefs.Flying)
+    if s.mountSlotDefs.Flying then
+        s.flyingSlotFrame = AcquireMountSlot(charPreview, s.mountSlotDefs.Flying)
+    end
     s.groundSlotFrame  = AcquireMountSlot(charPreview, s.mountSlotDefs.Ground)
-    s.aquaticSlotFrame = AcquireMountSlot(charPreview, s.mountSlotDefs.Aquatic)
+    if s.mountSlotDefs.Aquatic then
+        s.aquaticSlotFrame = AcquireMountSlot(charPreview, s.mountSlotDefs.Aquatic)
+    end
     s.petSlotFrame     = AcquireMountSlot(charPreview, s.mountSlotDefs.Pet)
     if s.mountSlotDefs.HunterPet then
         s.hunterPetSlotFrame = AcquireMountSlot(
@@ -532,6 +536,19 @@ function UI_Transmog:InitializeMountIcons()
             transmogLocation = BuildMountSlotTransmogLocation("Emotes"),
         },
     }
+    -- Clients without flying/aquatic mounts (e.g. WoW Forever) drop those
+    -- slots and pull Ground and Pet into the top row.
+    if not ns.Features.FlyingMounts then
+        s.mountSlotDefs.Flying = nil
+        s.mountSlotDefs.Ground.xOffset = baseX
+    end
+    if not ns.Features.AquaticMounts then
+        s.mountSlotDefs.Aquatic = nil
+        if not s.mountSlotDefs.Flying then
+            s.mountSlotDefs.Pet.xOffset = baseX + hStep
+            s.mountSlotDefs.Pet.yOffset = baseY
+        end
+    end
     if s.hunterPetFrame then
         s.mountSlotDefs.HunterPet = {
             category = "HunterPet", pagedFrame = s.hunterPetFrame,
@@ -801,10 +818,13 @@ function UI_Transmog:UpdateMountIcons()
     end
 
     local function RefreshFitterSlots()
-        for _, sf in ipairs({s.flyingSlotFrame, s.groundSlotFrame, s.aquaticSlotFrame,
-            s.petSlotFrame, s.hunterPetSlotFrame, s.hearthstoneSlotFrame,
-            s.toySlotFrame, s.zonesSlotFrame,
-            s.emotesSlotFrame}) do
+        -- Iterate by key: optional slots (hunter pet, flying, aquatic) may
+        -- be nil, which would stop ipairs over a list early.
+        for _, key in ipairs({"flyingSlotFrame", "groundSlotFrame",
+            "aquaticSlotFrame", "petSlotFrame", "hunterPetSlotFrame",
+            "hearthstoneSlotFrame", "toySlotFrame", "zonesSlotFrame",
+            "emotesSlotFrame"}) do
+            local sf = s[key]
             if sf and sf.Update then
                 sf:Update()
             end

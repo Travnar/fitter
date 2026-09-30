@@ -1,4 +1,4 @@
-﻿## Interface: 121000, 120007
+﻿## Interface: 121000, 120007, 16001
 ## Title: Fitter
 ## Notes: Expands the outfit system with mounts, pets, hunter pets, zones, titles, toys, hearthstones and emotes.
 ## Notes-esMX: Amplía el sistema de conjuntos con monturas, mascotas, mascotas de cazador, zonas, títulos, juguetes, piedras de hogar y gestos.
@@ -8,6 +8,9 @@
 ## SavedVariablesPerCharacter: FitterCharacterSaved
 ## LoadSavedVariablesFirst: 1
 ## IconTexture: Interface\AddOns\Fitter\FitterIcon
+
+# Client detection (retail vs. World of Warcraft Forever); loaded first.
+Flavor.lua
 
 Localization\Localization.lua
 Localization\enUS.lua
