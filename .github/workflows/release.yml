@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Package and publish
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Verify tag matches TOC version
+        id: version
+        run: |
+          toc_version="$(grep -oP '^\W*##\s*Version:\s*\K[0-9.]+' Fitter.toc)"
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [[ "$toc_version" != "$tag_version" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match Fitter.toc version $toc_version"
+            exit 1
+          fi
+          echo "version=$toc_version" >> "$GITHUB_OUTPUT"
+
+      - name: Build package
+        run: |
+          mkdir -p build/Fitter
+          git archive HEAD | tar -x -C build/Fitter
+          rm -rf build/Fitter/.github build/Fitter/.gitignore build/Fitter/.luacheckrc
+          (cd build && zip -rq "../Fitter-${{ steps.version.outputs.version }}.zip" Fitter)
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "Fitter-${{ steps.version.outputs.version }}.zip" \
+            --title "Fitter ${{ steps.version.outputs.version }}" \
+            --generate-notes
