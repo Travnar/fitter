@@ -466,6 +466,7 @@ function UI_Transmog:Initialize()
     end)
     s.additionalFrame:SetScript("OnHide", function()
         if s.loadoutPopup then s.loadoutPopup:Hide() end
+        if s.conditionalPopup then s.conditionalPopup:Hide() end
     end)
     
     TransmogFrame.WardrobeCollection.fitterAdditionalTabID =

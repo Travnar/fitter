@@ -34,6 +34,7 @@ Pet.lua
 HunterPet.lua
 Toy.lua
 Mount.lua
+MountConditionals.lua
 Emote.lua
 Housing.lua
 Macro.lua
@@ -48,6 +49,7 @@ Core.lua
 # Transmog UI (uses everything above).
 UI\Transmog.lua
 UI\Transmog_Loadouts.lua
+UI\Transmog_MountConditionals.lua
 UI\Transmog_MountSlots.lua
 UI\Transmog_Titles.lua
 UI\Transmog_Mounts.lua

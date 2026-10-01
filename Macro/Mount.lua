@@ -3,54 +3,6 @@ local addonName, ns = ...
 local Macro = ns.Macro
 local G99_BREAKNECK_SPELL_ID = 1215279
 
-local function GetG99ModifierMacroLines()
-    if not FitterSaved then return "" end
-
-    local mods = {}
-    for _, data in ipairs({
-        {"ShiftMountCondition", "shift"},
-        {"AltMountCondition", "alt"},
-        {"CtrlMountCondition", "ctrl"},
-    }) do
-        if FitterSaved[data[1]] == "G-99 Breakneck" then
-            mods[#mods + 1] = data[2]
-        end
-    end
-
-    if #mods == 0 then return "" end
-
-    local conditional = "mod:" .. table.concat(mods, "][mod:")
-    local info = C_Spell.GetSpellInfo(G99_BREAKNECK_SPELL_ID)
-    local spellName = (info and info.name) or "G-99 Breakneck"
-    return "/cast [" .. conditional .. "]" .. spellName .. "\n"
-        .. "/stopmacro [" .. conditional .. "]\n"
-end
-
-local function GetAnyMountModifierCondition()
-    if not FitterSaved then return nil end
-
-    local checks, mods = {}, {}
-    for _, data in ipairs({
-        {"ShiftMountCondition", "IsShiftKeyDown()", "shift"},
-        {"AltMountCondition", "IsAltKeyDown()", "alt"},
-        {"CtrlMountCondition", "IsControlKeyDown()", "ctrl"},
-    }) do
-        local condition = FitterSaved[data[1]]
-        if condition and condition ~= "None" then
-            checks[#checks + 1] = data[2]
-            mods[#mods + 1] = data[3]
-        end
-    end
-
-    if #checks == 0 then return nil end
-
-    local negativeParts = {}
-    for _, mod in ipairs(mods) do
-        negativeParts[#negativeParts + 1] = "nomod:" .. mod
-    end
-    return table.concat(checks, "or"), table.concat(negativeParts, ",")
-end
-
 local function OutfitGroundMountInfo()
     local outfitID = ns.state.currentZoneOutfitID
         or (C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
@@ -83,7 +35,9 @@ local function PreRollGroundIsRunningWild()
 end
 
 local function BuildMountMacroBody(mountID, includeTooltip)
-    local prefix = Macro.GetOutfitMacroPrefix() .. GetG99ModifierMacroLines()
+    -- Conditionals come first so they take precedence over every mount option.
+    local conditionalLines = ns.MountConditionals and ns.MountConditionals.GetMacroLines() or ""
+    local prefix = conditionalLines .. Macro.GetOutfitMacroPrefix()
     local icon = Macro.MOUNT_MACRO_ICON
     local showTooltip = includeTooltip ~= false and Macro.ShouldShowMountTooltip()
 
@@ -118,11 +72,12 @@ local function BuildMountMacroBody(mountID, includeTooltip)
         local spellName = (info and info.name) or "G-99 Breakneck"
         icon = (info and info.iconID) or icon
         local tooltip = showTooltip and ("#showtooltip " .. spellName .. "\n") or ""
-        local anyModifierCheck, noConfiguredModifier = GetAnyMountModifierCondition()
-        if anyModifierCheck then
+        -- Other conditionals already stopped the macro; only Ground Mount
+        -- modifiers reach this point.
+        if checkFn then
             return tooltip .. prefix
-                .. "/run if " .. anyModifierCheck .. "then FitM()end\n"
-                .. "/cast [" .. noConfiguredModifier .. "]" .. spellName, icon
+                .. "/run if " .. checkFn .. "then FitM()end\n"
+                .. "/cast [" .. noMacroMod .. "]" .. spellName, icon
         end
         return tooltip .. prefix .. "/cast " .. spellName, icon
     end
@@ -253,7 +208,10 @@ function Macro.UpdateMacroForMount(mountID, outfitIDOverride)
         if cancelLines then
             btnBody = cancelLines .. "\n" .. btnBody
         end
-        if ns.MountButton:GetAttribute("macrotext") ~= btnBody then
+        -- While falling, MountConditionals owns the macrotext and restores this on landing.
+        ns.state.mountButtonBody = btnBody
+        local fallingActive = ns.MountConditionals and ns.MountConditionals.IsFallingActive()
+        if not fallingActive and ns.MountButton:GetAttribute("macrotext") ~= btnBody then
             ns.MountButton:SetAttribute("macrotext", btnBody)
         end
     end

@@ -188,17 +188,13 @@ function Macro.IsShamanMacroEnabled()
         and ns.state.playerClass == "SHAMAN"
 end
 
+-- Lua check, positive and negative macro modifiers for the modifier keys set
+-- to the Ground Mount conditional; nil when there are none.
 function Macro.GetModifierCondition()
-    if not FitterSaved then return nil end
+    if not ns.MountConditionals then return nil end
     local checks, mods = {}, {}
-    for _, data in ipairs({
-        {"ShiftMountCondition", "IsShiftKeyDown()", "shift"},
-        {"AltMountCondition", "IsAltKeyDown()", "alt"},
-        {"CtrlMountCondition", "IsControlKeyDown()", "ctrl"},
-    }) do
-        if FitterSaved[data[1]] == "Ground Mount" then
-            checks[#checks + 1], mods[#mods + 1] = data[2], data[3]
-        end
+    for _, condition in ipairs(ns.MountConditionals.GetGroundModifiers()) do
+        checks[#checks + 1], mods[#mods + 1] = condition.check, condition.key
     end
     if #checks == 0 then return nil end
     local positive = table.concat(mods, "][mod:")

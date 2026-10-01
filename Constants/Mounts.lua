@@ -18,18 +18,8 @@ ns.Constants.MOUNT_EXPANSIONS = {
     {key = "midnight", label = L["Midnight"],               minID = 2200, maxID = 99999},
 }
 
-ns.Constants.MOUNT_CONDITIONS = {
-    {label = "None", alwaysAvailable = true},
-    {label = "G-99 Breakneck", alwaysAvailable = true},
-    {label = "Grand Expedition Yak"},
-    {label = "Mighty Caravan Brutosaur"},
-    {label = "Trader's Gilded Brutosaur"},
-    {label = "Grizzly Hills Packmaster"},
-    {label = "Traveler's Tundra Mammoth"},
-    {label = "Ground Mount", alwaysAvailable = true},
-}
-
--- Former condition labels, mapped to their current label so saved settings carry over.
+-- Former Shift/Ctrl/Alt mount condition labels, mapped to their current mount
+-- name so they migrate to account-wide mount bind conditionals.
 ns.Constants.RENAMED_MOUNT_CONDITIONS = {
     ["Ground Expedition Yak"] = "Grand Expedition Yak",
     ["Reins of the Mighty Caravan Brutosaur"] = "Mighty Caravan Brutosaur",

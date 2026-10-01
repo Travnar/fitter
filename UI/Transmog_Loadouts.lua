@@ -728,4 +728,5 @@ function UI_Transmog:InitializeLoadouts()
     s.loadoutDeleteDropdown = deleteDropdown
 
     self:RefreshLoadouts()
+    self:InitializeMountConditionals(parent)
 end

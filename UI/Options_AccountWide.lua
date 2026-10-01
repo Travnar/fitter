@@ -225,9 +225,43 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
     header:SetTextColor(1, 1, 1, 1)
     header:SetText(L["Account Wide"])
 
+    -- Mount bind conditionals --
+    local CH = 76  -- height of the conditional rows; the mount rows start below them
+
+    local conditionalsDropdown
+    local function OnConditionalsChanged()
+        if conditionalsDropdown then conditionalsDropdown:RefreshText() end
+    end
+
+    local addConditionRow = CreateFrame("Frame", nil, frame)
+    addConditionRow:SetPoint("TOPLEFT", frame, "TOPLEFT", X + 20, -(YS + 32))
+    addConditionRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
+    addConditionRow:SetHeight(32)
+
+    local addConditionLabel = addConditionRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    addConditionLabel:SetPoint("LEFT", addConditionRow, "LEFT", 0, 0)
+    addConditionLabel:SetText(L["Add a Condition"])
+
+    local addConditionButton = ns.MountConditionalsUI.CreateAddButton(
+        addConditionRow, "account", OnConditionalsChanged)
+    addConditionButton:SetPoint("RIGHT", addConditionRow, "RIGHT", 0, 0)
+
+    local currentConditionsRow = CreateFrame("Frame", nil, frame)
+    currentConditionsRow:SetPoint("TOPLEFT", addConditionRow, "BOTTOMLEFT", 0, -8)
+    currentConditionsRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
+    currentConditionsRow:SetHeight(30)
+
+    local currentConditionsLabel = currentConditionsRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    currentConditionsLabel:SetPoint("LEFT", currentConditionsRow, "LEFT", 0, 0)
+    currentConditionsLabel:SetText(L["Current Conditionals"])
+
+    conditionalsDropdown = ns.MountConditionalsUI.CreateListDropdown(
+        currentConditionsRow, "account", 220, OnConditionalsChanged)
+    conditionalsDropdown:SetPoint("RIGHT", currentConditionsRow, "RIGHT", 0, 0)
+
     -- Flying --
     local flyingRow = CreateFrame("Frame", nil, frame)
-    flyingRow:SetPoint("TOPLEFT", frame, "TOPLEFT", X + 20, -(YS + 32))
+    flyingRow:SetPoint("TOPLEFT", frame, "TOPLEFT", X + 20, -(YS + 32 + CH))
     flyingRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
     flyingRow:SetHeight(26)
 
@@ -318,7 +352,7 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
             awBottom = aquaticContainer:IsShown()
                 and (aquaticBottom + 12 + SH) or aquaticBottom
         end
-        return awBottom + 20
+        return awBottom + 20 + CH
     end
 
     -- Repositions the ground section depending on whether the flying scrollbox is visible.
@@ -326,7 +360,7 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
         groundRow:ClearAllPoints()
         groundRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
         if not hasFlying then
-            groundRow:SetPoint("TOPLEFT", frame, "TOPLEFT", X + 20, -(YS + 32))
+            groundRow:SetPoint("TOPLEFT", frame, "TOPLEFT", X + 20, -(YS + 32 + CH))
         elseif flyingContainer:IsShown() then
             groundRow:SetPoint("TOPLEFT", flyingContainer, "BOTTOMLEFT", 0, -13)
         else
@@ -368,6 +402,7 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
     -- Return the refresh function that Options.lua calls on OnRefresh/OnShow
     return function()
         if not FitterSaved then return end
+        OnConditionalsChanged()
         local flyEnabled = hasFlying and FitterSaved.AccountWideFlyingEnabled
         local gndEnabled = FitterSaved.AccountWideGroundEnabled
         local aquaticEnabled = hasAquatic and FitterSaved.AccountWideAquaticEnabled

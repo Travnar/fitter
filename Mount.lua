@@ -283,27 +283,10 @@ function FitterMount(outfitIDOverride)
     local state = ns.state
     ns.Toy.ScheduleMacroRefresh()
 
-    -- Modifier conditions take precedence over the normal contextual mount.
-    local condition
-    if FitterSaved then
-        if IsShiftKeyDown() then condition = FitterSaved.ShiftMountCondition
-        elseif IsAltKeyDown() then condition = FitterSaved.AltMountCondition
-        elseif IsControlKeyDown() then condition = FitterSaved.CtrlMountCondition end
-    end
-    if condition and condition ~= "None" then
-        if condition == "Ground Mount" then
-            FitterGroundMount(outfitIDOverride)
-            return
-        end
-        for _, id in ipairs(C_MountJournal.GetMountIDs() or {}) do
-            local name = C_MountJournal.GetMountInfoByID(id)
-            if name == condition then
-                if IsMounted() then Dismount() else C_MountJournal.SummonByID(id) end
-                ns.Title.Apply(outfitIDOverride)
-                state.nextMountToSummon = nil
-                return
-            end
-        end
+    -- Other mount bind conditionals are cast by the macro before FitM() runs;
+    -- only Ground Mount modifiers are handled here.
+    if ns.MountConditionals and ns.MountConditionals.IsGroundModifierHeld() then
+        FitterGroundMount(outfitIDOverride)
         return
     end
 
