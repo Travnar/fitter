@@ -42,7 +42,7 @@ local function SetPopupType(popup, data)
     popup.suggestions:Hide()
 end
 
--- A list under the Ability / Item field that filters the suggestion pool as
+-- A list under the Name / ID field that filters the suggestion pool as
 -- the player types. Up/Down move the highlight; Enter or Tab picks it.
 local function CreateSuggestionList(popup, editBox)
     local list = CreateFrame("Frame", nil, popup, "TooltipBackdropTemplate")
@@ -210,7 +210,7 @@ local function CreateConditionalPopup()
 
     local abilityLabel = popup:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     abilityLabel:SetPoint("TOPLEFT", typeLabel, "BOTTOMLEFT", 0, -26)
-    abilityLabel:SetText(L["Ability / Item"])
+    abilityLabel:SetText(L["Name / ID"])
     popup.abilityLabel = abilityLabel
 
     local abilityEdit = CreateFrame("EditBox", nil, popup, "InputBoxTemplate")
@@ -220,7 +220,7 @@ local function CreateConditionalPopup()
     abilityEdit:SetMaxLetters(80)
     abilityEdit:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(L["Ability / Item"])
+        GameTooltip:SetText(L["Name / ID"])
         GameTooltip:AddLine(L["Enter the name or ID of an ability, toy or mount known by this character."],
             1, 1, 1, true)
         GameTooltip:AddLine(L["Start typing to see suggestions. Anything not listed can still be entered by its full name or ID."], 1, 0.82, 0, true)
@@ -305,7 +305,7 @@ function ConditionalsUI.ShowAddPopup(scope, onChanged)
     popup.scope = scope
     popup.onChanged = onChanged
     popup:SetTitle(scope == "account" and L["Add an Account Wide Condition"]
-        or L["Add a Condition"])
+        or L["Add a Character Condition"])
     popup.condition.value = nil
     popup.condition:OverrideText(L["Select a condition"])
     SetPopupType(popup, TYPES[1])
@@ -365,7 +365,8 @@ function ConditionalsUI.CreateAddButton(parent, scope, onChanged)
     end)
     add:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(L["Add a Condition"])
+        GameTooltip:SetText(scope == "account" and L["Add an Account Wide Condition"]
+            or L["Add a Character Condition"])
         GameTooltip:AddLine(L["Use an ability, toy or mount instead of the normal mount when the mount macro or key binding is used while a condition is met."],
             1, 1, 1, true)
         if scope == "account" then
@@ -424,23 +425,18 @@ function UI_Transmog:InitializeMountConditionals(parent)
     end
     local function OnChanged() UI_Transmog:RefreshMountConditionals() end
 
-    local section = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    section:SetPoint("TOPLEFT", parent, "TOPLEFT", 66, -455)
-    section:SetTextColor(1, 1, 1, 1)
-    section:SetText(L["Mount Bind Conditionals"])
-
     local addLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    addLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -493)
-    addLabel:SetText(L["Add a Condition"])
+    addLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -200)
+    addLabel:SetText(L["Add a Character Condition"])
 
     local add = ConditionalsUI.CreateAddButton(parent, "character", OnChanged)
-    add:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -484)
+    add:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -191)
 
     local currentLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    currentLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -536)
-    currentLabel:SetText(L["Current Conditionals"])
+    currentLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -237)
+    currentLabel:SetText(L["Current Character Conditionals"])
 
     local dropdown = ConditionalsUI.CreateListDropdown(parent, "character", 220, OnChanged)
-    dropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -527)
+    dropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -228)
     s.mountConditionalsDropdown = dropdown
 end

@@ -240,7 +240,7 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
 
     local addConditionLabel = addConditionRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     addConditionLabel:SetPoint("LEFT", addConditionRow, "LEFT", 0, 0)
-    addConditionLabel:SetText(L["Add a Condition"])
+    addConditionLabel:SetText(L["Add an Account Condition"])
 
     local addConditionButton = ns.MountConditionalsUI.CreateAddButton(
         addConditionRow, "account", OnConditionalsChanged)
@@ -253,7 +253,7 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
 
     local currentConditionsLabel = currentConditionsRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     currentConditionsLabel:SetPoint("LEFT", currentConditionsRow, "LEFT", 0, 0)
-    currentConditionsLabel:SetText(L["Current Conditionals"])
+    currentConditionsLabel:SetText(L["Current Account Conditionals"])
 
     conditionalsDropdown = ns.MountConditionalsUI.CreateListDropdown(
         currentConditionsRow, "account", 220, OnConditionalsChanged)
