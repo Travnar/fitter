@@ -74,13 +74,14 @@ end
 _G.FitterOutfitUpdate = FitterOutfitUpdate
 _G.FitU = FitterOutfitUpdate
 
--- True when an opt-in class macro (druid/shaman) replaces the standard
+-- True when an opt-in class macro (druid/shaman/monk) replaces the standard
 -- FitterMount() driver; in that case the periodic mount re-roll is skipped.
 function ns.IsClassMountMacroEnabled()
     if not FitterSaved then return false end
     local class = ns.state.playerClass
     return (FitterSaved.UseDruidMacro and class == "DRUID")
         or (FitterSaved.UseShamanMacro and class == "SHAMAN")
+        or (FitterSaved.UseMonkMacro and class == "MONK")
 end
 
 function Fitter:CreateEmptyOutfit(outfitID)

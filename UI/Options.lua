@@ -8,6 +8,8 @@ local function EnsureDefaults()
     if FitterSaved == nil then FitterSaved = {} end
     if FitterSaved.UseDruidMacro == nil then FitterSaved.UseDruidMacro = false end
     if FitterSaved.UseShamanMacro == nil then FitterSaved.UseShamanMacro = false end
+    if FitterSaved.UseMonkMacro == nil then FitterSaved.UseMonkMacro = false end
+    if FitterSaved.CopyTargetMount == nil then FitterSaved.CopyTargetMount = false end
     if FitterSaved.ShiftHearthstoneCondition == nil then FitterSaved.ShiftHearthstoneCondition = "None" end
     if FitterSaved.AltHearthstoneCondition == nil then FitterSaved.AltHearthstoneCondition = "None" end
     if FitterSaved.CtrlHearthstoneCondition == nil then FitterSaved.CtrlHearthstoneCondition = "None" end
@@ -277,25 +279,35 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         "Replace the standard FitterMount on shaman characters that casts Ghost Wolf"
         .. " when not already in Ghost Wolf form, or summons a mount otherwise.",
         OPTION_X, -240, OnDruidMacroChanged)
+    local cbMonkMacro = MakeCheckbox(content, "UseMonkMacro",
+        "Use Monk Macro",
+        "Replace the standard FitterMount on monk characters that casts Zen Flight"
+        .. " when not already in Zen Flight, or summons a mount otherwise.",
+        OPTION_X, -270, OnDruidMacroChanged)
     local cbZoneSpecificMounts = MakeCheckbox(content, "UseZoneSpecificMounts",
         "Use Zone Specific Mounts",
         "Summon a special mount intended for the current zone when it is available"
         .. " to this character. Currently uses the G-99 Breakneck in Undermine.",
-        OPTION_X, -270, OnGroundMountModifierChanged)
+        OPTION_X, -300, OnGroundMountModifierChanged)
+    local cbCopyTargetMount = MakeCheckbox(content, "CopyTargetMount",
+        "Copy Target Player's Mount",
+        "When targeting a mounted player whose mount you own, summon that mount"
+        .. " instead. Otherwise, the regular mount selection is used.",
+        OPTION_X, -330)
 
     -- ===== Hearthstone Features =====
 
-    MakeSectionHeader(content, "Hearthstones", HEADER_X, -322)
+    MakeSectionHeader(content, "Hearthstones", HEADER_X, -382)
     local cbTooltipHS = MakeCheckbox(content, "ShowTooltipHearthstone",
         "Show Tooltip in Hearthstone Macro",
         "Include #showtooltip in the hearthstone macro. Disabling this frees up"
         .. " additional space for custom macro text.",
-        OPTION_X, -352, OnHearthstoneSettingChanged)
+        OPTION_X, -412, OnHearthstoneSettingChanged)
     local cbAstralRecallFallback = MakeCheckbox(content, "AstralRecallFallback",
         "Astral Recall Fallback",
         "On Shaman characters, use Astral Recall when the selected Hearthstone"
         .. " cannot be used because it is on cooldown.",
-        OPTION_X, -382, OnHearthstoneSettingChanged)
+        OPTION_X, -442, OnHearthstoneSettingChanged)
 
     local hearthstoneConditionDropdowns = {}
     local function GetHearthstoneConditionLabel(value)
@@ -373,9 +385,9 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         dropdown:OverrideText(GetHearthstoneConditionLabel(FitterSaved[key]))
         hearthstoneConditionDropdowns[key] = dropdown
     end
-    MakeHearthstoneConditionDropdown("Shift", -412)
-    MakeHearthstoneConditionDropdown("Ctrl", -442)
-    MakeHearthstoneConditionDropdown("Alt", -472)
+    MakeHearthstoneConditionDropdown("Shift", -472)
+    MakeHearthstoneConditionDropdown("Ctrl", -502)
+    MakeHearthstoneConditionDropdown("Alt", -532)
 
     StaticPopupDialogs.FITTER_RESET_DEFAULT_HEARTHSTONES = {
         text = L["Reset outfits that have only the default Hearthstone selected?\n\nThis applies now to this character and when each other character on the account next logs in."],
@@ -394,7 +406,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     local resetDefaultHearthstonesRow = CreateFrame("Frame", nil, content)
     resetDefaultHearthstonesRow:SetPoint(
-        "TOPLEFT", content, "TOPLEFT", OPTION_X, -502)
+        "TOPLEFT", content, "TOPLEFT", OPTION_X, -562)
     resetDefaultHearthstonesRow:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     resetDefaultHearthstonesRow:SetHeight(26)
 
@@ -417,34 +429,34 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Pet Features =====
 
-    MakeSectionHeader(content, "Pets", HEADER_X, -552)
+    MakeSectionHeader(content, "Pets", HEADER_X, -612)
     local cbDismissPetOnStealth = MakeCheckbox(content, "DismissPetOnStealth",
         "Dismiss Pet On Stealth",
         "When enabled, dismiss the currently summoned battle pet when your character"
         .. " becomes stealthed.",
-        OPTION_X, -582)
+        OPTION_X, -642)
     local cbDismissPetInInstancesWhileGrouped = MakeCheckbox(content, "DismissPetInInstancesWhileGrouped",
         "Dismiss Pet In Instances While Grouped",
         "When enabled, dismiss the currently summoned battle pet in any instance while"
         .. " you are in a party or raid, and prevent Fitter from summoning one there.",
-        OPTION_X, -612, OnPetSettingChanged)
+        OPTION_X, -672, OnPetSettingChanged)
 
     -- ===== Hunter Pet Features =====
 
-    MakeSectionHeader(content, "Hunter Pets", HEADER_X, -662)
+    MakeSectionHeader(content, "Hunter Pets", HEADER_X, -722)
     local cbReviveHunterPet = MakeCheckbox(content, "ReviveHunterPet",
         "Revive Pet",
         "When enabled, Fitter attempts to revive a dead hunter pet before continuing."
         .. " When disabled, Fitter only attempts to summon the selected hunter pet."
         .. " If the pet's corpse has despawned, it must be resurrected manually"
         .. " regardless of whether this setting is enabled.",
-        OPTION_X, -692, OnHunterPetSettingChanged)
+        OPTION_X, -752, OnHunterPetSettingChanged)
 
     -- ===== Emote Features =====
 
-    MakeSectionHeader(content, "Emotes", HEADER_X, -742)
+    MakeSectionHeader(content, "Emotes", HEADER_X, -802)
     local emoteCooldownRow = CreateFrame("Frame", nil, content)
-    emoteCooldownRow:SetPoint("TOPLEFT", content, "TOPLEFT", OPTION_X, -772)
+    emoteCooldownRow:SetPoint("TOPLEFT", content, "TOPLEFT", OPTION_X, -832)
     emoteCooldownRow:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     emoteCooldownRow:SetHeight(36)
 
@@ -484,26 +496,26 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Toy Features =====
 
-    MakeSectionHeader(content, "Cosmetic Toys", HEADER_X, -832)
+    MakeSectionHeader(content, "Cosmetic Toys", HEADER_X, -892)
     local cbCancelToys = MakeCheckbox(content, "CancelNonOutfitToys",
         "Cancel Non-Outfit Cosmetic Toys",
         "When switching outfits, automatically cancel any active toys from the"
         .. " previous outfit that are not also selected by the new outfit.",
-        OPTION_X, -862)
+        OPTION_X, -922)
     local cbApplyToy = MakeCheckbox(content, "ApplyToyOnSelect",
         "Apply Toy On Select",
         "When selecting or deselecting a toy while the outfit is currently active,"
         .. " immediately activate or cancel the toy.",
-        OPTION_X, -892)
+        OPTION_X, -952)
 
     -- ===== Zone Features =====
 
-    MakeSectionHeader(content, "Zones", HEADER_X, -942)
+    MakeSectionHeader(content, "Zones", HEADER_X, -1002)
     local cbAutoEnable = MakeCheckbox(content, "AutoEnableZoneSituations",
         "Auto Enable Zone Situations",
         "When enabled, associating zones with an outfit will automatically enable their"
         .. " respective Location situations: Rest for cities and World for others.",
-        OPTION_X, -972)
+        OPTION_X, -1032)
     local cbAutoDisable = MakeCheckbox(content, "AutoDisableZoneSituations",
         "Auto Disable Zone Situations",
         {
@@ -513,7 +525,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
             .. " others. Only situations that were enabled by Fitter are disabled, determined"
             .. " by the situation state captured before auto-enabling.", 1, 0.82, 0, true},
         },
-        OPTION_X, -1002)
+        OPTION_X, -1062)
 
     cbAutoEnable:HookScript("OnClick", function(self)
         if not self:GetChecked() and FitterSaved then
@@ -535,7 +547,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Account Wide (below Zone Features) =====
 
-    local AW_Y_START = 1060
+    local AW_Y_START = 1120
 
     local function UpdateContentHeight(awHeight)
         local h = AW_Y_START + awHeight
@@ -559,7 +571,9 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         cbTooltipMount:SetChecked(FitterSaved.ShowTooltipMount)
         cbDruidMacro:SetChecked(FitterSaved.UseDruidMacro)
         cbShamanMacro:SetChecked(FitterSaved.UseShamanMacro)
+        cbMonkMacro:SetChecked(FitterSaved.UseMonkMacro)
         cbZoneSpecificMounts:SetChecked(FitterSaved.UseZoneSpecificMounts)
+        cbCopyTargetMount:SetChecked(FitterSaved.CopyTargetMount)
         cbTooltipHS:SetChecked(FitterSaved.ShowTooltipHearthstone)
         cbAstralRecallFallback:SetChecked(FitterSaved.AstralRecallFallback)
         for key, dropdown in pairs(hearthstoneConditionDropdowns) do

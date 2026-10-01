@@ -42,10 +42,13 @@ local function BuildMountMacroBody(mountID, includeTooltip)
     local showTooltip = includeTooltip ~= false and Macro.ShouldShowMountTooltip()
 
     if mountID ~= "g99breakneck" and Macro.IsDruidMacroEnabled() then
-        return prefix .. Macro.DRUID_MACRO_BODY, icon
+        return prefix .. Macro.GetDruidMacroBody(), icon
     end
     if mountID ~= "g99breakneck" and Macro.IsShamanMacroEnabled() then
-        return prefix .. Macro.SHAMAN_MACRO_BODY, icon
+        return prefix .. Macro.GetShamanMacroBody(), icon
+    end
+    if mountID ~= "g99breakneck" and Macro.IsMonkMacroEnabled() then
+        return prefix .. Macro.GetMonkMacroBody(), icon
     end
 
     local checkFn, macroMod, noMacroMod = Macro.GetModifierCondition()

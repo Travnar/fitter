@@ -57,6 +57,8 @@ local translations = {
     ["Mounts"] = "Monturas", ["Remove Macro Changes On Update"] = "Eliminar cambios de macro al actualizar",
     ["Show Tooltip in Mount Macro"] = "Mostrar descripción en la macro de montura",
     ["Use Druid Macro"] = "Usar macro de druida", ["Use Shaman Macro"] = "Usar macro de chamán",
+    ["Use Monk Macro"] = "Usar macro de monje",
+    ["Copy Target Player's Mount"] = "Copiar la montura del jugador objetivo",
     ["Use Zone Specific Mounts"] = "Usar monturas específicas de zona",
     ["Show Tooltip in Hearthstone Macro"] = "Mostrar descripción en la macro de piedra de hogar",
     ["Astral Recall Fallback"] = "Usar Regreso astral como alternativa",

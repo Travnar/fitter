@@ -667,9 +667,7 @@ function UI_Transmog:RefreshActiveMountMacro(preferredMountID)
     local activeOutfitID = self:GetActiveOutfitID()
     if not currentOutfitID or currentOutfitID ~= activeOutfitID then return end
 
-    local playerClass = ns.state.playerClass
-    if (FitterSaved and FitterSaved.UseDruidMacro and playerClass == "DRUID")
-        or (FitterSaved and FitterSaved.UseShamanMacro and playerClass == "SHAMAN") then
+    if ns.IsClassMountMacroEnabled() then
         ns.state.nextMountToSummon = preferredMountID or ns.Mount.SelectNext(false, ns.state.currentZoneOutfitID)
         Fitter:UpdateMacroForCurrentState()
         return

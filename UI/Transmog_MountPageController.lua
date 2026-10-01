@@ -13,12 +13,13 @@ local function EnsureMountMacro()
     local index = GetMacroIndexByName(name)
     if index and index > 0 then return index end
     if select(1, GetNumMacros()) >= 120 then return nil end
-    local class = ns.state.playerClass
     local body
-    if FitterSaved and FitterSaved.UseDruidMacro and class == "DRUID" then
-        body = "/stopmacro [flying,combat]\n/run FitterMount()\n/cast [indoors,noform:2] Cat Form; [nocombat,outdoors,advflyable,noform:3][swimming,noform:3]Travel Form;[outdoors,noform:3]Mount Form;"
-    elseif FitterSaved and FitterSaved.UseShamanMacro and class == "SHAMAN" then
-        body = "/stopmacro [flying,combat]\n/run FitterMount()\n/cast [noform:1] Ghost Wolf;"
+    if ns.Macro.IsDruidMacroEnabled() then
+        body = ns.Macro.GetDruidMacroBody()
+    elseif ns.Macro.IsShamanMacroEnabled() then
+        body = ns.Macro.GetShamanMacroBody()
+    elseif ns.Macro.IsMonkMacroEnabled() then
+        body = ns.Macro.GetMonkMacroBody()
     else
         body = "/run FitterMount()"
     end

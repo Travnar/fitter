@@ -57,6 +57,8 @@ local translations = {
     ["Mounts"] = "坐骑", ["Remove Macro Changes On Update"] = "更新时移除宏修改",
     ["Show Tooltip in Mount Macro"] = "在坐骑宏中显示鼠标提示",
     ["Use Druid Macro"] = "使用德鲁伊宏", ["Use Shaman Macro"] = "使用萨满祭司宏",
+    ["Use Monk Macro"] = "使用武僧宏",
+    ["Copy Target Player's Mount"] = "复制目标玩家的坐骑",
     ["Use Zone Specific Mounts"] = "使用特定区域坐骑",
     ["Show Tooltip in Hearthstone Macro"] = "在炉石宏中显示鼠标提示",
     ["Astral Recall Fallback"] = "备用星界传送",

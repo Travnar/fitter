@@ -14,15 +14,39 @@ Macro.MAX_CHARACTER_MACROS = 18
 Macro.OUTFIT_UPDATE_MACRO_NAME = "Fitter Update"
 Macro.OUTFIT_UPDATE_MACRO_ICON = 4624566
 
-Macro.DRUID_MACRO_BODY = "/stopmacro [flying,combat]\n"
-    .. "/run FitM()\n"
-    .. "/cast [indoors,noform:2]Cat Form;"
-    .. "[nocombat,outdoors,advflyable,noform:3][swimming,noform:3]Travel Form;"
-    .. "[outdoors,noform:3]Mount Form"
+local CAT_FORM_SPELL_ID = 768
+local TRAVEL_FORM_SPELL_ID = 783
+local MOUNT_FORM_SPELL_ID = 210053
+local GHOST_WOLF_SPELL_ID = 2645
+local ZEN_FLIGHT_SPELL_ID = 125883
 
-Macro.SHAMAN_MACRO_BODY = "/stopmacro [flying,combat]\n"
-    .. "/run FitM()\n"
-    .. "/cast [noform:1]Ghost Wolf"
+-- /cast only accepts the client's localized spell name, so class macro bodies
+-- are built on demand; the English name is a fallback if the lookup fails.
+local function SpellName(spellID, fallback)
+    local info = C_Spell.GetSpellInfo(spellID)
+    return (info and info.name) or fallback
+end
+
+function Macro.GetDruidMacroBody()
+    return "/stopmacro [flying,combat]\n"
+        .. "/run FitM()\n"
+        .. "/cast [indoors,noform:2]" .. SpellName(CAT_FORM_SPELL_ID, "Cat Form") .. ";"
+        .. "[nocombat,outdoors,advflyable,noform:3][swimming,noform:3]"
+        .. SpellName(TRAVEL_FORM_SPELL_ID, "Travel Form") .. ";"
+        .. "[outdoors,noform:3]" .. SpellName(MOUNT_FORM_SPELL_ID, "Mount Form")
+end
+
+function Macro.GetShamanMacroBody()
+    return "/stopmacro [flying,combat]\n"
+        .. "/run FitM()\n"
+        .. "/cast [noform:1]" .. SpellName(GHOST_WOLF_SPELL_ID, "Ghost Wolf")
+end
+
+function Macro.GetMonkMacroBody()
+    return "/stopmacro [flying,combat]\n"
+        .. "/run FitM()\n"
+        .. "/cast [nochanneling]" .. SpellName(ZEN_FLIGHT_SPELL_ID, "Zen Flight")
+end
 
 local function GetUserAdditions(macroName, lastGenerated)
     if not lastGenerated then return nil end
@@ -186,6 +210,12 @@ function Macro.IsShamanMacroEnabled()
     return FitterSaved
         and FitterSaved.UseShamanMacro
         and ns.state.playerClass == "SHAMAN"
+end
+
+function Macro.IsMonkMacroEnabled()
+    return FitterSaved
+        and FitterSaved.UseMonkMacro
+        and ns.state.playerClass == "MONK"
 end
 
 -- Lua check, positive and negative macro modifiers for the modifier keys set

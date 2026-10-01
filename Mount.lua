@@ -111,6 +111,25 @@ local function IsMountCurrentlyUsable(mountID)
     return ok and canUse == true
 end
 
+-- Returns the target player's active mount when this character owns it and can
+-- use it here; nil otherwise (no player target, not mounted, not collected).
+local function GetTargetPlayerMount()
+    if not (FitterSaved and FitterSaved.CopyTargetMount) then return nil end
+    if not UnitIsPlayer("target") or UnitIsUnit("target", "player") then return nil end
+    for index = 1, 255 do
+        local aura = C_UnitAuras.GetAuraDataByIndex("target", index, "HELPFUL")
+        if not aura then return nil end
+        local spellID = aura.spellId
+        if spellID and not (issecretvalue and issecretvalue(spellID)) then
+            local mountID = C_MountJournal.GetMountFromSpell(spellID)
+            if mountID then
+                if IsMountCurrentlyUsable(mountID) then return mountID end
+                return nil
+            end
+        end
+    end
+end
+
 local function PickRandomUsableMount(mounts)
     local count = #mounts
     if count == 0 then return nil end
@@ -302,6 +321,13 @@ function FitterMount(outfitIDOverride)
 
     if IsMounted() then
         Dismount()
+        return
+    end
+
+    local targetMountID = GetTargetPlayerMount()
+    if targetMountID then
+        C_MountJournal.SummonByID(targetMountID)
+        ns.Title.Apply(outfitIDOverride)
         return
     end
 
