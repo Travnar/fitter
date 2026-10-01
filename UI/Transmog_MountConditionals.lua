@@ -20,6 +20,12 @@ local TYPES = {
     {key = "ground", label = L["Ground Mount"]},
 }
 
+local TYPE_BY_KEY = {}
+for _, data in ipairs(TYPES) do TYPE_BY_KEY[data.key] = data end
+
+local MAX_SUGGESTIONS = 8
+local SUGGESTION_HEIGHT = 20
+
 local function EntryLabel(entry)
     local icon = entry.icon and ("|T" .. entry.icon .. ":16:16|t ") or ""
     return icon .. L[entry.name or "?"] .. " |cff999999("
@@ -33,6 +39,106 @@ local function SetPopupType(popup, data)
     local needsInput = data.key ~= "ground"
     popup.abilityLabel:SetShown(needsInput)
     popup.abilityEdit:SetShown(needsInput)
+    popup.suggestions:Hide()
+end
+
+-- A list under the Ability / Item field that filters the suggestion pool as
+-- the player types. Up/Down move the highlight; Enter or Tab picks it.
+local function CreateSuggestionList(popup, editBox)
+    local list = CreateFrame("Frame", nil, popup, "TooltipBackdropTemplate")
+    list:SetFrameStrata("FULLSCREEN_DIALOG")
+    list:SetPoint("TOPRIGHT", editBox, "BOTTOMRIGHT", 4, 2)
+    list:SetWidth(280)
+    list:Hide()
+    list.buttons = {}
+
+    for index = 1, MAX_SUGGESTIONS do
+        local button = CreateFrame("Button", nil, list)
+        button:SetHeight(SUGGESTION_HEIGHT)
+        button:SetPoint("TOPLEFT", 6, -6 - (index - 1) * SUGGESTION_HEIGHT)
+        button:SetPoint("RIGHT", -6, 0)
+
+        button.selected = button:CreateTexture(nil, "BACKGROUND")
+        button.selected:SetAllPoints()
+        button.selected:SetColorTexture(1, 0.82, 0, 0.2)
+        button.selected:Hide()
+        local highlight = button:CreateTexture(nil, "HIGHLIGHT")
+        highlight:SetAllPoints()
+        highlight:SetColorTexture(1, 1, 1, 0.12)
+
+        button.icon = button:CreateTexture(nil, "ARTWORK")
+        button.icon:SetSize(16, 16)
+        button.icon:SetPoint("LEFT", 2, 0)
+        button.kind = button:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+        button.kind:SetPoint("RIGHT", -2, 0)
+        button.text = button:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+        button.text:SetPoint("LEFT", button.icon, "RIGHT", 5, 0)
+        button.text:SetPoint("RIGHT", button.kind, "LEFT", -5, 0)
+        button.text:SetJustifyH("LEFT")
+        button.text:SetWordWrap(false)
+
+        button:SetScript("OnClick", function(self) list:Pick(self.entry) end)
+        list.buttons[index] = button
+    end
+
+    function list:SetSelection(index)
+        self.selection = index
+        for buttonIndex, button in ipairs(self.buttons) do
+            button.selected:SetShown(buttonIndex == index)
+        end
+    end
+
+    function list:Update()
+        local results = popup.pool and Conditionals.GetSuggestions(
+            popup.pool, editBox:GetText(), popup.typeDropdown.value, MAX_SUGGESTIONS) or {}
+        if #results == 0 then
+            self:Hide()
+            return
+        end
+        for index, button in ipairs(self.buttons) do
+            local entry = results[index]
+            button.entry = entry
+            button:SetShown(entry ~= nil)
+            if entry then
+                button.icon:SetTexture(entry.icon or 134400)
+                button.text:SetText(L[entry.name])
+                local typeData = TYPE_BY_KEY[entry.kind]
+                button.kind:SetText(entry.kind ~= "ground" and typeData and typeData.label or "")
+            end
+        end
+        self:SetHeight(#results * SUGGESTION_HEIGHT + 12)
+        self.count = #results
+        self:SetSelection(nil)
+        self:Show()
+    end
+
+    function list:MoveSelection(step)
+        local index = (self.selection or (step > 0 and 0 or self.count + 1)) + step
+        if index < 1 then index = self.count elseif index > self.count then index = 1 end
+        self:SetSelection(index)
+    end
+
+    -- Fills in the field and the type, and remembers the entry so Add uses it
+    -- directly instead of resolving the name again.
+    function list:Pick(entry)
+        if not entry then return end
+        self:Hide()
+        SetPopupType(popup, TYPE_BY_KEY[entry.kind])
+        if entry.kind ~= "ground" then
+            editBox:SetText(L[entry.name])
+            editBox:SetCursorPosition(#editBox:GetText())
+        end
+        popup.pickedEntry = entry
+    end
+
+    function list:PickSelection()
+        local button = self.buttons[self.selection or 1]
+        if not self:IsShown() or not button or not button.entry then return false end
+        self:Pick(button.entry)
+        return true
+    end
+
+    return list
 end
 
 local function CreateConditionalPopup()
@@ -117,10 +223,31 @@ local function CreateConditionalPopup()
         GameTooltip:SetText(L["Ability / Item"])
         GameTooltip:AddLine(L["Enter the name or ID of an ability, toy or mount known by this character."],
             1, 1, 1, true)
+        GameTooltip:AddLine(L["Start typing to see suggestions. Anything not listed can still be entered by its full name or ID."], 1, 0.82, 0, true)
         GameTooltip:Show()
     end)
     abilityEdit:SetScript("OnLeave", GameTooltip_Hide)
     popup.abilityEdit = abilityEdit
+
+    local suggestions = CreateSuggestionList(popup, abilityEdit)
+    popup.suggestions = suggestions
+    abilityEdit:SetScript("OnTextChanged", function(_, userInput)
+        if not userInput then return end
+        popup.pickedEntry = nil
+        suggestions:Update()
+    end)
+    abilityEdit:SetScript("OnArrowPressed", function(_, key)
+        if not suggestions:IsShown() then return end
+        if key == "UP" then suggestions:MoveSelection(-1)
+        elseif key == "DOWN" then suggestions:MoveSelection(1) end
+    end)
+    abilityEdit:SetScript("OnTabPressed", function() suggestions:PickSelection() end)
+    abilityEdit:SetScript("OnEditFocusLost", function()
+        -- Delayed so a click on a suggestion lands before the list hides.
+        C_Timer.After(0.2, function()
+            if not abilityEdit:HasFocus() then suggestions:Hide() end
+        end)
+    end)
 
     local cancel = CreateFrame("Button", nil, popup, "UIPanelButtonTemplate")
     cancel:SetSize(90, 24)
@@ -137,7 +264,14 @@ local function CreateConditionalPopup()
             UIErrorsFrame:AddMessage(L["Choose a condition."], 1, 0.2, 0.2)
             return
         end
-        local entry = Conditionals.Resolve(abilityEdit:GetText(), typeDropdown.value)
+        local picked = popup.pickedEntry
+        local entry
+        if picked and picked.kind == typeDropdown.value
+            and (picked.kind == "ground" or abilityEdit:GetText() == L[picked.name]) then
+            entry = picked
+        else
+            entry = Conditionals.Resolve(abilityEdit:GetText(), typeDropdown.value)
+        end
         if not entry then
             UIErrorsFrame:AddMessage(
                 L["No ability, toy or mount with that name or ID is known by this character."],
@@ -153,8 +287,13 @@ local function CreateConditionalPopup()
         if popup.onChanged then popup.onChanged() end
         PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
     end)
-    abilityEdit:SetScript("OnEnterPressed", function() add:Click() end)
-    abilityEdit:SetScript("OnEscapePressed", function() popup:Hide() end)
+    abilityEdit:SetScript("OnEnterPressed", function()
+        if suggestions.selection and suggestions:PickSelection() then return end
+        add:Click()
+    end)
+    abilityEdit:SetScript("OnEscapePressed", function()
+        if suggestions:IsShown() then suggestions:Hide() else popup:Hide() end
+    end)
 
     s.conditionalPopup = popup
     return popup
@@ -171,11 +310,16 @@ function ConditionalsUI.ShowAddPopup(scope, onChanged)
     popup.condition:OverrideText(L["Select a condition"])
     SetPopupType(popup, TYPES[1])
     popup.abilityEdit:SetText("")
+    popup.pickedEntry = nil
+    popup.pool = Conditionals.BuildSuggestionPool()
     popup:Show()
 end
 
-function ConditionalsUI.HidePopup()
-    if s.conditionalPopup then s.conditionalPopup:Hide() end
+-- Hides the add popup if it is open for scope (any scope when nil), so closing
+-- one panel does not close a popup opened from the other.
+function ConditionalsUI.HidePopup(scope)
+    local popup = s.conditionalPopup
+    if popup and (not scope or popup.scope == scope) then popup:Hide() end
 end
 
 StaticPopupDialogs["FITTER_REMOVE_MOUNT_CONDITIONAL"] = {

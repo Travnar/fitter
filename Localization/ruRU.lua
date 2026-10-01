@@ -241,6 +241,7 @@ local translations = {
     ["Ground Mount summons the ground mount selected for your current outfit, and only works with Shift, Ctrl or Alt."] = "Наземный транспорт призывает наземный транспорт, выбранный для текущего комплекта, и работает только с Shift, Ctrl или Alt.",
     ["Ground Mount can only be used with Shift, Ctrl or Alt."] = "Наземный транспорт можно использовать только с Shift, Ctrl или Alt.",
     ["Applies to every character. A character's own conditional for the same condition takes priority, and abilities or toys a character does not have are skipped."] = "Действует для всех персонажей. Собственное условие персонажа для того же случая имеет приоритет, а отсутствующие у персонажа способности и игрушки пропускаются.",
+    ["Start typing to see suggestions. Anything not listed can still be entered by its full name or ID."] = "Начните вводить текст, чтобы увидеть подсказки. То, чего нет в списке, можно ввести по полному названию или ID.",
 }
 
 for key, value in pairs(translations) do

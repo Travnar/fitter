@@ -157,6 +157,7 @@ local translations = {
     ["Ground Mount summons the ground mount selected for your current outfit, and only works with Shift, Ctrl or Alt."] = "Montura terrestre invoca la montura terrestre seleccionada para tu conjunto actual y solo funciona con Shift, Ctrl o Alt.",
     ["Ground Mount can only be used with Shift, Ctrl or Alt."] = "Montura terrestre solo se puede usar con Shift, Ctrl o Alt.",
     ["Applies to every character. A character's own conditional for the same condition takes priority, and abilities or toys a character does not have are skipped."] = "Se aplica a todos los personajes. El condicional propio de un personaje para la misma condición tiene prioridad, y se omiten las habilidades o juguetes que el personaje no tenga.",
+    ["Start typing to see suggestions. Anything not listed can still be entered by its full name or ID."] = "Empieza a escribir para ver sugerencias. Lo que no aparezca se puede introducir con su nombre completo o ID.",
 }
 
 for key, value in pairs(translations) do

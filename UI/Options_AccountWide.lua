@@ -258,6 +258,10 @@ function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChange
     conditionalsDropdown = ns.MountConditionalsUI.CreateListDropdown(
         currentConditionsRow, "account", 220, OnConditionalsChanged)
     conditionalsDropdown:SetPoint("RIGHT", currentConditionsRow, "RIGHT", 0, 0)
+    -- Closing the options panel hides its children, including this row.
+    currentConditionsRow:HookScript("OnHide", function()
+        ns.MountConditionalsUI.HidePopup("account")
+    end)
 
     -- Flying --
     local flyingRow = CreateFrame("Frame", nil, frame)

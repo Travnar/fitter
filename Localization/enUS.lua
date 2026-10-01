@@ -92,6 +92,7 @@ local strings = {
     "Choose a condition and an ability or item.",
     "Use an ability, toy or mount instead of the normal mount when the mount macro or key binding is used while a condition is met.",
     "Falling only applies to the key binding, and only out of combat.",
+    "Start typing to see suggestions. Anything not listed can still be entered by its full name or ID.",
     "Ground Mount",
     "Add an Account Wide Condition",
     "Ground Mount summons the ground mount selected for your current outfit, and only works with Shift, Ctrl or Alt.",

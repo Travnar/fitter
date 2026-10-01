@@ -157,6 +157,7 @@ local translations = {
     ["Ground Mount summons the ground mount selected for your current outfit, and only works with Shift, Ctrl or Alt."] = "地面坐骑会召唤当前套装所选的地面坐骑，且仅适用于 Shift、Ctrl 或 Alt。",
     ["Ground Mount can only be used with Shift, Ctrl or Alt."] = "地面坐骑只能与 Shift、Ctrl 或 Alt 一起使用。",
     ["Applies to every character. A character's own conditional for the same condition takes priority, and abilities or toys a character does not have are skipped."] = "适用于所有角色。角色自身针对同一条件的设置优先，角色没有的技能或玩具会被跳过。",
+    ["Start typing to see suggestions. Anything not listed can still be entered by its full name or ID."] = "开始输入即可查看建议。未列出的内容仍可通过完整名称或 ID 输入。",
 }
 
 for key, value in pairs(translations) do
