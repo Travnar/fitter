@@ -3,7 +3,7 @@
 ## Notes: Expands the outfit system with mounts, pets, hunter pets, zones, titles, toys, hearthstones and emotes.
 ## Notes-esMX: Amplía el sistema de conjuntos con monturas, mascotas, mascotas de cazador, zonas, títulos, juguetes, piedras de hogar y gestos.
 ## Author: Travnar
-## Version: 2.3.0
+## Version: 2.4.0
 ## SavedVariables: FitterSaved
 ## SavedVariablesPerCharacter: FitterCharacterSaved
 ## LoadSavedVariablesFirst: 1
@@ -67,6 +67,7 @@ UI\Transmog_PetPaged.lua
 UI\Transmog_HunterPets.lua
 UI\Options.lua
 UI\Options_AccountWide.lua
+
 
 
 
