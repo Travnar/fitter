@@ -394,6 +394,35 @@ function UI_Transmog:InitializePetPaged()
         s.petFrame,
         function() UI_Transmog:PetPagePrev() end,
         function() UI_Transmog:PetPageNext() end)
+
+    -- Created here, not lazily on first refresh: creating frames while
+    -- TransmogFrame is open taints gamepad SmartNavigation (see
+    -- UI_Transmog._CreateDetachedFrame).  Mount pages do the same.
+    s.petNoPetCard = UI_Transmog._PagedShared.CreateNoSelectionCard(
+        s.petFrame,
+        {
+            title = "Disable Pets",
+            centerAtlas = "shop-icon-housing-pets-up",
+        },
+        function(selected)
+            local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
+            local data = outfitID
+                and FitterCharacterSaved["Outfit"..outfitID]
+            if not data then return end
+            data.PetNoPet = selected
+            if selected then
+                data.Pets = {}
+                data.PetRandom = false
+                data.PetSummonTriggers = {}
+                UI_Transmog:ClearMountPreview()
+            end
+            UI_Transmog:UpdatePetPageDisplay()
+            UI_Transmog:UpdateMountIcons()
+            if C_TransmogOutfitInfo.GetActiveOutfitID() == outfitID then
+                Fitter:UpdatePet()
+            end
+            PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
+        end)
 end
 
 
@@ -452,33 +481,6 @@ function UI_Transmog:RefreshPetPaged()
     local seenPetNames = {}
     local notCollectedFilter = LE_PET_JOURNAL_FILTER_NOT_COLLECTED
 
-    if not s.petNoPetCard then
-        s.petNoPetCard = UI_Transmog._PagedShared.CreateNoSelectionCard(
-            s.petFrame,
-            {
-                title = "Disable Pets",
-                centerAtlas = "shop-icon-housing-pets-up",
-            },
-            function(selected)
-                local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-                local data = outfitID
-                    and FitterCharacterSaved["Outfit"..outfitID]
-                if not data then return end
-                data.PetNoPet = selected
-                if selected then
-                    data.Pets = {}
-                    data.PetRandom = false
-                    data.PetSummonTriggers = {}
-                    UI_Transmog:ClearMountPreview()
-                end
-                UI_Transmog:UpdatePetPageDisplay()
-                UI_Transmog:UpdateMountIcons()
-                if C_TransmogOutfitInfo.GetActiveOutfitID() == outfitID then
-                    Fitter:UpdatePet()
-                end
-                PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
-            end)
-    end
     -- Fitter intentionally resets the shared Pet Journal filters. They are
     -- left at their defaults instead of being restored after enumeration.
     if C_PetJournal.SetDefaultFilters then
