@@ -61,14 +61,14 @@ function Toy.ScheduleMacroRefresh()
 end
 
 function Toy.IsToyActive(toyID)
-    local spellName = GetItemSpell(toyID)
+    local spellName = C_Item.GetItemSpell(toyID)
     if not spellName then return false end
     local aura = C_UnitAuras.GetAuraDataBySpellName("player", spellName)
     return aura ~= nil
 end
 
 function Toy.IsToyOnCooldown(toyID)
-    local startTime, duration = GetItemCooldown(toyID)
+    local startTime, duration = C_Item.GetItemCooldown(toyID)
     if CanAccessValue(startTime) and CanAccessValue(duration)
         and startTime and duration and startTime > 0 and duration > 0 then
         return (startTime + duration) > GetTime()
@@ -121,7 +121,7 @@ function Toy.GetCancelLines(outfitID, maxLength)
     for _, entry in ipairs(Toy.GetCatalog()) do
         local toyID = entry.id
         if not outfitToys[toyID] and Toy.IsToyActive(toyID) then
-            local spellName = GetItemSpell(toyID)
+            local spellName = C_Item.GetItemSpell(toyID)
             if spellName then
                 local line = "/cancelaura " .. spellName
                 local newLen = totalLen + #line + (totalLen > 0 and 1 or 0)
@@ -144,7 +144,7 @@ function Toy.GetEarliestUpdateDelay(outfitID)
     local earliest = nil
     local now = GetTime()
     for _, toyID in ipairs(data.Toys) do
-        local startTime, duration = GetItemCooldown(toyID)
+        local startTime, duration = C_Item.GetItemCooldown(toyID)
         if CanAccessValue(startTime) and CanAccessValue(duration)
             and startTime and duration and startTime > 0 and duration > 0 then
             local remaining = (startTime + duration) - now
@@ -152,7 +152,7 @@ function Toy.GetEarliestUpdateDelay(outfitID)
                 earliest = remaining
             end
         end
-        local spellName = GetItemSpell(toyID)
+        local spellName = C_Item.GetItemSpell(toyID)
         if spellName then
             local aura = C_UnitAuras.GetAuraDataBySpellName("player", spellName)
             local expirationTime = aura and aura.expirationTime
