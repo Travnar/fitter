@@ -1,4 +1,4 @@
-﻿## Interface: 121000, 120007, 16001
+﻿## Interface: 120105, 16001
 ## Title: Fitter
 ## Notes: Expands the outfit system with mounts, pets, hunter pets, zones, titles, toys, hearthstones and emotes.
 ## Notes-esMX: Amplía el sistema de conjuntos con monturas, mascotas, mascotas de cazador, zonas, títulos, juguetes, piedras de hogar y gestos.
