@@ -534,7 +534,7 @@ function Emote.RefreshHearthstoneSpells()
     if not HasCondition("HEARTHSTONE_USED") then return end
     local spellIDs = { [8690] = true }
     for _, entry in ipairs(ns.Constants.KNOWN_HEARTHSTONES or {}) do
-        local _, spellID = C_Item.GetItemSpell(entry.id)
+        local _, spellID = GetItemSpell(entry.id)
         if spellID and CanAccessValue(spellID) then spellIDs[spellID] = true end
     end
     state.hearthstoneSpellIDs = spellIDs

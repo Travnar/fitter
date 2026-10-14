@@ -20,7 +20,7 @@ local function IsAstralRecallFallbackEnabled()
 end
 
 local function IsHearthstoneOnCooldown(itemID)
-    local startTime, duration = C_Item.GetItemCooldown(itemID)
+    local startTime, duration = GetItemCooldown(itemID)
     return startTime and duration and startTime > 0 and duration > 0
         and (startTime + duration) > GetTime()
 end
