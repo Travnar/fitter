@@ -7,7 +7,6 @@ local Fitter = ns.Fitter
 
 local PAGE_SIZE = 30
 local DEFAULT_ID = 6948
-local PREVIEW_DURATION = 10
 local BUTTON_START_X = 30
 local BUTTON_START_Y = -120
 local BUTTON_GAP_X = 14
@@ -59,106 +58,6 @@ local function GetSelectedHearthstones(data, migrate)
     return data.Hearthstones
 end
 
-local function ResetPreviewActor(actor, request, onReady)
-    local outfitInfo = actor.GetItemTransmogInfoList
-        and actor:GetItemTransmogInfoList()
-    local sheathed = actor.GetSheathed and actor:GetSheathed()
-
-    if actor.SetSpellVisualKit then pcall(actor.SetSpellVisualKit, actor, 0, true) end
-    if actor.PlayAnimationKit then pcall(actor.PlayAnimationKit, actor, 0, false) end
-    if actor.SetAnimation then pcall(actor.SetAnimation, actor, 0) end
-
-    -- Rebuilding the actor is the reliable way to remove persistent
-    -- environmental attachments created by a spell visual kit.
-    if actor.SetModelByUnit then
-        pcall(actor.SetModelByUnit, actor, "player", sheathed ~= false, true)
-    end
-
-    local attempts = 0
-    local function RestoreWhenLoaded()
-        if request ~= s.hearthstonePreviewRequest then return end
-        attempts = attempts + 1
-        if actor.IsLoaded and not actor:IsLoaded() then
-            if attempts < 40 then
-                UI_Transmog:ScheduleTimer(
-                    .05, RestoreWhenLoaded, "preview")
-            end
-            return
-        end
-        if outfitInfo and actor.SetItemTransmogInfo then
-            for _, info in pairs(outfitInfo) do
-                pcall(actor.SetItemTransmogInfo, actor, info)
-            end
-        end
-        if sheathed ~= nil and actor.SetSheathed then
-            pcall(actor.SetSheathed, actor, sheathed, false)
-        end
-        if onReady then onReady() end
-    end
-    RestoreWhenLoaded()
-end
-
-local function FinishPreviewOnExistingActor(actor, request)
-    if request ~= s.hearthstonePreviewRequest then return end
-    s.previewHearthstoneActive = nil
-    if actor.SetSpellVisualKit then pcall(actor.SetSpellVisualKit, actor, 0, true) end
-    if actor.PlayAnimationKit then pcall(actor.PlayAnimationKit, actor, 0, false) end
-    if actor.SetAnimationBlendOperation then
-        -- Enum.ModelBlendOperation.Anim: blend from the cast pose back to idle
-        -- instead of snapping or rebuilding the character model.
-        pcall(actor.SetAnimationBlendOperation, actor, 1)
-    end
-    if actor.SetAnimation then pcall(actor.SetAnimation, actor, 0, 0, 1, 0) end
-end
-
-function UI_Transmog:PreviewHearthstoneCast(item)
-    self:CancelUITimers("preview")
-    s.hearthstonePreviewRequest = (s.hearthstonePreviewRequest or 0) + 1
-    local request = s.hearthstonePreviewRequest
-    s.previewHearthstoneActive = item ~= nil
-
-    self:ClearMountPreview()
-    local scene = TransmogFrame and TransmogFrame.CharacterPreview
-        and TransmogFrame.CharacterPreview.ModelScene
-    local actor = scene and scene.GetPlayerActor and scene:GetPlayerActor()
-    if not actor then return end
-
-    ResetPreviewActor(actor, request, function()
-        -- A nil item is a reset-only request.
-        if not item then
-            s.previewHearthstoneActive = nil
-            return
-        end
-        if actor.SetSpellVisualKit and item.previewSpellVisualKitID then
-            pcall(actor.SetSpellVisualKit, actor,
-                item.previewSpellVisualKitID, false)
-        end
-
-        local function ScheduleCleanup()
-            UI_Transmog:ScheduleTimer(PREVIEW_DURATION, function()
-                if request ~= s.hearthstonePreviewRequest then return end
-                FinishPreviewOnExistingActor(actor, request)
-            end, "preview")
-        end
-
-        if actor.PlayAnimationKit and item.previewAnimationKitID then
-            pcall(actor.PlayAnimationKit, actor, item.previewAnimationKitID, true)
-            ScheduleCleanup()
-        elseif actor.SetAnimation and item.previewAnimationID then
-            -- Persistent spell kits can update the actor's animation at the
-            -- end of their initialization frame. Apply explicit animations
-            -- one frame later so the standard Hearthstone cast is retained.
-            UI_Transmog:ScheduleTimer(0, function()
-                if request ~= s.hearthstonePreviewRequest then return end
-                pcall(actor.SetAnimation, actor, item.previewAnimationID, 0, 1, 0)
-                ScheduleCleanup()
-            end, "preview")
-        else
-            ScheduleCleanup()
-        end
-    end)
-end
-
 function UI_Transmog:PopulateHearthstoneList()
     local items, retry = {}, false
     local data = CurrentData(false)
@@ -193,6 +92,8 @@ function UI_Transmog:PopulateHearthstoneList()
                     previewAnimationID = entry.previewAnimationID,
                     previewAnimationKitID = entry.previewAnimationKitID,
                     previewSpellVisualKitID = entry.previewSpellVisualKitID,
+                    previewTransformDisplayID = entry.previewTransformDisplayID,
+                    previewEquipItemID = entry.previewEquipItemID,
                 }
             end
         else

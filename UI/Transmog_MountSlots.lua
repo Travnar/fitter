@@ -1303,8 +1303,9 @@ function UI_Transmog:PreviewSelectedMount(mountID)
         return
     end
 
-    local outfitInfo = sourcePlayer.GetItemTransmogInfoList
-        and sourcePlayer:GetItemTransmogInfoList()
+    local outfitInfo = self:RestoreHearthstonePreviewOutfit()
+        or (sourcePlayer.GetItemTransmogInfoList
+        and sourcePlayer:GetItemTransmogInfoList())
 
     self:ClearMountPreview()
     local request = s.mountPreviewRequest

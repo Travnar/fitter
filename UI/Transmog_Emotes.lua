@@ -191,6 +191,7 @@ function UI_Transmog:PreviewEmoteAnimation(item)
     s.hearthstonePreviewRequest = (s.hearthstonePreviewRequest or 0) + 1
     s.previewHearthstoneActive = nil
     self:ClearMountPreview()
+    self:RestoreHearthstonePreviewOutfit()
 
     local attempts = 0
     local function PlayWhenLoaded()

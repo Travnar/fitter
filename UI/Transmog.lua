@@ -96,6 +96,7 @@ function UI_Transmog:Cleanup()
     s.mountPreviewRequest = (s.mountPreviewRequest or 0) + 1
     s.hearthstonePreviewRequest = (s.hearthstonePreviewRequest or 0) + 1
     if self.ClearMountPreview then self:ClearMountPreview() end
+    if self.RestoreHearthstonePreviewOutfit then self:RestoreHearthstonePreviewOutfit() end
     s.previewHearthstoneActive = nil
     for _, frames in ipairs({
         s.flyingModelFrames, s.groundModelFrames,

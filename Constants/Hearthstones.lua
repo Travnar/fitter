@@ -10,14 +10,22 @@ ns.Constants.KNOWN_HEARTHSTONES = {
     {id = 64488,  previewSpellVisualKitID = 36,     previewAnimationID = 51},
     {id = 93672,  previewSpellVisualKitID = 31681,  previewAnimationID = 52},
     {id = 142542, previewSpellVisualKitID = 180930, previewAnimationKitID = 27317},
-    {id = 162973, previewSpellVisualKitID = 102715, previewAnimationID = 69},
-    {id = 163045, previewSpellVisualKitID = 102824, previewAnimationID = 922},
+    -- previewEquipItemID: a cosmetic item the cast equips for its duration
+    -- (SpellProceduralEffect type 17 in the caster-start kit).
+    {id = 162973, previewSpellVisualKitID = 102715, previewAnimationID = 69,
+        previewEquipItemID = 139299},
+    {id = 163045, previewSpellVisualKitID = 102824, previewAnimationID = 922,
+        previewEquipItemID = 33292},
     {id = 163206, previewSpellVisualKitID = 104086, previewAnimationID = 51},
     {id = 165669, previewSpellVisualKitID = 106223, previewAnimationKitID = 16976},
-    {id = 165670, previewSpellVisualKitID = 106285, previewAnimationKitID = 16984},
-    {id = 165802, previewSpellVisualKitID = 106481, previewAnimationID = 1330},
-    {id = 166746, previewSpellVisualKitID = 106582, previewAnimationKitID = 17054},
-    {id = 166747, previewSpellVisualKitID = 106588, previewAnimationID = 69},
+    {id = 165670, previewSpellVisualKitID = 106285, previewAnimationKitID = 16984,
+        previewEquipItemID = 151355},
+    {id = 165802, previewSpellVisualKitID = 106481, previewAnimationID = 1330,
+        previewEquipItemID = 44803},
+    {id = 166746, previewSpellVisualKitID = 106582, previewAnimationKitID = 17054,
+        previewEquipItemID = {Horde = 35280, Alliance = 35279}},
+    {id = 166747, previewSpellVisualKitID = 106588, previewAnimationID = 69,
+        previewEquipItemID = 33864},
     {id = 168907, previewSpellVisualKitID = 112576, previewAnimationID = 113},
     {id = 172179, previewSpellVisualKitID = 118950, previewAnimationID = 879},
     {id = 180290, previewSpellVisualKitID = 128103, previewAnimationKitID = 11602},
@@ -45,6 +53,11 @@ ns.Constants.KNOWN_HEARTHSTONES = {
     {id = 265100, previewSpellVisualKitID = 252859, previewAnimationKitID = 19057},
     {id = 257736, previewSpellVisualKitID = 247250, previewAnimationKitID = 35175},
     {id = 263933, previewSpellVisualKitID = 251445, previewAnimationID = 52},
+    -- Spell 1310234 casts 1310241, which transforms the caster into the
+    -- Aqir Scuttler (creature 272289) at the start of the cast.
+    {id = 281136, previewSpellVisualKitID = 276054, previewAnimationKitID = 2194,
+        previewTransformDisplayID = 144616},
+    {id = 281615, previewSpellVisualKitID = 277034, previewAnimationID = 878},
 }
 
 -- Toys that can override the outfit Hearthstone while a modifier is held.
