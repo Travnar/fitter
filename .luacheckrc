@@ -39,7 +39,7 @@ read_globals = {
     "C_TransmogOutfitInfo", "C_UnitAuras", "CreateDataProvider", "CreateFrame", "CreateFromMixins", "CreateMacro",
     "CreateMinimalSliderFormatter", "CreateScrollBoxLinearView", "CreateScrollBoxListLinearView", "Dismount", "DoEmote", "EditMacro",
     "Enum", "EventUtil", "GameFontHighlight", "GameTooltip", "GameTooltip_AddNormalLine", "GameTooltip_Hide",
-    "GameTooltip_SetTitle", "GetBindingKey", "GetBuildInfo", "GetCurrentTitle", "GetItemCooldown", "GetItemSpell",
+    "GameTooltip_SetTitle", "GetBindingKey", "GetBuildInfo", "GetCurrentTitle",
     "GetLocale", "GetLooseMacroIcons", "GetMacroBody", "GetMacroIcons", "GetMacroIndexByName", "GetMacroInfo",
     "GetNumExpansions", "GetNumMacros", "GetNumTitles", "GetServerTime", "GetSpecialization", "GetSpecializationInfo",
     "GetTime", "GetTitleName", "HasPetUI", "InCombatLockdown", "IsAltKeyDown", "IsControlKeyDown",

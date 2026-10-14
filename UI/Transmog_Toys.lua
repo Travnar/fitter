@@ -128,7 +128,7 @@ local function ConfigureToyUse(overlay)
         overlay:SetAttribute("type", "macro")
         overlay:SetAttribute("macrotext", "/use item:"..button.item.id)
     elseif selected and ns.Toy.IsToyActive(button.item.id) then
-        local spellName = GetItemSpell(button.item.id)
+        local spellName = C_Item.GetItemSpell(button.item.id)
         overlay:SetAttribute("type", spellName and "macro" or nil)
         overlay:SetAttribute("macrotext", spellName and ("/cancelaura "..spellName) or "")
     else
