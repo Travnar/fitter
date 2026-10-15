@@ -92,7 +92,7 @@ local function CreateNoSelectionCard(parent, tooltipText, onClick)
 
     local function UpdateHoverStyle()
         if card.selected then
-            hover:SetAtlas("transmog-wardrobe-border-current-transmogged", true)
+            hover:SetAtlas("transmog-setcard-transmogrified", true)
             hover:SetVertexColor(1, 1, 1, .5)
         else
             hover:SetAtlas("transmog-setCard-default", true)
@@ -103,7 +103,7 @@ local function CreateNoSelectionCard(parent, tooltipText, onClick)
     function card:SetSelected(selected)
         self.selected = selected == true
         border:SetAtlas(self.selected
-            and "transmog-wardrobe-border-current-transmogged"
+            and "transmog-setcard-transmogrified"
             or "transmog-setCard-default", true)
         if hover:IsShown() then
             UpdateHoverStyle()

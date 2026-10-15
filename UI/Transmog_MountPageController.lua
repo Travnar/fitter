@@ -112,7 +112,7 @@ local function CreateEntry(controller, index)
 
     local function SetHover(selected)
         hover:SetAtlas(selected
-            and "transmog-wardrobe-border-current-transmogged"
+            and "transmog-setcard-transmogrified"
             or "transmog-setCard-default", true)
         hover:SetVertexColor(selected and 1 or 1, selected and 1 or .9,
             selected and 1 or .5, selected and .5 or .75)
@@ -501,7 +501,7 @@ function Controller:UpdateDisplay()
             entry.favoriteStar:SetShown(
                 UI_Transmog._PagedShared.IsMountFavorite(mount.id))
             entry.bg:SetAtlas(selected
-                and "transmog-wardrobe-border-current-transmogged"
+                and "transmog-setcard-transmogrified"
                 or "transmog-setCard-default", true)
             entry.container:Show()
         end

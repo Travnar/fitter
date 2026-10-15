@@ -138,7 +138,7 @@ local function CreatePetCard(parent, visualIndex)
     card.favoriteStar = favoriteStar
     local function UpdateHoverStyle(self)
         hover:SetAtlas(self.selected
-            and "transmog-wardrobe-border-current-transmogged"
+            and "transmog-setcard-transmogrified"
             or "transmog-setCard-default", true)
         if self.selected then
             hover:SetVertexColor(1, 1, 1, .5)
@@ -352,7 +352,7 @@ function UI_Transmog:RefreshHunterPets()
                 .IsHunterPetFavorite(tonumber(info.petNumber)))
             card.model:SetAlpha(isActive and 1 or .45)
             card.border:SetAtlas(card.selected
-                and "transmog-wardrobe-border-current-transmogged"
+                and "transmog-setcard-transmogrified"
                 or "transmog-setCard-default", true)
             card.border:SetDesaturated(not isActive and not card.selected)
             card.border:SetVertexColor(

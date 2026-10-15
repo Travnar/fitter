@@ -217,7 +217,7 @@ function UI_Transmog:InitializePetPaged()
                     end
                 end
                 if isSelected then
-                    frame.hoverHighlight:SetAtlas("transmog-wardrobe-border-current-transmogged", true)
+                    frame.hoverHighlight:SetAtlas("transmog-setcard-transmogrified", true)
                     frame.hoverHighlight:SetVertexColor(1, 1, 1, 0.5)
                 else
                     frame.hoverHighlight:SetAtlas("transmog-setCard-default", true)
@@ -255,7 +255,7 @@ function UI_Transmog:InitializePetPaged()
                 if frame and frame.checkbox then
                     frame.checkbox:Click()
                     if frame.checkbox:GetChecked() then
-                        frame.hoverHighlight:SetAtlas("transmog-wardrobe-border-current-transmogged", true)
+                        frame.hoverHighlight:SetAtlas("transmog-setcard-transmogrified", true)
                         frame.hoverHighlight:SetVertexColor(1, 1, 1, 0.5)
                     else
                         frame.hoverHighlight:SetAtlas("transmog-setCard-default", true)
@@ -666,7 +666,7 @@ function UI_Transmog:UpdatePetPageDisplay()
                     and UI_Transmog._PagedShared.IsPetFavorite(petData.petGUID))
 
                 if isSelected then
-                    frame.bg:SetAtlas("transmog-wardrobe-border-current-transmogged", true)
+                    frame.bg:SetAtlas("transmog-setcard-transmogrified", true)
                 else
                     frame.bg:SetAtlas("transmog-setCard-default", true)
                 end
