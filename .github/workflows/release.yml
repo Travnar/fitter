@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history so the packager can build the changelog from commits since the last tag
+          fetch-depth: 0
+
+      - name: Package and upload
+        uses: BigWigsMods/packager@v2

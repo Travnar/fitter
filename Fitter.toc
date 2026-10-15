@@ -1,9 +1,9 @@
 ﻿## Interface: 120105, 16001
 ## Title: Fitter
 ## Notes: Expands the outfit system with mounts, pets, hunter pets, zones, titles, toys, hearthstones and emotes.
-## Notes-esMX: Amplía el sistema de conjuntos con monturas, mascotas, mascotas de cazador, zonas, títulos, juguetes, piedras de hogar y gestos.
 ## Author: Travnar
-## Version: 2.5.1
+## Version: @project-version@
+## X-Curse-Project-ID: 1530178
 ## SavedVariables: FitterSaved
 ## SavedVariablesPerCharacter: FitterCharacterSaved
 ## LoadSavedVariablesFirst: 1

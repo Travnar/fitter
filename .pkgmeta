@@ -1,0 +1,10 @@
+package-as: Fitter
+
+# Empty on purpose: uploads with no release notes instead of a commit-generated changelog.
+manual-changelog:
+  filename: .changelog
+  markup-type: text
+
+ignore:
+  - dev
+  - README.md
