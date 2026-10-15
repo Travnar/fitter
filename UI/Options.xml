@@ -1,0 +1,9 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+    <!-- Custom settings-list rows (see Options_AccountWide.lua). The settings list
+         pools frames by template name, so each row type gets its own template and
+         never shares frames with Blizzard's or other addons' rows. -->
+    <Frame name="FitterSettingsConditionAddTemplate" inherits="SettingsListElementTemplate" virtual="true"/>
+    <Frame name="FitterSettingsConditionListTemplate" inherits="SettingsListElementTemplate" virtual="true"/>
+    <Frame name="FitterSettingsMountListTemplate" inherits="SettingsListElementTemplate" virtual="true"/>
+</Ui>

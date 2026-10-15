@@ -66,5 +66,6 @@ UI\Transmog_GroundPaged.lua
 UI\Transmog_AquaticPaged.lua
 UI\Transmog_PetPaged.lua
 UI\Transmog_HunterPets.lua
+UI\Options.xml
 UI\Options.lua
 UI\Options_AccountWide.lua

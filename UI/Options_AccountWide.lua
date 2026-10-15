@@ -1,6 +1,7 @@
 -- UI/Options_AccountWide.lua
--- Adds the "Account Wide" section to the Fitter canvas settings panel.
--- Called from Options.lua; adds widgets directly to the shared canvas frame.
+-- Adds the "Account Wide" section to the Fitter settings category.
+-- Called from Options.lua; the conditional and mount list rows are custom
+-- settings-list elements, everything else uses Blizzard's stock controls.
 
 local addonName, ns = ...
 local L = ns.L
@@ -80,8 +81,56 @@ local function BuildDataWithSelection(mountType, savedKey, randomFlagKey)
     return all
 end
 
-local function CreateMountScrollBox(parent, mountType, savedKey, randomFlagKey)
-    local container = CreateFrame("Frame", nil, parent, "InsetFrameTemplate")
+-- Custom settings rows --
+
+-- Builds a settings-list initializer for a custom row. Each template has its own
+-- frame pool, and pooled frames are recycled between rows of the same template,
+-- so build(frame) runs once per frame and bind(frame, data) on every display.
+local function CreateCustomInitializer(template, extent, data, build, bind)
+    local initializer = CreateFromMixins(ScrollBoxFactoryInitializerMixin,
+        SettingsElementHierarchyMixin, SettingsSearchableElementMixin)
+    ScrollBoxFactoryInitializerMixin.Init(initializer, template)
+    initializer.data = data
+    if data.name then initializer:AddSearchTags(data.name) end
+
+    function initializer:GetExtent()
+        return extent
+    end
+
+    function initializer:InitFrame(frame)
+        if not frame.cbrHandles then
+            frame.cbrHandles = Settings.CreateCallbackHandleContainer()
+        end
+        frame.data = self.data
+        frame.Text:SetFontObject("GameFontNormal")
+        frame.Text:SetPoint("LEFT", 37, 0)
+        frame.Text:SetPoint("RIGHT", frame, "CENTER", -85, 0)
+        frame.Text:SetText(self.data.name or "")
+        if not frame.fitterBuilt then
+            build(frame)
+            frame.fitterBuilt = true
+        end
+        if bind then bind(frame, self.data) end
+    end
+
+    return initializer
+end
+
+local function RefreshMountList(scrollBox, retainScroll)
+    local b = scrollBox.binding
+    scrollBox:SetDataProvider(
+        CreateDataProvider(BuildDataWithSelection(b.mountType, b.savedKey, b.randomKey)),
+        retainScroll and ScrollBoxConstants.RetainScrollPosition
+            or ScrollBoxConstants.DiscardScrollPosition)
+end
+
+-- Builds the inset mount list inside a pooled row frame. The row may be reused
+-- for a different mount type, so clicks read scrollBox.binding, not upvalues.
+local function BuildMountList(frame)
+    local container = CreateFrame("Frame", nil, frame, "InsetFrameTemplate")
+    -- Hang the list under the checkbox column of the row above.
+    container:SetPoint("TOPLEFT", frame, "TOP", -80, -2)
+    container:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -20, 10)
 
     local scrollBar = CreateFrame("EventFrame", nil, container, "MinimalScrollBar")
     scrollBar:SetPoint("TOPRIGHT", container, "TOPRIGHT", -10, -5)
@@ -94,46 +143,46 @@ local function CreateMountScrollBox(parent, mountType, savedKey, randomFlagKey)
     local view = CreateScrollBoxListLinearView()
     view:SetPadding(4, 0, 0, 0, 0)
     view:SetElementExtent(22)
-    view:SetElementInitializer("Button", function(frame, elementData)
-        frame:SetPushedTextOffset(0, 0)
-        frame:SetNormalFontObject(GameFontHighlight)
+    view:SetElementInitializer("Button", function(row, elementData)
+        row:SetPushedTextOffset(0, 0)
+        row:SetNormalFontObject(GameFontHighlight)
 
-        if not frame.cbBorder then
+        if not row.cbBorder then
             -- Gold hover highlight (HIGHLIGHT layer shows only on mouse-over)
-            local hlTex = frame:CreateTexture(nil, "HIGHLIGHT")
+            local hlTex = row:CreateTexture(nil, "HIGHLIGHT")
             hlTex:SetAllPoints()
             hlTex:SetColorTexture(1, 0.82, 0, 0.12)
 
             -- Checkbox border (always visible)
-            frame.cbBorder = frame:CreateTexture(nil, "ARTWORK")
-            frame.cbBorder:SetSize(14, 14)
-            frame.cbBorder:SetPoint("LEFT", frame, "LEFT", 4, 0)
-            frame.cbBorder:SetTexture("Interface\\Buttons\\UI-CheckBox-Up")
+            row.cbBorder = row:CreateTexture(nil, "ARTWORK")
+            row.cbBorder:SetSize(14, 14)
+            row.cbBorder:SetPoint("LEFT", row, "LEFT", 4, 0)
+            row.cbBorder:SetTexture("Interface\\Buttons\\UI-CheckBox-Up")
 
             -- Checkmark (shown when selected)
-            frame.cbCheck = frame:CreateTexture(nil, "OVERLAY")
-            frame.cbCheck:SetSize(16, 16)
-            frame.cbCheck:SetPoint("CENTER", frame.cbBorder, "CENTER", 0, 0)
-            frame.cbCheck:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+            row.cbCheck = row:CreateTexture(nil, "OVERLAY")
+            row.cbCheck:SetSize(16, 16)
+            row.cbCheck:SetPoint("CENTER", row.cbBorder, "CENTER", 0, 0)
+            row.cbCheck:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
 
             -- Mount icon
-            frame.mountIcon = frame:CreateTexture(nil, "ARTWORK")
-            frame.mountIcon:SetSize(16, 16)
-            frame.mountIcon:SetPoint("LEFT", frame.cbBorder, "RIGHT", 5, 0)
+            row.mountIcon = row:CreateTexture(nil, "ARTWORK")
+            row.mountIcon:SetSize(16, 16)
+            row.mountIcon:SetPoint("LEFT", row.cbBorder, "RIGHT", 5, 0)
 
             -- Dedicated name label (avoids conflicts with the Button's built-in label anchors)
-            frame.nameText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-            frame.nameText:SetPoint("LEFT", frame.mountIcon, "RIGHT", 5, 0)
-            frame.nameText:SetPoint("RIGHT", frame, "RIGHT", -4, 0)
-            frame.nameText:SetJustifyH("LEFT")
-            frame.nameText:SetWordWrap(false)
+            row.nameText = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+            row.nameText:SetPoint("LEFT", row.mountIcon, "RIGHT", 5, 0)
+            row.nameText:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+            row.nameText:SetJustifyH("LEFT")
+            row.nameText:SetWordWrap(false)
         end
 
-        frame.nameText:SetText(elementData.name)
-        frame.mountIcon:SetTexture(elementData.icon)
-        frame.cbCheck:SetShown(elementData.selected)
+        row.nameText:SetText(elementData.name)
+        row.mountIcon:SetTexture(elementData.icon)
+        row.cbCheck:SetShown(elementData.selected)
 
-        frame:SetScript("OnEnter", function(self)
+        row:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             if elementData.isRandom then
                 GameTooltip:SetText(L["Random Mount"], 1, 1, 1)
@@ -150,26 +199,27 @@ local function CreateMountScrollBox(parent, mountType, savedKey, randomFlagKey)
             end
             GameTooltip:Show()
         end)
-        frame:SetScript("OnLeave", function()
+        row:SetScript("OnLeave", function()
             GameTooltip:Hide()
         end)
 
-        frame:SetScript("OnClick", function()
+        row:SetScript("OnClick", function()
+            local b = scrollBox.binding
             elementData.selected = not elementData.selected
-            frame.cbCheck:SetShown(elementData.selected)
+            row.cbCheck:SetShown(elementData.selected)
 
             if elementData.isRandom then
-                FitterSaved[randomFlagKey] = elementData.selected
+                FitterSaved[b.randomKey] = elementData.selected
                 if elementData.selected then
                     -- Deselect all individual mounts
-                    FitterSaved[savedKey] = {}
+                    FitterSaved[b.savedKey] = {}
                 end
             else
                 if elementData.selected then
                     -- Deselect random
-                    FitterSaved[randomFlagKey] = false
+                    FitterSaved[b.randomKey] = false
                 end
-                local saved = FitterSaved[savedKey] or {}
+                local saved = FitterSaved[b.savedKey] or {}
                 if elementData.selected then
                     table.insert(saved, elementData.id)
                 else
@@ -180,17 +230,21 @@ local function CreateMountScrollBox(parent, mountType, savedKey, randomFlagKey)
                         end
                     end
                 end
-                FitterSaved[savedKey] = saved
+                FitterSaved[b.savedKey] = saved
             end
 
             -- Rebuild data provider so all rows reflect the updated state
-            scrollBox:SetDataProvider(
-                CreateDataProvider(BuildDataWithSelection(mountType, savedKey, randomFlagKey)))
+            RefreshMountList(scrollBox, true)
         end)
     end)
 
     ScrollUtil.InitScrollBoxListWithScrollBar(scrollBox, scrollBar, view)
-    return container, scrollBox
+    frame.ScrollBox = scrollBox
+end
+
+local function BindMountList(frame, data)
+    frame.ScrollBox.binding = data.binding
+    RefreshMountList(frame.ScrollBox, false)
 end
 
 local FLYING_TOOLTIP = "When enabled, outfits that have no flying or ground mount selected"
@@ -200,234 +254,67 @@ local GROUND_TOOLTIP = "When enabled, outfits that have no flying or ground moun
 local AQUATIC_TOOLTIP = "When enabled, outfits that have no aquatic mount selected"
     .. " will fall back to a random aquatic mount chosen from this list."
 
-local function AddCheckboxTooltip(cb, label, tooltip)
-    cb:HookScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(L[label], 1, 1, 1)
-        GameTooltip:AddLine(L[tooltip], 1, 0.82, 0, true)
-        GameTooltip:Show()
-    end)
-    cb:HookScript("OnLeave", function() GameTooltip:Hide() end)
-end
-
--- Called from Options.lua:Initialize(). Adds account-wide widgets to the
--- shared canvas frame at xOffset and returns a refresh function that
--- Options.lua calls from its OnShow/OnRefresh handler.
-function UI_Options:InitializeAccountWide(frame, xOffset, yStart, onHeightChanged)
-    local X  = xOffset or 10
-    local YS = yStart  or 450
-    local SW = 275   -- scrollbox width
-    local SH = 185   -- scrollbox height
-
-    -- Section header
-    local header = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    header:SetPoint("TOPLEFT", frame, "TOPLEFT", X, -YS)
-    header:SetTextColor(1, 1, 1, 1)
-    header:SetText(L["Account Wide"])
+-- Called from Options.lua:Register(). addCheckbox is Options.lua's checkbox
+-- helper, so these settings bind to FitterSaved the same way as the rest.
+function UI_Options:InitializeAccountWide(layout, addCheckbox)
+    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Account Wide"]))
 
     -- Mount bind conditionals --
-    local CH = 76  -- height of the conditional rows; the mount rows start below them
-
     local conditionalsDropdown
     local function OnConditionalsChanged()
         if conditionalsDropdown then conditionalsDropdown:RefreshText() end
     end
 
-    local addConditionRow = CreateFrame("Frame", nil, frame)
-    addConditionRow:SetPoint("TOPLEFT", frame, "TOPLEFT", X + 20, -(YS + 32))
-    addConditionRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
-    addConditionRow:SetHeight(32)
+    layout:AddInitializer(CreateCustomInitializer("FitterSettingsConditionAddTemplate", 34,
+        {name = L["Add an Account Condition"]},
+        function(frame)
+            local addButton = ns.MountConditionalsUI.CreateAddButton(
+                frame, "account", OnConditionalsChanged)
+            addButton:SetPoint("LEFT", frame, "CENTER", -80, 0)
+        end))
 
-    local addConditionLabel = addConditionRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    addConditionLabel:SetPoint("LEFT", addConditionRow, "LEFT", 0, 0)
-    addConditionLabel:SetText(L["Add an Account Condition"])
+    layout:AddInitializer(CreateCustomInitializer("FitterSettingsConditionListTemplate", 34,
+        {name = L["Current Account Conditionals"]},
+        function(frame)
+            frame.Dropdown = ns.MountConditionalsUI.CreateListDropdown(
+                frame, "account", 220, OnConditionalsChanged)
+            frame.Dropdown:SetPoint("LEFT", frame, "CENTER", -80, 0)
+            -- Leaving the category or closing the panel hides this row.
+            frame:HookScript("OnHide", function()
+                ns.MountConditionalsUI.HidePopup("account")
+            end)
+        end,
+        function(frame)
+            conditionalsDropdown = frame.Dropdown
+            conditionalsDropdown:RefreshText()
+        end))
 
-    local addConditionButton = ns.MountConditionalsUI.CreateAddButton(
-        addConditionRow, "account", OnConditionalsChanged)
-    addConditionButton:SetPoint("RIGHT", addConditionRow, "RIGHT", 0, 0)
+    -- Mount lists --
+    -- Each list row is shown only while its checkbox is enabled; the checkbox's
+    -- change callback repairs the display so the row appears or disappears.
+    local function AddMountSection(mountType, label, tooltip)
+        local enabledKey = "AccountWide" .. mountType .. "Enabled"
+        local setting, checkboxInit = addCheckbox(enabledKey, label, tooltip,
+            UI_Options.RepairDisplay)
 
-    local currentConditionsRow = CreateFrame("Frame", nil, frame)
-    currentConditionsRow:SetPoint("TOPLEFT", addConditionRow, "BOTTOMLEFT", 0, -8)
-    currentConditionsRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
-    currentConditionsRow:SetHeight(30)
-
-    local currentConditionsLabel = currentConditionsRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    currentConditionsLabel:SetPoint("LEFT", currentConditionsRow, "LEFT", 0, 0)
-    currentConditionsLabel:SetText(L["Current Account Conditionals"])
-
-    conditionalsDropdown = ns.MountConditionalsUI.CreateListDropdown(
-        currentConditionsRow, "account", 220, OnConditionalsChanged)
-    conditionalsDropdown:SetPoint("RIGHT", currentConditionsRow, "RIGHT", 0, 0)
-    -- Closing the options panel hides its children, including this row.
-    currentConditionsRow:HookScript("OnHide", function()
-        ns.MountConditionalsUI.HidePopup("account")
-    end)
-
-    -- Flying --
-    local flyingRow = CreateFrame("Frame", nil, frame)
-    flyingRow:SetPoint("TOPLEFT", frame, "TOPLEFT", X + 20, -(YS + 32 + CH))
-    flyingRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
-    flyingRow:SetHeight(26)
-
-    local flyingLabel = flyingRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    flyingLabel:SetPoint("LEFT", flyingRow, "LEFT", 0, 0)
-    flyingLabel:SetText(L["Account Wide Flying Mounts"])
-
-    local flyingCheckbox = CreateFrame("CheckButton", nil, flyingRow, "SettingsCheckBoxTemplate")
-    flyingCheckbox:SetPoint("RIGHT", flyingRow, "RIGHT", 0, 0)
-    AddCheckboxTooltip(flyingCheckbox, L["Account Wide Flying Mounts"], FLYING_TOOLTIP)
-
-    -- Forward-declared so the flying OnClick closure can reference it before ground is created.
-    local UpdateGroundPosition
-
-    local flyingContainer, flyingScrollBox = CreateMountScrollBox(frame, "Flying", "AccountWideFlyingMounts", "AccountWideFlyingRandom")
-    flyingContainer:SetPoint("TOPLEFT", flyingRow, "BOTTOMLEFT", 0, -12)
-    flyingContainer:SetSize(SW, SH)
-    flyingContainer:Hide()  -- hidden until enabled
-
-    -- Clients without flying/aquatic mounts (e.g. WoW Forever) hide those
-    -- sections; Ground moves up into the Flying row's position.
-    local hasFlying = ns.Features.FlyingMounts
-    local hasAquatic = ns.Features.AquaticMounts
-    flyingRow:SetShown(hasFlying)
-
-    flyingCheckbox:SetScript("OnClick", function(self)
-        local enabled = self:GetChecked()
-        if FitterSaved then FitterSaved.AccountWideFlyingEnabled = enabled end
-        flyingContainer:SetShown(enabled)
-        UpdateGroundPosition()
-        if enabled then
-            flyingScrollBox:SetDataProvider(
-                CreateDataProvider(BuildDataWithSelection("Flying", "AccountWideFlyingMounts", "AccountWideFlyingRandom")))
-        end
-    end)
-
-    -- Ground --
-    local groundRow = CreateFrame("Frame", nil, frame)
-    groundRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
-    groundRow:SetHeight(26)
-
-    local groundLabel = groundRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    groundLabel:SetPoint("LEFT", groundRow, "LEFT", 0, 0)
-    groundLabel:SetText(L["Account Wide Ground Mounts"])
-
-    local groundCheckbox = CreateFrame("CheckButton", nil, groundRow, "SettingsCheckBoxTemplate")
-    groundCheckbox:SetPoint("RIGHT", groundRow, "RIGHT", 0, 0)
-    AddCheckboxTooltip(groundCheckbox, L["Account Wide Ground Mounts"], GROUND_TOOLTIP)
-
-    local groundContainer, groundScrollBox = CreateMountScrollBox(frame, "Ground", "AccountWideGroundMounts", "AccountWideGroundRandom")
-    groundContainer:SetPoint("TOPLEFT", groundRow, "BOTTOMLEFT", 0, -12)
-    groundContainer:SetSize(SW, SH)
-    groundContainer:Hide()  -- hidden until enabled
-
-    -- Aquatic --
-    local aquaticRow = CreateFrame("Frame", nil, frame)
-    aquaticRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
-    aquaticRow:SetHeight(26)
-
-    local aquaticLabel = aquaticRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    aquaticLabel:SetPoint("LEFT", aquaticRow, "LEFT", 0, 0)
-    aquaticLabel:SetText(L["Account Wide Aquatic Mounts"])
-
-    local aquaticCheckbox = CreateFrame("CheckButton", nil, aquaticRow, "SettingsCheckBoxTemplate")
-    aquaticCheckbox:SetPoint("RIGHT", aquaticRow, "RIGHT", 0, 0)
-    AddCheckboxTooltip(aquaticCheckbox, L["Account Wide Aquatic Mounts"], AQUATIC_TOOLTIP)
-
-    local aquaticContainer, aquaticScrollBox = CreateMountScrollBox(
-        frame, "Aquatic", "AccountWideAquaticMounts", "AccountWideAquaticRandom")
-    aquaticContainer:SetPoint("TOPLEFT", aquaticRow, "BOTTOMLEFT", 0, -12)
-    aquaticContainer:SetSize(SW, SH)
-    aquaticContainer:Hide()
-    aquaticRow:SetShown(hasAquatic)
-
-    -- Height of the Account Wide section from its start (YS) to the bottom of the last
-    -- visible element, plus padding. Used to resize the content scroll frame.
-    local function CalcAWHeight()
-        local gndBottom = 54
-        if hasFlying then
-            local flyBottom = flyingContainer:IsShown() and (64 + SH) or 54
-            local gndOffset = flyingContainer:IsShown() and 13 or 8
-            gndBottom = flyBottom + gndOffset + 26
-        end
-        local groundBottom = groundContainer:IsShown() and (gndBottom + 12 + SH) or gndBottom
-        local awBottom = groundBottom
-        if hasAquatic then
-            local aquaticBottom = groundBottom + (groundContainer:IsShown() and 13 or 8) + 26
-            awBottom = aquaticContainer:IsShown()
-                and (aquaticBottom + 12 + SH) or aquaticBottom
-        end
-        return awBottom + 20 + CH
+        local list = CreateCustomInitializer("FitterSettingsMountListTemplate", 200, {
+            binding = {
+                mountType = mountType,
+                savedKey = "AccountWide" .. mountType .. "Mounts",
+                randomKey = "AccountWide" .. mountType .. "Random",
+            },
+        }, BuildMountList, BindMountList)
+        list:SetParentInitializer(checkboxInit)
+        list:AddShownPredicate(function() return setting:GetValue() end)
+        layout:AddInitializer(list)
     end
 
-    -- Repositions the ground section depending on whether the flying scrollbox is visible.
-    UpdateGroundPosition = function()
-        groundRow:ClearAllPoints()
-        groundRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
-        if not hasFlying then
-            groundRow:SetPoint("TOPLEFT", frame, "TOPLEFT", X + 20, -(YS + 32 + CH))
-        elseif flyingContainer:IsShown() then
-            groundRow:SetPoint("TOPLEFT", flyingContainer, "BOTTOMLEFT", 0, -13)
-        else
-            groundRow:SetPoint("TOPLEFT", flyingRow, "BOTTOMLEFT", 0, -8)
-        end
-        aquaticRow:ClearAllPoints()
-        aquaticRow:SetPoint("RIGHT", frame, "RIGHT", -10, 0)
-        if groundContainer:IsShown() then
-            aquaticRow:SetPoint("TOPLEFT", groundContainer, "BOTTOMLEFT", 0, -13)
-        else
-            aquaticRow:SetPoint("TOPLEFT", groundRow, "BOTTOMLEFT", 0, -8)
-        end
-        if onHeightChanged then onHeightChanged(CalcAWHeight()) end
+    -- Clients without flying/aquatic mounts (e.g. WoW Forever) omit those sections.
+    if ns.Features.FlyingMounts then
+        AddMountSection("Flying", "Account Wide Flying Mounts", FLYING_TOOLTIP)
     end
-    UpdateGroundPosition()
-
-    groundCheckbox:SetScript("OnClick", function(self)
-        local enabled = self:GetChecked()
-        if FitterSaved then FitterSaved.AccountWideGroundEnabled = enabled end
-        groundContainer:SetShown(enabled)
-        UpdateGroundPosition()
-        if enabled then
-            groundScrollBox:SetDataProvider(
-                CreateDataProvider(BuildDataWithSelection("Ground", "AccountWideGroundMounts", "AccountWideGroundRandom")))
-        end
-    end)
-
-    aquaticCheckbox:SetScript("OnClick", function(self)
-        local enabled = self:GetChecked()
-        if FitterSaved then FitterSaved.AccountWideAquaticEnabled = enabled end
-        aquaticContainer:SetShown(enabled)
-        if onHeightChanged then onHeightChanged(CalcAWHeight()) end
-        if enabled then
-            aquaticScrollBox:SetDataProvider(CreateDataProvider(BuildDataWithSelection(
-                "Aquatic", "AccountWideAquaticMounts", "AccountWideAquaticRandom")))
-        end
-    end)
-
-    -- Return the refresh function that Options.lua calls on OnRefresh/OnShow
-    return function()
-        if not FitterSaved then return end
-        OnConditionalsChanged()
-        local flyEnabled = hasFlying and FitterSaved.AccountWideFlyingEnabled
-        local gndEnabled = FitterSaved.AccountWideGroundEnabled
-        local aquaticEnabled = hasAquatic and FitterSaved.AccountWideAquaticEnabled
-        flyingCheckbox:SetChecked(flyEnabled)
-        groundCheckbox:SetChecked(gndEnabled)
-        aquaticCheckbox:SetChecked(aquaticEnabled)
-        flyingContainer:SetShown(flyEnabled)
-        groundContainer:SetShown(gndEnabled)
-        aquaticContainer:SetShown(aquaticEnabled)
-        UpdateGroundPosition()
-        if flyEnabled then
-            flyingScrollBox:SetDataProvider(
-                CreateDataProvider(BuildDataWithSelection("Flying", "AccountWideFlyingMounts", "AccountWideFlyingRandom")))
-        end
-        if gndEnabled then
-            groundScrollBox:SetDataProvider(
-                CreateDataProvider(BuildDataWithSelection("Ground", "AccountWideGroundMounts", "AccountWideGroundRandom")))
-        end
-        if aquaticEnabled then
-            aquaticScrollBox:SetDataProvider(CreateDataProvider(BuildDataWithSelection(
-                "Aquatic", "AccountWideAquaticMounts", "AccountWideAquaticRandom")))
-        end
+    AddMountSection("Ground", "Account Wide Ground Mounts", GROUND_TOOLTIP)
+    if ns.Features.AquaticMounts then
+        AddMountSection("Aquatic", "Account Wide Aquatic Mounts", AQUATIC_TOOLTIP)
     end
 end
