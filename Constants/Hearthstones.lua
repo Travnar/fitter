@@ -30,9 +30,25 @@ ns.Constants.KNOWN_HEARTHSTONES = {
     {id = 172179, previewSpellVisualKitID = 118950, previewAnimationID = 879},
     {id = 180290, previewSpellVisualKitID = 128103, previewAnimationKitID = 11602},
     {id = 182773, previewSpellVisualKitID = 142152, previewAnimationKitID = 11603},
-    {id = 183716, previewSpellVisualKitID = 139168, previewAnimationID = 52},
+    -- previewEffectModels: kit models placed by positioners, which the
+    -- preview does not render, shown as separate actors instead.
+    {id = 183716, previewSpellVisualKitID = 139168, previewAnimationID = 52,
+        previewEffectModels = {
+            {fileID = 3490420, x = 0.12, y = 0.2,  z = 0.55, scale = 1.2, animationID = 158},
+            {fileID = 3490420, x = 0.12, y = -0.2, z = 0.55, scale = 1.2, animationID = 158},
+            {fileID = 3490421, scale = 1.1},
+            {fileID = 3734198, z = 0.75, scale = 0.8, yaw = math.pi / 2,
+                orbit = {radius = 0.35, period = 3}},
+            {fileID = 3490420, z = 0.75, scale = 2,
+                orbit = {radius = 0.35, period = 3}},
+        }},
     {id = 184353, previewSpellVisualKitID = 140841, previewAnimationKitID = 10212},
-    {id = 188952, previewSpellVisualKitID = 152793, previewAnimationID = 52},
+    {id = 188952, previewSpellVisualKitID = 152793, previewAnimationID = 52,
+        previewEffectModels = {
+            {fileID = 3483478, x = 0.12, y = 0.2,  z = 0.55, scale = 1.2, animationID = 158},
+            {fileID = 3483478, x = 0.12, y = -0.2, z = 0.55, scale = 1.2, animationID = 158},
+            {fileID = 4062864, x = 0.6, z = 0.12},
+        }},
     {id = 190196, previewSpellVisualKitID = 154737, previewAnimationID = 1448},
     {id = 190237, previewSpellVisualKitID = 154740, previewAnimationID = 52},
     {id = 193588, previewSpellVisualKitID = 159673, previewAnimationID = 52},
@@ -47,11 +63,24 @@ ns.Constants.KNOWN_HEARTHSTONES = {
     {id = 236687, previewSpellVisualKitID = 224060, previewAnimationKitID = 32318},
     {id = 246565, previewSpellVisualKitID = 235783, previewAnimationKitID = 19057},
     {id = 245970, previewSpellVisualKitID = 234534, previewAnimationID = 52},
-    -- Spell 1217281 currently has no SpellXSpellVisual record, so this one
-    -- retains the generic character precast animation.
-    {id = 235016, previewAnimationID = 51},
+    -- Spell 1217281 has no visual, so this uses the Redeployment Module aura
+    -- visual. It dissolves the caster, so the actor is rebuilt afterward.
+    {id = 235016, previewSpellVisualKitID = 217747, previewAnimationKitID = 31526,
+        previewRebuildAfter = true},
     {id = 265100, previewSpellVisualKitID = 252859, previewAnimationKitID = 19057},
-    {id = 257736, previewSpellVisualKitID = 247250, previewAnimationKitID = 35175},
+    -- Kit 127176 attaches the same hand glow as kit 248146 directly to the
+    -- hands, since 248146's positioners do not render. The final aura plays
+    -- at 9.65s in game and is shown earlier so it appears before cleanup.
+    {id = 257736, previewSpellVisualKitID = {247250, 127176}, previewAnimationKitID = 35175,
+        previewEffectModels = {
+            {fileID = 6795071, x = 0.55, z = 0.5, scale = 0.75,
+                yaw = math.pi, pitch = -0.349, rise = {from = -0.3, duration = 2}},
+            {fileID = 5870752, x = 0.8, z = 0.4, animationKitID = 35203,
+                rise = {from = -0.3, duration = 2}},
+            {fileID = 5550643, x = 0.8, z = 0.18, scale = 0.5},
+            {fileID = 5503527, x = 0.8, scale = 0.5},
+            {fileID = 5635867, x = 0.8, scale = 0.8, delay = 8.5},
+        }},
     {id = 263933, previewSpellVisualKitID = 251445, previewAnimationID = 52},
     -- Spell 1310234 casts 1310241, which transforms the caster into the
     -- Aqir Scuttler (creature 272289) at the start of the cast.

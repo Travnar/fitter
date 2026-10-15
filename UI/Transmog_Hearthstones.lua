@@ -94,6 +94,8 @@ function UI_Transmog:PopulateHearthstoneList()
                     previewSpellVisualKitID = entry.previewSpellVisualKitID,
                     previewTransformDisplayID = entry.previewTransformDisplayID,
                     previewEquipItemID = entry.previewEquipItemID,
+                    previewRebuildAfter = entry.previewRebuildAfter,
+                    previewEffectModels = entry.previewEffectModels,
                 }
             end
         else

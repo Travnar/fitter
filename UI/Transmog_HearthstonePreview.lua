@@ -25,7 +25,121 @@ local function WhenActorLoaded(actor, request, callback)
     Check()
 end
 
+local function GetPreviewScene()
+    return TransmogFrame and TransmogFrame.CharacterPreview
+        and TransmogFrame.CharacterPreview.ModelScene
+end
+
+local motionFrame = CreateFrame("Frame")
+motionFrame:Hide()
+
+local function ClearPreviewEffects()
+    motionFrame:Hide()
+    s.hearthstonePreviewMotions = nil
+    for _, effectActor in ipairs(s.hearthstonePreviewEffects or {}) do
+        if effectActor.ClearModel then pcall(effectActor.ClearModel, effectActor) end
+        effectActor:Hide()
+    end
+end
+
+local function PlaceEffect(effectActor, effect, origin, elapsed)
+    local x, y = (effect.x or 0) * origin.height, (effect.y or 0) * origin.height
+    local z = effect.z or 0
+    local yaw = origin.yaw + (effect.yaw or 0)
+    if effect.orbit then
+        local angle = (elapsed or 0) / effect.orbit.period * 2 * math.pi
+        local radius = effect.orbit.radius * origin.height
+        x, y = x + radius * math.cos(angle), y + radius * math.sin(angle)
+        yaw = yaw + angle
+    end
+    if effect.rise then
+        local t = math.min((elapsed or 0) / effect.rise.duration, 1)
+        t = 1 - (1 - t) * (1 - t)
+        z = effect.rise.from + (z - effect.rise.from) * t
+    end
+    local cosYaw, sinYaw = math.cos(origin.yaw), math.sin(origin.yaw)
+    effectActor:SetPosition(origin.x + x * cosYaw - y * sinYaw,
+        origin.y + x * sinYaw + y * cosYaw,
+        origin.z + z * origin.height)
+    effectActor:SetYaw(yaw)
+end
+
+motionFrame:SetScript("OnUpdate", function(self)
+    local motions = s.hearthstonePreviewMotions
+    if not motions then
+        self:Hide()
+        return
+    end
+    local now = GetTime()
+    for _, motion in ipairs(motions) do
+        PlaceEffect(motion.actor, motion.effect, motion.origin,
+            now - motion.startTime)
+    end
+end)
+
+local function ShowPreviewEffects(actor, effects, request)
+    local scene = GetPreviewScene()
+    if not scene or not scene.CreateActor then return end
+
+    local actorScale = actor.GetScale and actor:GetScale() or 1
+    local height
+    if actor.GetActiveBoundingBox then
+        local _, _, bottomZ, _, _, topZ = actor:GetActiveBoundingBox()
+        height = bottomZ and topZ and (topZ - bottomZ) * actorScale
+    end
+    if not height or height <= 0 then height = 2 * actorScale end
+    local origin = {x = 0, y = 0, z = 0, height = height,
+        yaw = actor.GetYaw and actor:GetYaw() or 0}
+    if actor.GetPosition then
+        origin.x, origin.y, origin.z = actor:GetPosition()
+    end
+
+    s.hearthstonePreviewEffects = s.hearthstonePreviewEffects or {}
+    for index, effect in ipairs(effects) do
+        local effectActor = s.hearthstonePreviewEffects[index]
+        if not effectActor then
+            effectActor = scene:CreateActor()
+            s.hearthstonePreviewEffects[index] = effectActor
+        end
+        effectActor:SetUseCenterForOrigin(false, false, false)
+        PlaceEffect(effectActor, effect, origin, 0)
+        effectActor:SetPitch(effect.pitch or 0)
+        effectActor:SetRoll(0)
+        effectActor:SetScale((effect.scale or 1) * actorScale)
+
+        local function Activate()
+            effectActor:SetModelByFileID(effect.fileID)
+            if effect.animationKitID and effectActor.PlayAnimationKit then
+                pcall(effectActor.PlayAnimationKit, effectActor,
+                    effect.animationKitID, true)
+            elseif effect.animationID then
+                pcall(effectActor.SetAnimation, effectActor, effect.animationID)
+            end
+            effectActor:Show()
+            if effect.orbit or effect.rise then
+                s.hearthstonePreviewMotions = s.hearthstonePreviewMotions or {}
+                table.insert(s.hearthstonePreviewMotions, {actor = effectActor,
+                    effect = effect, origin = origin, startTime = GetTime()})
+                motionFrame:Show()
+            end
+        end
+        if effect.delay then
+            effectActor:Hide()
+            UI_Transmog:ScheduleTimer(effect.delay, function()
+                if request ~= s.hearthstonePreviewRequest
+                    or not s.previewHearthstoneActive then
+                    return
+                end
+                Activate()
+            end, "preview")
+        else
+            Activate()
+        end
+    end
+end
+
 local function ResetPreviewActor(actor, request, onReady)
+    ClearPreviewEffects()
     -- A transformed actor cannot report the outfit, and a tried-on item would
     -- be reported as part of it, so restore the copy saved before either.
     local saved = s.hearthstonePreviewOutfit
@@ -67,8 +181,7 @@ local function ResetPreviewActor(actor, request, onReady)
 end
 
 local function GetPreviewActor()
-    local scene = TransmogFrame and TransmogFrame.CharacterPreview
-        and TransmogFrame.CharacterPreview.ModelScene
+    local scene = GetPreviewScene()
     return scene and scene.GetPlayerActor and scene:GetPlayerActor()
 end
 
@@ -76,6 +189,7 @@ end
 -- an item. Returns the saved outfit, since the actor cannot report it until
 -- rebuilt.
 function UI_Transmog:RestoreHearthstonePreviewOutfit()
+    ClearPreviewEffects()
     local saved = s.hearthstonePreviewOutfit
     if not saved then return nil end
     local actor = GetPreviewActor()
@@ -86,6 +200,7 @@ end
 local function FinishPreviewOnExistingActor(actor, request)
     if request ~= s.hearthstonePreviewRequest then return end
     s.previewHearthstoneActive = nil
+    ClearPreviewEffects()
     if s.hearthstonePreviewOutfit then
         ResetPreviewActor(actor, nil)
         return
@@ -129,9 +244,15 @@ function UI_Transmog:PreviewHearthstoneCast(item)
         -- Some Hearthstones equip a cosmetic item for the cast.
         if equipItemID then TryOnPreviewItem(actor, equipItemID) end
 
-        if actor.SetSpellVisualKit and item.previewSpellVisualKitID then
-            pcall(actor.SetSpellVisualKit, actor,
-                item.previewSpellVisualKitID, false)
+        local kits = item.previewSpellVisualKitID
+        if actor.SetSpellVisualKit and kits then
+            if type(kits) ~= "table" then kits = {kits} end
+            for _, kitID in ipairs(kits) do
+                pcall(actor.SetSpellVisualKit, actor, kitID, false)
+            end
+        end
+        if item.previewEffectModels then
+            ShowPreviewEffects(actor, item.previewEffectModels, request)
         end
 
         local function ScheduleCleanup()
@@ -141,13 +262,16 @@ function UI_Transmog:PreviewHearthstoneCast(item)
             end, "preview")
         end
 
+        -- Persistent spell kits can update the actor's animation at the end
+        -- of their initialization frame. Apply explicit animations one frame
+        -- later so the Hearthstone's own cast is retained.
         if actor.PlayAnimationKit and item.previewAnimationKitID then
-            pcall(actor.PlayAnimationKit, actor, item.previewAnimationKitID, true)
-            ScheduleCleanup()
+            UI_Transmog:ScheduleTimer(0, function()
+                if request ~= s.hearthstonePreviewRequest then return end
+                pcall(actor.PlayAnimationKit, actor, item.previewAnimationKitID, true)
+                ScheduleCleanup()
+            end, "preview")
         elseif actor.SetAnimation and item.previewAnimationID then
-            -- Persistent spell kits can update the actor's animation at the
-            -- end of their initialization frame. Apply explicit animations
-            -- one frame later so the standard Hearthstone cast is retained.
             UI_Transmog:ScheduleTimer(0, function()
                 if request ~= s.hearthstonePreviewRequest then return end
                 pcall(actor.SetAnimation, actor, item.previewAnimationID, 0, 1, 0)
@@ -167,10 +291,13 @@ function UI_Transmog:PreviewHearthstoneCast(item)
         local transformID = actor.SetModelByCreatureDisplayID
             and item.previewTransformDisplayID
         local equipItemID = GetPreviewEquipItemID(item)
-        if not transformID and not equipItemID then
+        if not transformID and not equipItemID
+            and not item.previewRebuildAfter then
             PlayCast()
             return
         end
+        -- A saved outfit makes cleanup rebuild the actor, which also clears
+        -- dissolves that outlast the spell kit.
         s.hearthstonePreviewOutfit = {
             outfitInfo = actor.GetItemTransmogInfoList
                 and actor:GetItemTransmogInfoList(),
