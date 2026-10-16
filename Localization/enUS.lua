@@ -48,6 +48,7 @@ local strings = {
     "Target Friendly Player", "Target Friendly NPC", "Target Hostile NPC",
     "Drag or click to pick up the macro.", "Right-click for favorite options.",
     "You have not collected this toy.", "Right-click to remove this custom toy.",
+    "Clear Preview", "Right-click to preview this toy.",
     "Valid behavior is not guaranteed.", "Summons a random favorite battle pet.",
     "Selecting a specific pet turns this off.",
     "Summons a random mount from this category.",

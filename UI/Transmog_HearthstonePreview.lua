@@ -215,13 +215,39 @@ local function FinishPreviewOnExistingActor(actor, request)
     if actor.SetAnimation then pcall(actor.SetAnimation, actor, 0, 0, 1, 0) end
 end
 
--- previewEquipItemID is an item ID, or a table of item IDs keyed by faction.
-local function GetPreviewEquipItemID(item)
+-- previewEquipItemID is an item ID, a list of item IDs, or a table of item
+-- IDs keyed by faction. Returns a list (possibly empty).
+local function GetPreviewEquipItemIDs(item)
     local equip = item.previewEquipItemID
     if type(equip) == "table" then
-        return equip[UnitFactionGroup("player")]
+        if #equip > 0 then return equip end
+        equip = equip[UnitFactionGroup("player")]
     end
-    return equip
+    return equip and {equip} or {}
+end
+
+-- Returns the player's faction value from a {Alliance = x, Horde = y} table,
+-- falling back to Alliance for neutral characters.
+local function ForFaction(value)
+    if type(value) ~= "table" or #value > 0 then return value end
+    return value[UnitFactionGroup("player")] or value.Alliance
+end
+
+-- previewSpellVisualKitID is a kit ID, a list of kit IDs, or a table keyed by
+-- faction. Some kits attach with different offsets on certain body types
+-- (see TOY_PREVIEW_ALT_BODIES); those provide previewAltSpellVisualKitID.
+local function GetPreviewSpellVisualKitIDs(item)
+    local kits = item.previewSpellVisualKitID
+    if item.previewAltSpellVisualKitID then
+        local _, _, raceID = UnitRace("player")
+        local bodies = ns.Constants.TOY_PREVIEW_ALT_BODIES or {}
+        if raceID and bodies[raceID .. ":" .. UnitSex("player")] then
+            kits = item.previewAltSpellVisualKitID
+        end
+    end
+    kits = ForFaction(kits)
+    if type(kits) == "table" then return kits end
+    return kits and {kits} or {}
 end
 
 local function TryOnPreviewItem(actor, itemID)
@@ -230,23 +256,73 @@ local function TryOnPreviewItem(actor, itemID)
     pcall(actor.TryOn, actor, sourceID or ("item:" .. itemID))
 end
 
+-- Most transform creatures are missing from the client's Creature table, so
+-- resolve their display through a hidden PlayerModel. SetCreature queries the
+-- server-backed creature cache; GetDisplayInfo stays 0 until it arrives.
+-- Each creature gets its own model: a reused model keeps reporting the
+-- previous creature's display (even after ClearModel) until the server
+-- answers, which would cache the wrong display.
+local creatureDisplayCache = {}
+local creatureModels = {}
+local function ResolveCreatureDisplayID(creatureID, request, callback)
+    if creatureDisplayCache[creatureID] then
+        callback(creatureDisplayCache[creatureID])
+        return
+    end
+    local creatureModel = creatureModels[creatureID]
+    if not creatureModel then
+        creatureModel = CreateFrame("PlayerModel", nil, UIParent)
+        creatureModel:SetSize(1, 1)
+        creatureModel:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -10, 10)
+        creatureModel:SetAlpha(0)
+        creatureModels[creatureID] = creatureModel
+    end
+    creatureModel:Show()
+    pcall(creatureModel.SetCreature, creatureModel, creatureID)
+    local attempts = 0
+    local function Check()
+        if request ~= s.hearthstonePreviewRequest then
+            creatureModel:Hide()
+            return
+        end
+        local ok, displayID = pcall(creatureModel.GetDisplayInfo, creatureModel)
+        if ok and displayID and displayID > 0 then
+            creatureDisplayCache[creatureID] = displayID
+            creatureModel:Hide()
+            callback(displayID)
+            return
+        end
+        attempts = attempts + 1
+        if attempts < 60 then
+            UI_Transmog:ScheduleTimer(.05, Check, "preview")
+        else
+            creatureModel:Hide()
+            callback(nil)
+        end
+    end
+    Check()
+end
+
 function UI_Transmog:PreviewHearthstoneCast(item)
     self:CancelUITimers("preview")
     s.hearthstonePreviewRequest = (s.hearthstonePreviewRequest or 0) + 1
     local request = s.hearthstonePreviewRequest
     s.previewHearthstoneActive = item ~= nil
+    -- Lets the toy menu offer "Clear Preview" for the toy being shown.
+    s.previewToyID = item and item.previewToyID or nil
 
     self:ClearMountPreview()
     local actor = GetPreviewActor()
     if not actor then return end
 
-    local function PlayCast(equipItemID)
-        -- Some Hearthstones equip a cosmetic item for the cast.
-        if equipItemID then TryOnPreviewItem(actor, equipItemID) end
+    local function PlayCast(equipItemIDs)
+        -- Some Hearthstones and toys equip cosmetic items for their effect.
+        for _, equipItemID in ipairs(equipItemIDs or {}) do
+            TryOnPreviewItem(actor, equipItemID)
+        end
 
-        local kits = item.previewSpellVisualKitID
-        if actor.SetSpellVisualKit and kits then
-            if type(kits) ~= "table" then kits = {kits} end
+        local kits = GetPreviewSpellVisualKitIDs(item)
+        if actor.SetSpellVisualKit then
             for _, kitID in ipairs(kits) do
                 pcall(actor.SetSpellVisualKit, actor, kitID, false)
             end
@@ -256,6 +332,9 @@ function UI_Transmog:PreviewHearthstoneCast(item)
         end
 
         local function ScheduleCleanup()
+            -- Toy effects are persistent auras; keep them until replaced
+            -- or cleared instead of ending like a Hearthstone cast.
+            if item.previewPersistent then return end
             UI_Transmog:ScheduleTimer(PREVIEW_DURATION, function()
                 if request ~= s.hearthstonePreviewRequest then return end
                 FinishPreviewOnExistingActor(actor, request)
@@ -288,10 +367,12 @@ function UI_Transmog:PreviewHearthstoneCast(item)
             s.previewHearthstoneActive = nil
             return
         end
-        local transformID = actor.SetModelByCreatureDisplayID
-            and item.previewTransformDisplayID
-        local equipItemID = GetPreviewEquipItemID(item)
-        if not transformID and not equipItemID
+        local canTransform = actor.SetModelByCreatureDisplayID ~= nil
+        local transformID = canTransform and item.previewTransformDisplayID
+        local transformCreatureID = canTransform
+            and item.previewTransformCreatureID
+        local equipItemIDs = GetPreviewEquipItemIDs(item)
+        if not transformID and not transformCreatureID and #equipItemIDs == 0
             and not item.previewRebuildAfter then
             PlayCast()
             return
@@ -303,12 +384,19 @@ function UI_Transmog:PreviewHearthstoneCast(item)
                 and actor:GetItemTransmogInfoList(),
             sheathed = actor.GetSheathed and actor:GetSheathed(),
         }
-        if not transformID then
-            PlayCast(equipItemID)
-            return
+        -- Some Hearthstones and toys transform the caster.
+        local function Transform(displayID)
+            if not displayID then
+                PlayCast(equipItemIDs)
+                return
+            end
+            pcall(actor.SetModelByCreatureDisplayID, actor, displayID)
+            WhenActorLoaded(actor, request, function() PlayCast(equipItemIDs) end)
         end
-        -- Some Hearthstones transform the caster at the start of the cast.
-        pcall(actor.SetModelByCreatureDisplayID, actor, transformID)
-        WhenActorLoaded(actor, request, function() PlayCast(equipItemID) end)
+        if transformID or not transformCreatureID then
+            Transform(transformID)
+        else
+            ResolveCreatureDisplayID(transformCreatureID, request, Transform)
+        end
     end)
 end

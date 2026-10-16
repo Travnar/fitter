@@ -64,6 +64,7 @@ function UI_Transmog:PopulateToyList()
                         id = entry.id, name = name, icon = icon,
                         isCollected = isCollected == true,
                         custom = entry.custom == true,
+                        catalogEntry = entry,
                     }
                 end
             else
@@ -138,10 +139,31 @@ local function ConfigureToyUse(overlay)
     return true
 end
 
+local PREVIEW_FIELDS = {
+    "previewTransformDisplayID", "previewTransformCreatureID",
+    "previewSpellVisualKitID", "previewAltSpellVisualKitID", "previewEquipItemID",
+}
+
+-- Returns the preview request for a toy's catalog entry, or nil when the
+-- toy has no visual that can be shown on the character model.
+local function GetToyPreview(item)
+    local entry = item.catalogEntry
+    if not entry then return nil end
+    local preview
+    for _, field in ipairs(PREVIEW_FIELDS) do
+        if entry[field] then
+            preview = preview or {previewPersistent = true, previewToyID = item.id}
+            preview[field] = entry[field]
+        end
+    end
+    return preview
+end
+
 local function ShowToyContextMenu(owner)
     local item = owner.item
-    if not item or (not item.isCollected and not item.custom)
-        or not MenuUtil or not MenuUtil.CreateContextMenu then return end
+    if not item or not MenuUtil or not MenuUtil.CreateContextMenu then return end
+    local preview = GetToyPreview(item)
+    if not item.isCollected and not item.custom and not preview then return end
     MenuUtil.CreateContextMenu(owner, function(_, root)
         if item.isCollected then
             local favorite = UI_Transmog._PagedShared.IsToyFavorite(item.id)
@@ -150,6 +172,18 @@ local function ShowToyContextMenu(owner)
                     "FavoriteToys", item.id, not favorite)
                 UI_Transmog:RefreshToyList()
             end)
+        end
+        if preview then
+            if item.isCollected then root:CreateDivider() end
+            if s.previewToyID == item.id and s.previewHearthstoneActive then
+                root:CreateButton(L["Clear Preview"], function()
+                    UI_Transmog:PreviewHearthstoneCast(nil)
+                end)
+            else
+                root:CreateButton(L["Preview"], function()
+                    UI_Transmog:PreviewHearthstoneCast(preview)
+                end)
+            end
         end
         if item.custom then
             root:CreateButton(L["Remove Added Toy"], function()
@@ -361,6 +395,10 @@ function UI_Transmog:InitializeToyPaged()
                 GameTooltip:AddLine(L["Right-click to remove this custom toy."],
                     .5, .8, 1, true)
             end
+            if GetToyPreview(self.item) then
+                GameTooltip:AddLine(L["Right-click to preview this toy."],
+                    .5, .8, 1, true)
+            end
             GameTooltip:Show()
         end)
         button:HookScript("OnLeave", function(self)
@@ -399,6 +437,10 @@ function UI_Transmog:InitializeToyPaged()
                 GameTooltip:AddLine(L["Right-click to remove this custom toy."],
                     .5, .8, 1, true)
             end
+            if GetToyPreview(item) then
+                GameTooltip:AddLine(L["Right-click to preview this toy."],
+                    .5, .8, 1, true)
+            end
             GameTooltip:Show()
         end)
         overlay:SetScript("OnLeave", function(self)
@@ -411,6 +453,12 @@ function UI_Transmog:InitializeToyPaged()
     end
     LayoutButtons()
     s.toyFrame:HookScript("OnSizeChanged", LayoutButtons)
+    -- Toy previews persist, so end them when leaving the page.
+    s.toyFrame:HookScript("OnHide", function()
+        if s.previewToyID and s.previewHearthstoneActive then
+            UI_Transmog:PreviewHearthstoneCast(nil)
+        end
+    end)
     s.toyPageText, s.toyPrevButton, s.toyNextButton =
         UI_Transmog._PagedShared.CreateNavButtons(s.toyFrame,
             function() UI_Transmog:ToyPagePrev() end,
