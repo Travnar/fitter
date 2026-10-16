@@ -52,6 +52,7 @@ UI\Transmog_Loadouts.lua
 UI\Transmog_MountConditionals.lua
 UI\Transmog_MountSlots.lua
 UI\Transmog_Titles.lua
+UI\Transmog_ViewWithoutTransmog.lua
 UI\Transmog_Mounts.lua
 UI\Transmog_Hearthstones.lua
 UI\Transmog_HearthstonePreview.lua

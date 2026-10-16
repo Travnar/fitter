@@ -105,6 +105,7 @@ local strings = {
     "Auto Detect",
     "Ability",
     "Auto Detect tries each type in turn. Choose a type when an ID could match more than one.",
+    "View Without Transmog",
 }
 
 for _, text in ipairs(strings) do

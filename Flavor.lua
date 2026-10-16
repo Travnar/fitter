@@ -11,4 +11,5 @@ ns.IsForever = tocVersion < 20000
 ns.Features = {
     FlyingMounts = not ns.IsForever,
     AquaticMounts = not ns.IsForever,
+    ViewWithoutTransmog = ns.IsForever,
 }

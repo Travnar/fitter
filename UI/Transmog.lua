@@ -566,6 +566,7 @@ function UI_Transmog:Initialize()
     end)
     
     UI_Transmog:InitializeTitleDropdown()
+    UI_Transmog:InitializeViewWithoutTransmogToggle()
     
     self:InitializeMountIcons()
 
