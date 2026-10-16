@@ -5,7 +5,7 @@ local s = UI_Transmog._s
 local Fitter = ns.Fitter
 
 local PAGE_SIZE = 30
-local START_X, START_Y = 30, -120
+local START_X, START_Y = 30, -103
 local GAP_X = 14
 local BOTTOM_PADDING = 65
 local ICONS_PER_PAGE = 24
@@ -648,7 +648,7 @@ function UI_Transmog:InitializeEmotesView()
 
     local add = CreateFrame("Button", nil, s.emotesFrame, "UIPanelButtonTemplate")
     add:SetSize(130, 26)
-    add:SetPoint("TOPLEFT", s.emotesFrame, "TOPLEFT", 50, -24)
+    self._PagedShared.AnchorTopLeftControl(add, s.emotesFrame)
     add:SetText(L["Add New Emote"])
     add:SetScript("OnClick", ShowCreatePopup)
     s.emoteAddButton = add

@@ -9,7 +9,7 @@ local EXPANSION_ZONES = ns.Zones.EXPANSION_ZONES
 local CONTINENT_ZONES = ns.Zones.CONTINENT_ZONES
 
 local PAGE_SIZE = 30
-local START_X, START_Y = 30, -120
+local START_X, START_Y = 30, -103
 local GAP_X, BOTTOM_PADDING = 14, 65
 local ICON_PATH = "Interface\\Icons\\"
 
@@ -261,7 +261,7 @@ function UI_Transmog:InitializeZoneSection()
 
     local selectAll = CreateFrame("Button", nil, s.zonesFrame, "UIPanelButtonTemplate")
     selectAll:SetSize(105, 24)
-    selectAll:SetPoint("TOPLEFT", s.zonesFrame, "TOPLEFT", 50, -25)
+    self._PagedShared.AnchorTopLeftControl(selectAll, s.zonesFrame)
     selectAll:SetText(L["Select All"])
     selectAll:SetScript("OnClick", function() self:ApplyBiomeSelection("all") end)
     selectAll:SetScript("OnEnter", function(button)

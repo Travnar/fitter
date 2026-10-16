@@ -600,19 +600,15 @@ function UI_Transmog:InitializeLoadouts()
         return
     end
     local parent = s.additionalFrame
-    local title = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetFont("Fonts\\FRIZQT__.TTF", 22, "")
-    title:SetShadowColor(0, 0, 0, 0.8)
-    title:SetShadowOffset(1, -1)
-    title:SetPoint("TOPLEFT", parent, "TOPLEFT", 50, -65)
+    local title = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightHuge")
+    title:SetJustifyH("LEFT")
+    title:SetPoint("TOPLEFT", parent, "TOPLEFT", 23, -58)
     title:SetText("Fitter")
-    title:SetTextColor(1, 1, 1, 1)
 
     local separator = parent:CreateTexture(nil, "ARTWORK")
-    separator:SetHeight(1)
-    separator:SetPoint("TOPLEFT", parent, "TOPLEFT", 50, -97)
-    separator:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -50, -97)
-    separator:SetColorTexture(0.4, 0.4, 0.4, 0.8)
+    separator:SetAtlas("transmog-tabs-header-line", true)
+    separator:SetAlpha(0.1)
+    separator:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
 
     local characterSection = parent:CreateFontString(nil, "OVERLAY",
         "GameFontNormalLarge")

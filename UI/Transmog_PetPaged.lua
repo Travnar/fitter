@@ -31,13 +31,10 @@ end
 
 
 function UI_Transmog:InitializePetPaged()
-    local _, _, searchBox = UI_Transmog._PagedShared.CreateHeader(s.petFrame, L["Pets"], function(text)
+    local label, _, searchBox = UI_Transmog._PagedShared.CreateHeader(s.petFrame, L["Pets"], function(text)
         s.petSearchString = text
         UI_Transmog:RefreshPetPaged()
     end)
-    -- Pet search box is anchored 10px further from the right than the mount headers.
-    searchBox:ClearAllPoints()
-    searchBox:SetPoint("TOPRIGHT", s.petFrame, "TOPRIGHT", -150, -26)
     s.petPagedSearchBox = searchBox
 
     s.petPagedSourcesDropdown = UI_Transmog._PagedShared.CreateFilterDropdown(s.petFrame, searchBox, {
@@ -79,7 +76,7 @@ function UI_Transmog:InitializePetPaged()
     
 
     s.petIgnoreButton = CreateFrame("Button", nil, s.petFrame, "DisplayTypeButtonTemplate")
-    s.petIgnoreButton:SetPoint("TOPLEFT", s.petFrame, "TOPLEFT", 50, -130)
+    UI_Transmog._PagedShared.AnchorDisplayTypeButton(s.petIgnoreButton, label)
     s.petIgnoreButton:SetText(L["Ignore Pets"])
     s.petIgnoreButton.IconFrame.Icon:SetTexture(132598)
     s.petIgnoreButton.IconFrame.Icon:SetDesaturated(true)
@@ -144,21 +141,11 @@ function UI_Transmog:InitializePetPaged()
     end)
     s.petRandomButton:HookScript("OnLeave", function() GameTooltip:Hide() end)
 
-    local startY = -175
-    local spacingX = 3
-    local spacingY = 3
-    local modelWidth = 114
-    local modelHeight = 146
-    local gridStartX = -((5 * modelWidth + 4 * spacingX - modelWidth) / 2)
-    
+    local shared = UI_Transmog._PagedShared
     for i = 1, 20 do
-        local visualIndex = i
-        local col = (visualIndex - 1) % 5
-        local row = math.floor((visualIndex - 1) / 5)
-        
         local container = CreateFrame("Button", nil, s.petFrame)
-        container:SetSize(modelWidth, modelHeight)
-        container:SetPoint("TOP", s.petFrame, "TOP", gridStartX + (col * (modelWidth + spacingX)), startY - (row * (modelHeight + spacingY)))
+        container:SetSize(shared.GRID_CARD_WIDTH, shared.GRID_CARD_HEIGHT)
+        container:SetPoint("TOP", s.petFrame, "TOP", shared.GetGridCardOffset(i))
         container:SetClipsChildren(true)
         
 

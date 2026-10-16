@@ -54,10 +54,24 @@ local function CreateFavoriteStar(parent)
     return star
 end
 
+-- Card grid geometry, matched to Blizzard's Items tab: 5 columns, 20px
+-- padding between the visible card art, first row just under the
+-- display-type buttons.
+local GRID_CARD_WIDTH, GRID_CARD_HEIGHT = 114, 146
+local GRID_STEP_X, GRID_STEP_Y = 120, 152
+local GRID_TOP = -155
+
+-- Returns the TOP-relative offset for a 1-based grid slot.
+local function GetGridCardOffset(visualIndex)
+    local col = (visualIndex - 1) % 5
+    local row = math.floor((visualIndex - 1) / 5)
+    return (col - 2) * GRID_STEP_X, GRID_TOP - row * GRID_STEP_Y
+end
+
 local function CreateNoSelectionCard(parent, tooltipText, onClick)
     local card = CreateFrame("Button", nil, parent)
-    card:SetSize(114, 146)
-    card:SetPoint("TOP", parent, "TOP", -234, -175)
+    card:SetSize(GRID_CARD_WIDTH, GRID_CARD_HEIGHT)
+    card:SetPoint("TOP", parent, "TOP", GetGridCardOffset(1))
 
     local blackBg = card:CreateTexture(nil, "BACKGROUND", nil, -1)
     blackBg:SetColorTexture(0, 0, 0, 1)
@@ -158,11 +172,8 @@ end
 local function PositionSpecialCardPageItem(container, parent, itemIndex, page, showSpecialCard)
     local visualIndex = page == 1 and showSpecialCard ~= false
         and itemIndex + 1 or itemIndex
-    local col = (visualIndex - 1) % 5
-    local row = math.floor((visualIndex - 1) / 5)
     container:ClearAllPoints()
-    container:SetPoint("TOP", parent, "TOP",
-        -234 + (col * 117), -175 - (row * 149))
+    container:SetPoint("TOP", parent, "TOP", GetGridCardOffset(visualIndex))
 end
 
 -- Compact collection entry inspired by Blizzard's Toy Box: a framed square
@@ -288,6 +299,13 @@ local function SetFavorite(key, id, favorite)
 end
 
 
+-- Header layout mirrors Blizzard's TransmogFrame Items tab
+-- (ActiveSlotTitle / Divider / SearchBox / FilterButton) so the Fitter pages
+-- line up with the native tabs.
+local HEADER_LEFT = 23
+local TOP_ROW_CENTER_Y = -33
+local FILTER_WIDTH = 135
+
 -- Creates the header row used by each paged frame:
 --   * label  ("Flying" / "Ground" / "Aquatic" / "Pets")
 --   * separator line under the label
@@ -296,7 +314,7 @@ end
 local function CreateHeader(parentFrame, labelText, onSearchChanged)
     local label = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightHuge")
     label:SetJustifyH("LEFT")
-    label:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 50, -75)
+    label:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", HEADER_LEFT, -58)
     label:SetText(L[labelText])
 
     local separator = parentFrame:CreateTexture(nil, "ARTWORK")
@@ -304,9 +322,11 @@ local function CreateHeader(parentFrame, labelText, onSearchChanged)
     separator:SetAlpha(0.1)
     separator:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -2)
 
-    local searchBox = CreateFrame("EditBox", nil, parentFrame, "SearchBoxTemplate")
-    searchBox:SetSize(168, 20)
-    searchBox:SetPoint("TOPRIGHT", parentFrame, "TOPRIGHT", -160, -26)
+    -- Filter sits at TOPRIGHT -29,-24; the search box is 10px left of it.
+    local searchBox = CreateFrame("EditBox", nil, parentFrame, "SearchBoxNineSliceTemplate")
+    searchBox:SetSize(142, 19)
+    searchBox:SetPoint("TOPRIGHT", parentFrame, "TOPRIGHT",
+        -29 - FILTER_WIDTH - 10, -23)
     searchBox:SetAutoFocus(false)
     searchBox.Instructions:SetText(L["Search"])
     searchBox:HookScript("OnTextChanged", function(self)
@@ -320,13 +340,29 @@ end
 -- Creates a filter dropdown anchored to the right of `anchorRight`.
 local function CreateFilterDropdown(parentFrame, anchorRight, cfg)
     local dropdown = CreateFrame("DropdownButton", nil, parentFrame, "WowStyle1FilterDropdownTemplate")
-    dropdown:SetPoint("LEFT", anchorRight, "RIGHT", 5, 0)
-    dropdown:SetWidth(104)
+    dropdown:SetPoint("TOPLEFT", anchorRight, "TOPRIGHT", 10, -1)
+    dropdown:SetWidth(FILTER_WIDTH)
     dropdown.resizeToText = false
     dropdown:SetIsDefaultCallback(cfg.isDefault)
     dropdown:SetDefaultCallback(cfg.default)
     dropdown:SetupMenu(cfg.setup)
     return dropdown
+end
+
+
+-- Places a DisplayTypeButtonTemplate row under the header label, matching
+-- Blizzard's DisplayTypes offset (Ignore Slot / Show Equipped Gear).
+local function AnchorDisplayTypeButton(button, label)
+    button:ClearAllPoints()
+    button:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 16, -21)
+end
+
+
+-- Places a top-left control (macro icon, add/select buttons) on the same row
+-- as the search box and flush with the header label.
+local function AnchorTopLeftControl(control, parentFrame)
+    control:ClearAllPoints()
+    control:SetPoint("LEFT", parentFrame, "TOPLEFT", HEADER_LEFT, TOP_ROW_CENTER_Y)
 end
 
 
@@ -370,20 +406,27 @@ local function AddCheckboxFilterSubmenu(rootDescription, label, entries, state, 
 end
 
 
--- Creates a bottom-centered pagination navigation row on `parentFrame`:
--- a centered "X / Y" font string flanked by Prev / Next arrow buttons.
+-- Creates a bottom-centered pagination navigation row on `parentFrame`,
+-- laid out like Blizzard's PagingControlsHorizontalTemplate: "Page X/Y"
+-- text, then Prev / Next arrows, 5px apart, with the whole row centered.
 -- Returns (pageText, prevButton, nextButton).
+local NAV_SPACING, NAV_BUTTON_SIZE = 5, 32
 local function CreateNavButtons(parentFrame, onPrev, onNext)
     local navContainer = CreateFrame("Frame", nil, parentFrame)
-    navContainer:SetSize(200, 30)
+    navContainer:SetSize(200, NAV_BUTTON_SIZE)
     navContainer:SetPoint("BOTTOM", parentFrame, "BOTTOM", 0, 18)
 
     local pageText = navContainer:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    pageText:SetPoint("CENTER", -25, 0)
+    pageText:SetPoint("LEFT", navContainer, "LEFT", 0, 0)
+    -- Resize the row to its contents so the group, not just the text, is centered.
+    hooksecurefunc(pageText, "SetText", function(self)
+        navContainer:SetWidth(math.ceil(self:GetStringWidth())
+            + 2 * (NAV_SPACING + NAV_BUTTON_SIZE))
+    end)
 
     local prevButton = CreateFrame("Button", nil, navContainer)
-    prevButton:SetSize(32, 32)
-    prevButton:SetPoint("LEFT", pageText, "RIGHT", 5, 0)
+    prevButton:SetSize(NAV_BUTTON_SIZE, NAV_BUTTON_SIZE)
+    prevButton:SetPoint("LEFT", pageText, "RIGHT", NAV_SPACING, 0)
 
     local prevNormal = prevButton:CreateTexture(nil, "ARTWORK")
     prevNormal:SetAllPoints()
@@ -411,8 +454,8 @@ local function CreateNavButtons(parentFrame, onPrev, onNext)
     prevButton:Show()
 
     local nextButton = CreateFrame("Button", nil, navContainer)
-    nextButton:SetSize(32, 32)
-    nextButton:SetPoint("LEFT", prevButton, "RIGHT", 3, 0)
+    nextButton:SetSize(NAV_BUTTON_SIZE, NAV_BUTTON_SIZE)
+    nextButton:SetPoint("LEFT", prevButton, "RIGHT", NAV_SPACING, 0)
 
     local nextNormal = nextButton:CreateTexture(nil, "ARTWORK")
     nextNormal:SetAllPoints()
@@ -479,6 +522,11 @@ end
 UI_Transmog._PagedShared = {
     CreateHeader = CreateHeader,
     CreateFilterDropdown = CreateFilterDropdown,
+    AnchorDisplayTypeButton = AnchorDisplayTypeButton,
+    AnchorTopLeftControl = AnchorTopLeftControl,
+    GetGridCardOffset = GetGridCardOffset,
+    GRID_CARD_WIDTH = GRID_CARD_WIDTH,
+    GRID_CARD_HEIGHT = GRID_CARD_HEIGHT,
     AddSelectedCheckbox = AddSelectedCheckbox,
     AddCheckboxFilterSubmenu = AddCheckboxFilterSubmenu,
     CreateNavButtons = CreateNavButtons,

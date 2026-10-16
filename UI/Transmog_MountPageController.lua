@@ -30,7 +30,7 @@ end
 
 local function SetupMacroButton(frame)
     local button = UI_Transmog._CreateMacroIconButton(frame, 1769015)
-    button:SetPoint("TOPLEFT", frame, "TOPLEFT", 50, -25)
+    UI_Transmog._PagedShared.AnchorTopLeftControl(button, frame)
     local label = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("LEFT", button, "RIGHT", 8, 0)
     label:SetText(L["Mount Macro"])
@@ -60,17 +60,13 @@ end
 
 local function CreateEntry(controller, index)
     local frameParent = controller:State("Frame")
-    local col = (index - 1) % 5
-    local row = math.floor((index - 1) / 5)
-    local width, height, gap = 114, 146, 3
-    local startX = -((5 * width + 4 * gap - width) / 2)
+    local shared = UI_Transmog._PagedShared
     -- A Button, not a Frame: gamepad SmartNavigation calls GetScript on
     -- non-button frames' OnMouseDown/OnMouseUp while building navigation
     -- data, and our handler returned there taints it.
     local container = CreateFrame("Button", nil, frameParent)
-    container:SetSize(width, height)
-    container:SetPoint("TOP", frameParent, "TOP",
-        startX + col * (width + gap), -175 - row * (height + gap))
+    container:SetSize(shared.GRID_CARD_WIDTH, shared.GRID_CARD_HEIGHT)
+    container:SetPoint("TOP", frameParent, "TOP", shared.GetGridCardOffset(index))
     container:SetClipsChildren(true)
 
     local black = container:CreateTexture(nil, "BACKGROUND", nil, -1)
@@ -208,7 +204,7 @@ end
 
 function Controller:Initialize()
     local frame = self:State("Frame")
-    local _, _, search = UI_Transmog._PagedShared.CreateHeader(
+    local label, _, search = UI_Transmog._PagedShared.CreateHeader(
         frame, self.category, function(text)
             self:State("SearchString", text)
             self:Refresh()
@@ -251,7 +247,7 @@ function Controller:Initialize()
         }))
 
     local ignore = CreateFrame("Button", nil, frame, "DisplayTypeButtonTemplate")
-    ignore:SetPoint("TOPLEFT", frame, "TOPLEFT", 50, -130)
+    UI_Transmog._PagedShared.AnchorDisplayTypeButton(ignore, label)
     ignore:SetText(string.format(L["Ignore %s"], L[self.category]))
     ignore.IconFrame.Icon:SetTexture(self.ignoreIcon)
     ignore.IconFrame.Icon:SetDesaturated(true)

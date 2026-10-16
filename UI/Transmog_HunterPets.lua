@@ -96,14 +96,10 @@ function UI_Transmog:ShowHunterPets()
 end
 
 local function CreatePetCard(parent, visualIndex)
-    local width, height, spacing = 114, 146, 3
-    local col = (visualIndex - 1) % 5
-    local row = math.floor((visualIndex - 1) / 5)
-    local gridStartX = -((5 * width + 4 * spacing - width) / 2)
+    local shared = UI_Transmog._PagedShared
     local card = CreateFrame("Button", nil, parent)
-    card:SetSize(width, height)
-    card:SetPoint("TOP", parent, "TOP",
-        gridStartX + col * (width + spacing), -175 - row * (height + spacing))
+    card:SetSize(shared.GRID_CARD_WIDTH, shared.GRID_CARD_HEIGHT)
+    card:SetPoint("TOP", parent, "TOP", shared.GetGridCardOffset(visualIndex))
     card:SetClipsChildren(true)
 
     local black = card:CreateTexture(nil, "BACKGROUND", nil, -1)
@@ -193,7 +189,7 @@ local function CreatePetCard(parent, visualIndex)
 end
 
 function UI_Transmog:InitializeHunterPets()
-    local _, _, search = UI_Transmog._PagedShared.CreateHeader(
+    local label, _, search = UI_Transmog._PagedShared.CreateHeader(
         s.hunterPetFrame, "Hunter Pets", function(text)
             s.hunterPetSearchString = text
             s.hunterPetCurrentPage = 1
@@ -242,8 +238,8 @@ function UI_Transmog:InitializeHunterPets()
 
     s.hunterPetIgnoreButton = CreateFrame(
         "Button", nil, s.hunterPetFrame, "DisplayTypeButtonTemplate")
-    s.hunterPetIgnoreButton:SetPoint(
-        "TOPLEFT", s.hunterPetFrame, "TOPLEFT", 50, -130)
+    UI_Transmog._PagedShared.AnchorDisplayTypeButton(
+        s.hunterPetIgnoreButton, label)
     s.hunterPetIgnoreButton:SetText(L["Ignore Hunter Pet"])
     s.hunterPetIgnoreButton.IconFrame.Icon:SetTexture(132311)
     s.hunterPetIgnoreButton.IconFrame.Icon:SetDesaturated(true)

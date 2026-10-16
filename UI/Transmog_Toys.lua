@@ -7,7 +7,7 @@ local Fitter = ns.Fitter
 
 local PAGE_SIZE = 30
 local BUTTON_START_X = 30
-local BUTTON_START_Y = -120
+local BUTTON_START_Y = -103
 local BUTTON_GAP_X = 14
 local BUTTON_BOTTOM_PADDING = 65
 
@@ -305,7 +305,7 @@ function UI_Transmog:InitializeToyPaged()
 
     local add = CreateFrame("Button", nil, s.toyFrame, "UIPanelButtonTemplate")
     add:SetSize(130, 26)
-    add:SetPoint("TOPLEFT", s.toyFrame, "TOPLEFT", 50, -24)
+    UI_Transmog._PagedShared.AnchorTopLeftControl(add, s.toyFrame)
     add:SetText(L["Add Toy By ID"])
     add:SetScript("OnClick", ShowAddToyPopup)
     add:SetScript("OnEnter", function(self)

@@ -8,7 +8,7 @@ local Fitter = ns.Fitter
 local PAGE_SIZE = 30
 local DEFAULT_ID = 6948
 local BUTTON_START_X = 30
-local BUTTON_START_Y = -120
+local BUTTON_START_Y = -103
 local BUTTON_GAP_X = 14
 local BUTTON_BOTTOM_PADDING = 65
 
@@ -110,7 +110,8 @@ end
 
 local function SetupMacroButton()
     s.hearthstoneMacroButton = UI_Transmog._CreateMacroIconButton(s.hearthstoneFrame, 134414)
-    s.hearthstoneMacroButton:SetPoint("TOPLEFT", s.hearthstoneFrame, "TOPLEFT", 50, -25)
+    UI_Transmog._PagedShared.AnchorTopLeftControl(
+        s.hearthstoneMacroButton, s.hearthstoneFrame)
     local label = s.hearthstoneFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("LEFT", s.hearthstoneMacroButton, "RIGHT", 8, 0)
     label:SetText(L["Hearthstone Macro"])
