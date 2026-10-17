@@ -179,135 +179,70 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
     ScrollUtil.AddManagedScrollBarVisibilityBehavior(scrollBox, scrollBar)
     scrollBox:SetPanExtent(50)
 
-    -- ===== General =====
+    -- ===== Macros =====
 
-    MakeSectionHeader(content, "General", HEADER_X, -10)
+    MakeSectionHeader(content, "Macros", HEADER_X, -10)
     local cbRemoveMacro = MakeCheckbox(content, "RemoveMacroChangesOnUpdate",
         "Remove Macro Changes On Update",
         "When enabled, changes to this addon's macros will be cleared whenever"
         .. " the macro is updated for different outfits, zones, etc.",
         OPTION_X, -40)
 
-    local createOutfitUpdateRow = CreateFrame("Frame", nil, content)
-    createOutfitUpdateRow:SetPoint("TOPLEFT", content, "TOPLEFT", OPTION_X, -70)
-    createOutfitUpdateRow:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    createOutfitUpdateRow:SetHeight(26)
-
-    local createOutfitUpdateLabel = createOutfitUpdateRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    createOutfitUpdateLabel:SetPoint("LEFT", createOutfitUpdateRow, "LEFT", 0, 0)
-    createOutfitUpdateLabel:SetText(L["Create Outfit Update Macro"])
-
-    local createOutfitUpdateBtn = CreateFrame("Button", nil, createOutfitUpdateRow, "UIPanelButtonTemplate")
-    createOutfitUpdateBtn:SetSize(110, 22)
-    createOutfitUpdateBtn:SetPoint("RIGHT", createOutfitUpdateRow, "RIGHT", 0, 0)
-    createOutfitUpdateBtn:SetText(L["Create Macro"])
-    createOutfitUpdateBtn:SetScript("OnClick", function()
-        if ns.Macro and ns.Macro.EnsureOutfitUpdateMacro then
-            ns.Macro.EnsureOutfitUpdateMacro()
-        end
-    end)
-
-    local function ShowOutfitUpdateTip(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(L["Create Outfit Update Macro"], 1, 1, 1)
-        GameTooltip:AddLine(
-            "Create a macro that updates your outfit by applying toys and titles,"
-            .. " and summoning pets, based on your current outfit or zone you are in.",
-            1, 0.82, 0, true)
-        GameTooltip:Show()
-    end
-    createOutfitUpdateRow:SetScript("OnEnter", ShowOutfitUpdateTip)
-    createOutfitUpdateRow:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    createOutfitUpdateBtn:HookScript("OnEnter", ShowOutfitUpdateTip)
-    createOutfitUpdateBtn:HookScript("OnLeave", function() GameTooltip:Hide() end)
-
-    local createCharOutfitUpdateRow = CreateFrame("Frame", nil, content)
-    createCharOutfitUpdateRow:SetPoint("TOPLEFT", content, "TOPLEFT", OPTION_X, -100)
-    createCharOutfitUpdateRow:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    createCharOutfitUpdateRow:SetHeight(26)
-
-    local createCharOutfitUpdateLabel = createCharOutfitUpdateRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    createCharOutfitUpdateLabel:SetPoint("LEFT", createCharOutfitUpdateRow, "LEFT", 0, 0)
-    createCharOutfitUpdateLabel:SetText(L["Create Character Outfit Update Macro"])
-
-    local createCharOutfitUpdateBtn = CreateFrame("Button", nil, createCharOutfitUpdateRow, "UIPanelButtonTemplate")
-    createCharOutfitUpdateBtn:SetSize(110, 22)
-    createCharOutfitUpdateBtn:SetPoint("RIGHT", createCharOutfitUpdateRow, "RIGHT", 0, 0)
-    createCharOutfitUpdateBtn:SetText(L["Create Macro"])
-    createCharOutfitUpdateBtn:SetScript("OnClick", function()
-        if ns.Macro and ns.Macro.EnsureCharacterOutfitUpdateMacro then
-            ns.Macro.EnsureCharacterOutfitUpdateMacro()
-        end
-    end)
-
-    local function ShowCharMacroTip(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(L["Create Character Outfit Update Macro"], 1, 1, 1)
-        GameTooltip:AddLine(
-            "Creates a character-specific version of the outfit update macro in your"
-            .. " character macro list, allowing it to be used alongside an ability on"
-            .. " your action bar.",
-            1, 0.82, 0, true)
-        GameTooltip:AddLine(" ", 1, 1, 1)
-        GameTooltip:AddLine(
-            "It is suggested to disable |cffffd100Remove Macro Changes On Update|r before"
-            .. " adding abilities to this macro, to prevent them from being removed on updates.",
-            1, 0.82, 0, true)
-        GameTooltip:Show()
-    end
-    createCharOutfitUpdateRow:SetScript("OnEnter", ShowCharMacroTip)
-    createCharOutfitUpdateRow:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    createCharOutfitUpdateBtn:HookScript("OnEnter", ShowCharMacroTip)
-    createCharOutfitUpdateBtn:HookScript("OnLeave", function() GameTooltip:Hide() end)
+    -- Sections below the macro rows are parented here; it moves as macro rows
+    -- are shown or hidden.
+    local rest = CreateFrame("Frame", nil, content)
+    rest:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    rest:SetPoint("RIGHT", content, "RIGHT", 0, 0)
+    rest:SetHeight(1)
 
     -- ===== Mount Features =====
 
-    MakeSectionHeader(content, "Mounts", HEADER_X, -150)
-    local cbTooltipMount = MakeCheckbox(content, "ShowTooltipMount",
+    MakeSectionHeader(rest, "Mounts", HEADER_X, 0)
+    local cbTooltipMount = MakeCheckbox(rest, "ShowTooltipMount",
         "Show Tooltip in Mount Macro",
         "Include #showtooltip in the mount macro. Disabling this frees up space"
         .. " for custom macro text and/or toys in the mount macro.",
-        OPTION_X, -180, OnGroundMountModifierChanged)
-    local cbDruidMacro = MakeCheckbox(content, "UseDruidMacro",
+        OPTION_X, -30, OnGroundMountModifierChanged)
+    local cbDruidMacro = MakeCheckbox(rest, "UseDruidMacro",
         "Use Druid Macro",
-        "Replace the standard FitterMount on druid characters that intelligently"
+        "Replace the standard Outfit Mount macro on druid characters that intelligently"
         .. " transforms into flight form, cat form, aquatic form, or summons a mount"
         .. " while not moving.",
-        OPTION_X, -210, OnDruidMacroChanged)
-    local cbShamanMacro = MakeCheckbox(content, "UseShamanMacro",
+        OPTION_X, -60, OnDruidMacroChanged)
+    local cbShamanMacro = MakeCheckbox(rest, "UseShamanMacro",
         "Use Shaman Macro",
-        "Replace the standard FitterMount on shaman characters that casts Ghost Wolf"
+        "Replace the standard Outfit Mount macro on shaman characters that casts Ghost Wolf"
         .. " when not already in Ghost Wolf form, or summons a mount otherwise.",
-        OPTION_X, -240, OnDruidMacroChanged)
-    local cbMonkMacro = MakeCheckbox(content, "UseMonkMacro",
+        OPTION_X, -90, OnDruidMacroChanged)
+    local cbMonkMacro = MakeCheckbox(rest, "UseMonkMacro",
         "Use Monk Macro",
-        "Replace the standard FitterMount on monk characters that casts Zen Flight"
+        "Replace the standard Outfit Mount macro on monk characters that casts Zen Flight"
         .. " when not already in Zen Flight, or summons a mount otherwise.",
-        OPTION_X, -270, OnDruidMacroChanged)
-    local cbZoneSpecificMounts = MakeCheckbox(content, "UseZoneSpecificMounts",
+        OPTION_X, -120, OnDruidMacroChanged)
+    local cbZoneSpecificMounts = MakeCheckbox(rest, "UseZoneSpecificMounts",
         "Use Zone Specific Mounts",
         "Summon a special mount intended for the current zone when it is available"
         .. " to this character. Currently uses the G-99 Breakneck in Undermine.",
-        OPTION_X, -300, OnGroundMountModifierChanged)
-    local cbCopyTargetMount = MakeCheckbox(content, "CopyTargetMount",
+        OPTION_X, -150, OnGroundMountModifierChanged)
+    local cbCopyTargetMount = MakeCheckbox(rest, "CopyTargetMount",
         "Copy Target Player's Mount",
         "When targeting a mounted player whose mount you own, summon that mount"
         .. " instead. Otherwise, the regular mount selection is used.",
-        OPTION_X, -330)
+        OPTION_X, -180)
 
     -- ===== Hearthstone Features =====
 
-    MakeSectionHeader(content, "Hearthstones", HEADER_X, -382)
-    local cbTooltipHS = MakeCheckbox(content, "ShowTooltipHearthstone",
+    MakeSectionHeader(rest, "Hearthstones", HEADER_X, -232)
+    local cbTooltipHS = MakeCheckbox(rest, "ShowTooltipHearthstone",
         "Show Tooltip in Hearthstone Macro",
         "Include #showtooltip in the hearthstone macro. Disabling this frees up"
         .. " additional space for custom macro text.",
-        OPTION_X, -412, OnHearthstoneSettingChanged)
-    local cbAstralRecallFallback = MakeCheckbox(content, "AstralRecallFallback",
+        OPTION_X, -262, OnHearthstoneSettingChanged)
+    local cbAstralRecallFallback = MakeCheckbox(rest, "AstralRecallFallback",
         "Astral Recall Fallback",
         "On Shaman characters, use Astral Recall when the selected Hearthstone"
         .. " cannot be used because it is on cooldown.",
-        OPTION_X, -442, OnHearthstoneSettingChanged)
+        OPTION_X, -292, OnHearthstoneSettingChanged)
 
     local hearthstoneConditionDropdowns = {}
     local function GetHearthstoneConditionLabel(value)
@@ -323,9 +258,9 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
     end
     local function MakeHearthstoneConditionDropdown(modifier, y)
         local key = modifier .. "HearthstoneCondition"
-        local row = CreateFrame("Frame", nil, content)
-        row:SetPoint("TOPLEFT", content, "TOPLEFT", OPTION_X, y)
-        row:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+        local row = CreateFrame("Frame", nil, rest)
+        row:SetPoint("TOPLEFT", rest, "TOPLEFT", OPTION_X, y)
+        row:SetPoint("RIGHT", rest, "RIGHT", -10, 0)
         row:SetHeight(26)
 
         local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -385,9 +320,9 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         dropdown:OverrideText(GetHearthstoneConditionLabel(FitterSaved[key]))
         hearthstoneConditionDropdowns[key] = dropdown
     end
-    MakeHearthstoneConditionDropdown("Shift", -472)
-    MakeHearthstoneConditionDropdown("Ctrl", -502)
-    MakeHearthstoneConditionDropdown("Alt", -532)
+    MakeHearthstoneConditionDropdown("Shift", -322)
+    MakeHearthstoneConditionDropdown("Ctrl", -352)
+    MakeHearthstoneConditionDropdown("Alt", -382)
 
     StaticPopupDialogs.FITTER_RESET_DEFAULT_HEARTHSTONES = {
         text = L["Reset outfits that have only the default Hearthstone selected?\n\nThis applies now to this character and when each other character on the account next logs in."],
@@ -404,10 +339,10 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         preferredIndex = 3,
     }
 
-    local resetDefaultHearthstonesRow = CreateFrame("Frame", nil, content)
+    local resetDefaultHearthstonesRow = CreateFrame("Frame", nil, rest)
     resetDefaultHearthstonesRow:SetPoint(
-        "TOPLEFT", content, "TOPLEFT", OPTION_X, -562)
-    resetDefaultHearthstonesRow:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+        "TOPLEFT", rest, "TOPLEFT", OPTION_X, -412)
+    resetDefaultHearthstonesRow:SetPoint("RIGHT", rest, "RIGHT", -10, 0)
     resetDefaultHearthstonesRow:SetHeight(26)
 
     local resetDefaultHearthstonesLabel =
@@ -429,35 +364,35 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Pet Features =====
 
-    MakeSectionHeader(content, "Pets", HEADER_X, -612)
-    local cbDismissPetOnStealth = MakeCheckbox(content, "DismissPetOnStealth",
+    MakeSectionHeader(rest, "Pets", HEADER_X, -462)
+    local cbDismissPetOnStealth = MakeCheckbox(rest, "DismissPetOnStealth",
         "Dismiss Pet On Stealth",
         "When enabled, dismiss the currently summoned battle pet when your character"
         .. " becomes stealthed.",
-        OPTION_X, -642)
-    local cbDismissPetInInstancesWhileGrouped = MakeCheckbox(content, "DismissPetInInstancesWhileGrouped",
+        OPTION_X, -492)
+    local cbDismissPetInInstancesWhileGrouped = MakeCheckbox(rest, "DismissPetInInstancesWhileGrouped",
         "Dismiss Pet In Instances While Grouped",
         "When enabled, dismiss the currently summoned battle pet in any instance while"
         .. " you are in a party or raid, and prevent Fitter from summoning one there.",
-        OPTION_X, -672, OnPetSettingChanged)
+        OPTION_X, -522, OnPetSettingChanged)
 
     -- ===== Hunter Pet Features =====
 
-    MakeSectionHeader(content, "Hunter Pets", HEADER_X, -722)
-    local cbReviveHunterPet = MakeCheckbox(content, "ReviveHunterPet",
+    MakeSectionHeader(rest, "Hunter Pets", HEADER_X, -572)
+    local cbReviveHunterPet = MakeCheckbox(rest, "ReviveHunterPet",
         "Revive Pet",
         "When enabled, Fitter attempts to revive a dead hunter pet before continuing."
         .. " When disabled, Fitter only attempts to summon the selected hunter pet."
         .. " If the pet's corpse has despawned, it must be resurrected manually"
         .. " regardless of whether this setting is enabled.",
-        OPTION_X, -752, OnHunterPetSettingChanged)
+        OPTION_X, -602, OnHunterPetSettingChanged)
 
     -- ===== Emote Features =====
 
-    MakeSectionHeader(content, "Emotes", HEADER_X, -802)
-    local emoteCooldownRow = CreateFrame("Frame", nil, content)
-    emoteCooldownRow:SetPoint("TOPLEFT", content, "TOPLEFT", OPTION_X, -832)
-    emoteCooldownRow:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    MakeSectionHeader(rest, "Emotes", HEADER_X, -652)
+    local emoteCooldownRow = CreateFrame("Frame", nil, rest)
+    emoteCooldownRow:SetPoint("TOPLEFT", rest, "TOPLEFT", OPTION_X, -682)
+    emoteCooldownRow:SetPoint("RIGHT", rest, "RIGHT", -10, 0)
     emoteCooldownRow:SetHeight(36)
 
     local emoteCooldownLabel =
@@ -496,27 +431,27 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Toy Features =====
 
-    MakeSectionHeader(content, "Cosmetic Toys", HEADER_X, -892)
-    local cbCancelToys = MakeCheckbox(content, "CancelNonOutfitToys",
+    MakeSectionHeader(rest, "Cosmetic Toys", HEADER_X, -742)
+    local cbCancelToys = MakeCheckbox(rest, "CancelNonOutfitToys",
         "Cancel Non-Outfit Cosmetic Toys",
         "When switching outfits, automatically cancel any active toys from the"
         .. " previous outfit that are not also selected by the new outfit.",
-        OPTION_X, -922)
-    local cbApplyToy = MakeCheckbox(content, "ApplyToyOnSelect",
+        OPTION_X, -772)
+    local cbApplyToy = MakeCheckbox(rest, "ApplyToyOnSelect",
         "Apply Toy On Select",
         "When selecting or deselecting a toy while the outfit is currently active,"
         .. " immediately activate or cancel the toy.",
-        OPTION_X, -952)
+        OPTION_X, -802)
 
     -- ===== Zone Features =====
 
-    MakeSectionHeader(content, "Zones", HEADER_X, -1002)
-    local cbAutoEnable = MakeCheckbox(content, "AutoEnableZoneSituations",
+    MakeSectionHeader(rest, "Zones", HEADER_X, -852)
+    local cbAutoEnable = MakeCheckbox(rest, "AutoEnableZoneSituations",
         "Auto Enable Zone Situations",
         "When enabled, associating zones with an outfit will automatically enable their"
         .. " respective Location situations: Rest for cities and World for others.",
-        OPTION_X, -1032)
-    local cbAutoDisable = MakeCheckbox(content, "AutoDisableZoneSituations",
+        OPTION_X, -882)
+    local cbAutoDisable = MakeCheckbox(rest, "AutoDisableZoneSituations",
         "Auto Disable Zone Situations",
         {
             {"Requires Auto Enable Zone Situations enabled.", 0.4, 0.8, 1, true},
@@ -525,7 +460,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
             .. " others. Only situations that were enabled by Fitter are disabled, determined"
             .. " by the situation state captured before auto-enabling.", 1, 0.82, 0, true},
         },
-        OPTION_X, -1062)
+        OPTION_X, -912)
 
     cbAutoEnable:HookScript("OnClick", function(self)
         if not self:GetChecked() and FitterSaved then
@@ -547,10 +482,12 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Account Wide (below Zone Features) =====
 
-    local AW_Y_START = 1120
+    local AW_Y_START = 970
+    local restOffset, awHeight = 0, 218
 
-    local function UpdateContentHeight(awHeight)
-        local h = AW_Y_START + awHeight
+    local function UpdateContentHeight(newAwHeight)
+        awHeight = newAwHeight or awHeight
+        local h = restOffset + AW_Y_START + awHeight
         content:SetHeight(h)
         scrollChild:SetSize(580, h)
         scrollBox:FullUpdate(ScrollBoxConstants.UpdateImmediately)
@@ -558,10 +495,16 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     local awRefreshFn
     pcall(function()
-        awRefreshFn = UI_Options:InitializeAccountWide(content, HEADER_X, AW_Y_START, UpdateContentHeight)
+        awRefreshFn = UI_Options:InitializeAccountWide(rest, HEADER_X, AW_Y_START, UpdateContentHeight)
     end)
 
-    UpdateContentHeight(218)  -- initial: header, conditional rows and three checkboxes
+    local refreshMacroRows = UI_Options:InitializeMacros(content, OPTION_X, 70,
+        function(lowestRowY)
+            restOffset = lowestRowY + 50
+            rest:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -restOffset)
+            UpdateContentHeight()
+        end)
+    refreshMacroRows()
 
     -- ===== SYNC =====
 
@@ -594,6 +537,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
             cbAutoDisable:Disable()
         end
         if awRefreshFn then awRefreshFn() end
+        refreshMacroRows()
     end
 
     optionsFrame.OnRefresh = SyncAll

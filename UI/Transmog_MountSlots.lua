@@ -495,6 +495,7 @@ function UI_Transmog:InitializeMountIcons()
 
     local function MakePagedSelectSlot(pagedFrame, showFn)
         return function(_, slotFrame, forceRefresh)
+            s.selectedFitterCategory = slotFrame.fitterCategory
 
             charPreview:UpdateSlot(slotFrame.slotData, forceRefresh)
 
@@ -748,6 +749,14 @@ function UI_Transmog:InitializeMountIcons()
 
         local function SelectHeadSlotAfterOpen(attempt)
             if not TransmogFrame:IsShown() then return end
+            if UI_Transmog:IsOffVendor() then
+                local slotFrame = s.flyingSlotFrame or s.groundSlotFrame
+                if slotFrame and slotFrame.isFitterMountSlot then
+                    s.selectHeadOnNextTransmogOpen = nil
+                    slotFrame:Click("LeftButton")
+                    return
+                end
+            end
             for slotFrame in IterateActiveSlots() do
                 local location = slotFrame.slotData
                     and slotFrame.slotData.transmogLocation
@@ -771,7 +780,27 @@ function UI_Transmog:InitializeMountIcons()
         TransmogFrame:HookScript("OnHide", function()
             UI_Transmog:ClearMountPreview()
             s.selectHeadOnNextTransmogOpen = true
+            s.selectedFitterCategory = nil
         end)
+
+        -- C_Timer rather than ScheduleTimer: the Blizzard reselect this
+        -- follows cancels UI timers via the SetTab/SelectSlot hooks.
+        local function ReselectFitterSlot()
+            local category = s.selectedFitterCategory
+            if not category then return end
+            C_Timer.After(0, function()
+                if not TransmogFrame:IsShown() then return end
+                local selected = charPreview:GetSelectedSlotData()
+                if selected and selected.isFitterMountSlot then return end
+                for slotFrame in IterateActiveSlots() do
+                    if slotFrame.isFitterMountSlot
+                        and slotFrame.fitterCategory == category then
+                        slotFrame:OnSelect()
+                        return
+                    end
+                end
+            end)
+        end
 
         TransmogFrame:HookScript("OnShow", function()
             if s.selectHeadOnNextTransmogOpen then
@@ -782,10 +811,21 @@ function UI_Transmog:InitializeMountIcons()
         end)
 
         hooksecurefunc(charPreview, "SetupSlots", function()
+            -- Fitter slots share the ranged slot's location, so a Fitter
+            -- selection can survive SetupSlots where a ranged slot exists
+            -- (e.g. WoW Forever). Blizzard's RefreshSelectedSlot would then
+            -- route it through TransmogFrame:SelectSlot, which errors on
+            -- Fitter locations.
+            local selected = charPreview:GetSelectedSlotData()
+            if selected and selected.isFitterMountSlot then
+                charPreview:SetSelectedSlotData(nil)
+            end
+
             RebuildMountSlots()
 
             PatchForeignCustomSlots()
             PatchStandardSlotPreviews()
+            ReselectFitterSlot()
         end)
 
         if TransmogSlotMixin then

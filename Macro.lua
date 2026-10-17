@@ -4,15 +4,71 @@ local Macro = {}
 ns.Macro = Macro
 
 -- Constants (exposed for sub-modules)
-Macro.MOUNT_MACRO_NAME = "FitterMount"
+Macro.MOUNT_MACRO_NAME = "Outfit Mount"
 Macro.MOUNT_MACRO_ICON = 1769015
-Macro.HEARTHSTONE_MACRO_NAME = "FitterHearthstone"
+Macro.HEARTHSTONE_MACRO_NAME = "Outfit Hearth"
 Macro.HEARTHSTONE_MACRO_ICON = 134414
 Macro.DEFAULT_HEARTHSTONE_ITEM_ID = 6948
 Macro.MAX_ACCOUNT_MACROS = 120
 Macro.MAX_CHARACTER_MACROS = 18
-Macro.OUTFIT_UPDATE_MACRO_NAME = "Fitter Update"
+Macro.OUTFIT_UPDATE_MACRO_NAME = "Outfit Update"
 Macro.OUTFIT_UPDATE_MACRO_ICON = 4624566
+Macro.OUTFIT_SETTINGS_MACRO_NAME = "Outfit Window"
+Macro.OUTFIT_SETTINGS_MACRO_ICON = 1602705
+
+-- Macro names used through 2.5.2.
+local LEGACY_MACRO_NAMES = {
+    ["FitterMount"] = Macro.MOUNT_MACRO_NAME,
+    ["FitterHearthstone"] = Macro.HEARTHSTONE_MACRO_NAME,
+    ["Fitter Update"] = Macro.OUTFIT_UPDATE_MACRO_NAME,
+}
+
+local function MacroNameExistsInRange(name, first, last)
+    for i = first, last do
+        if GetMacroInfo(i) == name then return true end
+    end
+    return false
+end
+
+-- scope: "account", "character", or nil for either.
+function Macro.Exists(name, scope)
+    local numAccount, numCharacter = GetNumMacros()
+    if scope ~= "character" and MacroNameExistsInRange(name, 1, numAccount) then
+        return true
+    end
+    return scope ~= "account" and MacroNameExistsInRange(name,
+        Macro.MAX_ACCOUNT_MACROS + 1, Macro.MAX_ACCOUNT_MACROS + numCharacter)
+end
+
+-- Renames legacy macros in place so action bar placement and player edits
+-- carry over. Renaming re-sorts the macro list, so the scan restarts after
+-- each rename. A legacy macro is left alone if its scope (account or
+-- character) already has one with the new name.
+function Macro.MigrateLegacyNames()
+    if Macro.legacyNamesMigrated or InCombatLockdown() then return end
+    local renamed
+    repeat
+        renamed = false
+        local numAccount, numCharacter = GetNumMacros()
+        local ranges = {
+            { 1, numAccount },
+            { Macro.MAX_ACCOUNT_MACROS + 1, Macro.MAX_ACCOUNT_MACROS + numCharacter },
+        }
+        for _, range in ipairs(ranges) do
+            for i = range[1], range[2] do
+                local name, icon, body = GetMacroInfo(i)
+                local newName = name and LEGACY_MACRO_NAMES[name]
+                if newName and not MacroNameExistsInRange(newName, range[1], range[2]) then
+                    EditMacro(i, newName, icon, body)
+                    renamed = true
+                    break
+                end
+            end
+            if renamed then break end
+        end
+    until not renamed
+    Macro.legacyNamesMigrated = true
+end
 
 local CAT_FORM_SPELL_ID = 768
 local TRAVEL_FORM_SPELL_ID = 783
@@ -238,14 +294,31 @@ function Macro.UpdateForCurrentState()
         if ns.MarkMacroRefreshPending then ns.MarkMacroRefreshPending() end
         return
     end
+    Macro.MigrateLegacyNames()
     ns.state.nextMountToSummon = ns.Mount.SelectNext(false, ns.state.currentZoneOutfitID)
     Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
     Macro.UpdateOutfitUpdateMacro()
 end
 
+-- Returns the macro index, creating the macro if needed; nil when it cannot
+-- be created.
+function Macro.EnsureOutfitSettings()
+    Macro.MigrateLegacyNames()
+    local index = GetMacroIndexByName(Macro.OUTFIT_SETTINGS_MACRO_NAME)
+    if index and index > 0 then return index end
+    if InCombatLockdown() or GetNumMacros() >= Macro.MAX_ACCOUNT_MACROS then
+        return nil
+    end
+    CreateMacro(Macro.OUTFIT_SETTINGS_MACRO_NAME,
+        Macro.OUTFIT_SETTINGS_MACRO_ICON, "/run FitO()", nil)
+    index = GetMacroIndexByName(Macro.OUTFIT_SETTINGS_MACRO_NAME)
+    return index and index > 0 and index or nil
+end
+
 function Macro.RebuildForCurrentCharacter()
     if InCombatLockdown() then return end
 
+    Macro.MigrateLegacyNames()
     Macro.rebuildForCharacter = true
     Macro.UpdateHearthstone()
     Macro.UpdateForCurrentState()

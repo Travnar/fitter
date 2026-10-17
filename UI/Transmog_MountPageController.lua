@@ -8,56 +8,6 @@ local MOUNT_EXPANSIONS = ns.Constants.MOUNT_EXPANSIONS
 
 local PAGE_SIZE = 20
 
-local function EnsureMountMacro()
-    local name = "FitterMount"
-    local index = GetMacroIndexByName(name)
-    if index and index > 0 then return index end
-    if select(1, GetNumMacros()) >= 120 then return nil end
-    local body
-    if ns.Macro.IsDruidMacroEnabled() then
-        body = ns.Macro.GetDruidMacroBody()
-    elseif ns.Macro.IsShamanMacroEnabled() then
-        body = ns.Macro.GetShamanMacroBody()
-    elseif ns.Macro.IsMonkMacroEnabled() then
-        body = ns.Macro.GetMonkMacroBody()
-    else
-        body = "/run FitterMount()"
-    end
-    CreateMacro(name, 1769015, body, nil)
-    index = GetMacroIndexByName(name)
-    return index and index > 0 and index or nil
-end
-
-local function SetupMacroButton(frame)
-    local button = UI_Transmog._CreateMacroIconButton(frame, 1769015)
-    UI_Transmog._PagedShared.AnchorTopLeftControl(button, frame)
-    local label = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    label:SetPoint("LEFT", button, "RIGHT", 8, 0)
-    label:SetText(L["Mount Macro"])
-    label:SetTextColor(1, .82, 0, 1)
-    local function Pickup()
-        local index = EnsureMountMacro()
-        if index then PickupMacro(index) end
-    end
-    button:SetScript("OnDragStart", Pickup)
-    button:SetScript("OnClick", Pickup)
-    button:HookScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(L["Mount Macro"], 1, 1, 1)
-        local macroIndex = GetMacroIndexByName("FitterMount")
-        if (not macroIndex or macroIndex == 0)
-            and select(1, GetNumMacros()) >= 120 then
-            GameTooltip:AddLine(
-                "Cannot create macro: all 120 account macro slots are full.",
-                1, .3, .3, true)
-        else
-            GameTooltip:AddLine(
-                L["Drag or click to pick up the macro."], 1, .82, 0, true)
-        end
-        GameTooltip:Show()
-    end)
-end
-
 local function CreateEntry(controller, index)
     local frameParent = controller:State("Frame")
     local shared = UI_Transmog._PagedShared
@@ -300,7 +250,6 @@ function Controller:Initialize()
     end)
     random:HookScript("OnLeave", function() GameTooltip:Hide() end)
     self:State("RandomButton", random)
-    SetupMacroButton(frame)
 
     self:State("ModelFrames", {})
     for index = 1, PAGE_SIZE do CreateEntry(self, index) end

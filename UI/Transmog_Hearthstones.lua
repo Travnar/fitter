@@ -108,31 +108,7 @@ function UI_Transmog:PopulateHearthstoneList()
     return items, retry
 end
 
-local function SetupMacroButton()
-    s.hearthstoneMacroButton = UI_Transmog._CreateMacroIconButton(s.hearthstoneFrame, 134414)
-    UI_Transmog._PagedShared.AnchorTopLeftControl(
-        s.hearthstoneMacroButton, s.hearthstoneFrame)
-    local label = s.hearthstoneFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    label:SetPoint("LEFT", s.hearthstoneMacroButton, "RIGHT", 8, 0)
-    label:SetText(L["Hearthstone Macro"])
-    label:SetTextColor(1, .82, 0, 1)
-    local function Pickup()
-        Fitter:EnsureHearthstoneMacro()
-        local index = GetMacroIndexByName("FitterHearthstone")
-        if index and index > 0 then PickupMacro(index) end
-    end
-    s.hearthstoneMacroButton:SetScript("OnDragStart", Pickup)
-    s.hearthstoneMacroButton:SetScript("OnClick", Pickup)
-    s.hearthstoneMacroButton:HookScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(L["Hearthstone Macro"], 1, 1, 1)
-        GameTooltip:AddLine(L["Drag or click to pick up the macro."], 1, .82, 0, true)
-        GameTooltip:Show()
-    end)
-end
-
 function UI_Transmog:InitializeHearthstonePaged()
-    SetupMacroButton()
     local _, _, search = UI_Transmog._PagedShared.CreateHeader(s.hearthstoneFrame, L["Hearthstones"], function(text)
         s.hearthstoneSearchString = text
         UI_Transmog:RefreshHearthstoneList()

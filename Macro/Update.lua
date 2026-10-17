@@ -112,8 +112,8 @@ end
 
 function Macro.EnsureOutfitUpdateMacro()
     if InCombatLockdown() then return end
-    local index = GetMacroIndexByName(Macro.OUTFIT_UPDATE_MACRO_NAME)
-    if index and index ~= 0 then
+    Macro.MigrateLegacyNames()
+    if Macro.Exists(Macro.OUTFIT_UPDATE_MACRO_NAME, "account") then
         Macro.UpdateOutfitUpdateMacro()
         return
     end
@@ -135,6 +135,7 @@ end
 
 function Macro.EnsureCharacterOutfitUpdateMacro()
     if InCombatLockdown() then return end
+    Macro.MigrateLegacyNames()
     -- Check only character macro slots (account macros occupy 1–MAX_ACCOUNT_MACROS)
     local _, numChar = GetNumMacros()
     for i = Macro.MAX_ACCOUNT_MACROS + 1, Macro.MAX_ACCOUNT_MACROS + numChar do

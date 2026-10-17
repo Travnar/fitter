@@ -544,6 +544,7 @@ function UI_Transmog:Initialize()
     
 
     hooksecurefunc(TransmogFrame, "SelectSlot", function()
+        s.selectedFitterCategory = nil
         UI_Transmog:HideTransientPopups()
 
         local wc = TransmogFrame.WardrobeCollection
@@ -569,6 +570,7 @@ function UI_Transmog:Initialize()
     UI_Transmog:InitializeViewWithoutTransmogToggle()
     
     self:InitializeMountIcons()
+    self:InitializeOffVendorMode()
 
     if self.CacheViewedZoneSituations then
         self:CacheViewedZoneSituations()
@@ -630,36 +632,6 @@ function UI_Transmog:RefreshFeatureVisibility()
             tabButton:Show()
         end
     end
-end
-
-local macroIconButtonCount = 0
-function UI_Transmog._CreateMacroIconButton(parent, iconFileID)
-    macroIconButtonCount = macroIconButtonCount + 1
-    local btn = CreateFrame("Button", "FitterMacroIconButton" .. macroIconButtonCount, parent)
-    btn:SetSize(37, 37)
-    btn:RegisterForDrag("LeftButton")
-    btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-
-    local icon = btn:CreateTexture(nil, "BACKGROUND")
-    icon:SetPoint("TOPLEFT", 3, -3)
-    icon:SetPoint("BOTTOMRIGHT", -3, 3)
-    icon:SetTexture(iconFileID)
-    icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-    btn.icon = icon
-
-    local border = btn:CreateTexture(nil, "OVERLAY")
-    border:SetTexture("Interface\\Buttons\\UI-Quickslot2")
-    border:SetTexCoord(0.2, 0.8, 0.2, 0.8)
-    border:SetAllPoints(btn)
-    btn.border = border
-
-    btn:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
-    btn:SetPushedTexture("Interface\\Buttons\\UI-Quickslot-Depress")
-
-    btn:SetScript("OnLeave", function(self)
-        GameTooltip:Hide()
-    end)
-    return btn
 end
 
 function UI_Transmog:RefreshActiveMountMacro(preferredMountID)

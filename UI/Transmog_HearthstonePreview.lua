@@ -4,18 +4,22 @@ local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
 
 local PREVIEW_DURATION = 10
+-- The first preview in a session can take several seconds to load the
+-- player's gear or query a transform creature; shorter limits silently
+-- dropped the preview.
+local LOAD_TIMEOUT = 10
+local POLL_INTERVAL = .05
 
 -- A nil request is never superseded. It is used to restore the player's
 -- outfit, which must finish even when a newer preview cancels the "preview"
 -- timers.
 local function WhenActorLoaded(actor, request, callback)
-    local attempts = 0
+    local deadline = GetTime() + LOAD_TIMEOUT
     local function Check()
         if request and request ~= s.hearthstonePreviewRequest then return end
-        attempts = attempts + 1
         if actor.IsLoaded and not actor:IsLoaded() then
-            if attempts < 40 then
-                UI_Transmog:ScheduleTimer(.05, Check,
+            if GetTime() < deadline then
+                UI_Transmog:ScheduleTimer(POLL_INTERVAL, Check,
                     request and "preview" or "hearthstone-restore")
             end
             return
@@ -279,7 +283,7 @@ local function ResolveCreatureDisplayID(creatureID, request, callback)
     end
     creatureModel:Show()
     pcall(creatureModel.SetCreature, creatureModel, creatureID)
-    local attempts = 0
+    local deadline = GetTime() + LOAD_TIMEOUT
     local function Check()
         if request ~= s.hearthstonePreviewRequest then
             creatureModel:Hide()
@@ -292,9 +296,8 @@ local function ResolveCreatureDisplayID(creatureID, request, callback)
             callback(displayID)
             return
         end
-        attempts = attempts + 1
-        if attempts < 60 then
-            UI_Transmog:ScheduleTimer(.05, Check, "preview")
+        if GetTime() < deadline then
+            UI_Transmog:ScheduleTimer(POLL_INTERVAL, Check, "preview")
         else
             creatureModel:Hide()
             callback(nil)

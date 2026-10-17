@@ -235,3 +235,27 @@ function Macro.UpdateMacroForMount(mountID, outfitIDOverride)
     end
     ns.Mount.MonitorSoarCooldown()
 end
+
+-- Returns the macro index, creating the macro if needed; nil when it cannot
+-- be created.
+function Macro.EnsureMount()
+    Macro.MigrateLegacyNames()
+    local index = GetMacroIndexByName(Macro.MOUNT_MACRO_NAME)
+    if index and index > 0 then return index end
+    if InCombatLockdown() or GetNumMacros() >= Macro.MAX_ACCOUNT_MACROS then
+        return nil
+    end
+    local body
+    if Macro.IsDruidMacroEnabled() then
+        body = Macro.GetDruidMacroBody()
+    elseif Macro.IsShamanMacroEnabled() then
+        body = Macro.GetShamanMacroBody()
+    elseif Macro.IsMonkMacroEnabled() then
+        body = Macro.GetMonkMacroBody()
+    else
+        body = "/run FitterMount()"
+    end
+    CreateMacro(Macro.MOUNT_MACRO_NAME, Macro.MOUNT_MACRO_ICON, body, nil)
+    index = GetMacroIndexByName(Macro.MOUNT_MACRO_NAME)
+    return index and index > 0 and index or nil
+end

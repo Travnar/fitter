@@ -84,7 +84,7 @@ local function CaptureBaselineIfNeeded(outfitID, situation, categoryData)
 end
 
 function UI_Transmog:UpdateZoneSituation(mapID, enable)
-    if not FitterSaved then return end
+    if not FitterSaved or self:IsOffVendor() then return end
     if not C_TransmogOutfitInfo or not C_TransmogOutfitInfo.GetUISituationCategoriesAndOptions then return end
 
     if enable then
@@ -364,7 +364,7 @@ function UI_Transmog:ApplyBiomeSelection(biomeKey)
     end
 
     if added and FitterSaved and FitterSaved.AutoEnableZoneSituations
-        and C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetUISituationCategoriesAndOptions then
+        and not self:IsOffVendor() and C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetUISituationCategoriesAndOptions then
         local currentOutfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
         -- Fetch category data BEFORE enabling to get accurate baseline state
         local categoryData = C_TransmogOutfitInfo.GetUISituationCategoriesAndOptions()

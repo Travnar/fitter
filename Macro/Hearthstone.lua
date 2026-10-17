@@ -181,6 +181,7 @@ end
 
 function Macro.UpdateHearthstone()
     if InCombatLockdown() then return end
+    Macro.MigrateLegacyNames()
 
     local index = GetMacroIndexByName(Macro.HEARTHSTONE_MACRO_NAME)
     local rawBody, icon = ResolveHearthstoneMacro()
@@ -202,6 +203,7 @@ end
 
 function Macro.EnsureHearthstone()
     if InCombatLockdown() then return end
+    Macro.MigrateLegacyNames()
 
     local index = GetMacroIndexByName(Macro.HEARTHSTONE_MACRO_NAME)
     if index ~= 0 then
