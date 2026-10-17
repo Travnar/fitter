@@ -8,6 +8,9 @@
 ## SavedVariablesPerCharacter: FitterCharacterSaved
 ## LoadSavedVariablesFirst: 1
 ## IconTexture: Interface\AddOns\Fitter\FitterIcon
+## AddonCompartmentFunc: FitterOutfitSettings
+## AddonCompartmentFuncOnEnter: FitterCompartment_OnEnter
+## AddonCompartmentFuncOnLeave: FitterCompartment_OnLeave
 
 # Client detection (retail vs. World of Warcraft Forever); loaded first.
 Flavor.lua

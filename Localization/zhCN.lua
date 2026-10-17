@@ -167,6 +167,8 @@ local translations = {
     ["Outfit Window Macro"] = "套装窗口宏",
     ["Character Outfit Update Macro"] = "角色套装更新宏",
     ["Displays the transmog window without gear slots to adjust Fitter outfit configurations."] = "显示不含装备栏位的幻化窗口，用于调整 Fitter 套装配置。",
+    ["Open Outfit Window"] = "打开套装窗口",
+    ["Click to open the outfit window."] = "点击打开套装窗口。",
 }
 
 for key, value in pairs(translations) do

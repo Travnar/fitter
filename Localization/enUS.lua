@@ -113,6 +113,8 @@ local strings = {
     "Outfit Window Macro",
     "Character Outfit Update Macro",
     "Displays the transmog window without gear slots to adjust Fitter outfit configurations.",
+    "Open Outfit Window",
+    "Click to open the outfit window.",
 }
 
 for _, text in ipairs(strings) do

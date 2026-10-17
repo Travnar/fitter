@@ -144,6 +144,17 @@ end
 _G.FitterOutfitSettings = ToggleOutfitSettings
 _G.FitO = ToggleOutfitSettings
 
+function FitterCompartment_OnEnter(_, menuButtonFrame)
+    GameTooltip:SetOwner(menuButtonFrame, "ANCHOR_LEFT")
+    GameTooltip:SetText("Fitter", 1, 1, 1)
+    GameTooltip:AddLine(L["Click to open the outfit window."], 1, 0.82, 0, true)
+    GameTooltip:Show()
+end
+
+function FitterCompartment_OnLeave()
+    GameTooltip:Hide()
+end
+
 hooksecurefunc(GameTooltip, "SetAction", function(tooltip, slot)
     local actionType, id = GetActionInfo(slot)
     if actionType ~= "macro" or not id then return end

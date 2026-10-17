@@ -248,6 +248,8 @@ local translations = {
     ["Outfit Window Macro"] = "Макрос окна комплектов",
     ["Character Outfit Update Macro"] = "Макрос обновления комплекта персонажа",
     ["Displays the transmog window without gear slots to adjust Fitter outfit configurations."] = "Показывает окно трансмогрификации без ячеек снаряжения для настройки параметров Fitter для комплектов.",
+    ["Open Outfit Window"] = "Открыть окно комплектов",
+    ["Click to open the outfit window."] = "Нажмите, чтобы открыть окно комплектов.",
 }
 
 for key, value in pairs(translations) do
