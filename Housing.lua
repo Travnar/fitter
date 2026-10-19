@@ -84,18 +84,25 @@ function Housing.GetConditions()
     return result
 end
 
--- Do not request the house list during login. The Housing Dashboard listens to
--- the same event and caches its result before its content pane exists; priming
--- that cache early can prevent the pane from receiving its initial update.
--- Blizzard requests the list when the dashboard is shown, so observe that
--- result passively and configure Fitter's buttons from it.
+-- The Housing Dashboard's house dropdown listens to PLAYER_HOUSE_LIST_UPDATED
+-- from its OnLoad and caches the list before its content pane exists; priming
+-- that cache can leave the pane blank when the dashboard is opened. Request the
+-- list once on the first world entry, and only while the dashboard is not yet
+-- loaded so nothing of Blizzard's is listening. Otherwise observe passively.
 local EventFrame = CreateFrame("Frame")
+EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 EventFrame:RegisterEvent("PLAYER_HOUSE_LIST_UPDATED")
 EventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-EventFrame:SetScript("OnEvent", function(_, event, houseInfoList)
+EventFrame:SetScript("OnEvent", function(self, event, houseInfoList)
     if event == "PLAYER_HOUSE_LIST_UPDATED" then
         ConfigureButtons(houseInfoList)
     elseif event == "PLAYER_REGEN_ENABLED" then
         if pendingHouseInfo then ConfigureButtons(pendingHouseInfo) end
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+        if C_Housing and C_Housing.GetPlayerOwnedHouses
+            and not C_AddOns.IsAddOnLoaded("Blizzard_HousingDashboard") then
+            C_Housing.GetPlayerOwnedHouses()
+        end
     end
 end)
