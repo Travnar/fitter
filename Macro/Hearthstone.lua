@@ -42,6 +42,15 @@ local function GetDefaultBody(showTooltip)
     return (showTooltip and "#showtooltip\n" or "") .. "/use " .. action
 end
 
+function Macro.IsHearthstoneRaceEligible(entry)
+    if not entry or not entry.races then return true end
+    for _, raceID in ipairs(entry.races) do
+        local info = C_CreatureInfo.GetRaceInfo(raceID)
+        if info and info.clientFileString == ns.state.playerRace then return true end
+    end
+    return false
+end
+
 local function HasDefaultHearthstone()
     return C_Item.GetItemCount(Macro.DEFAULT_HEARTHSTONE_ITEM_ID, false, false, false) > 0
 end
@@ -53,7 +62,7 @@ local function GetRandomAvailableHearthstone()
     end
     for _, entry in ipairs(ns.Constants.KNOWN_HEARTHSTONES) do
         if not entry.baseItem
-            and (not entry.race or entry.race == ns.state.playerRace)
+            and Macro.IsHearthstoneRaceEligible(entry)
             and PlayerHasToy(entry.id) then
             available[#available + 1] = entry.id
         end

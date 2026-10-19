@@ -66,7 +66,7 @@ function UI_Transmog:PopulateHearthstoneList()
         selected[itemID] = true
     end
     for _, entry in ipairs(ns.Constants.KNOWN_HEARTHSTONES) do
-        local eligible = not entry.race or entry.race == ns.state.playerRace
+        local eligible = ns.Macro.IsHearthstoneRaceEligible(entry)
         local owned = entry.baseItem or PlayerHasToy(entry.id)
         local name, icon
         if entry.baseItem then
@@ -75,8 +75,9 @@ function UI_Transmog:PopulateHearthstoneList()
         else
             _, name, icon = C_ToyBox.GetToyInfo(entry.id)
         end
-        if name and icon then
-            if (owned and eligible or s.hearthstoneShowNotCollected)
+        -- Racial Hearthstones are hidden from other races.
+        if eligible and name and icon then
+            if (owned or s.hearthstoneShowNotCollected)
                 and (not s.hearthstoneCheckedOnly or selected[entry.id])
                 and (s.hearthstoneSearchString == ""
                 or name:lower():find(s.hearthstoneSearchString, 1, true)) then
@@ -85,8 +86,7 @@ function UI_Transmog:PopulateHearthstoneList()
                     name = name,
                     icon = icon,
                     baseItem = entry.baseItem,
-                    isCollected = owned == true and eligible,
-                    requiredRace = entry.race,
+                    isCollected = owned == true,
                     -- Mapped visual kits contain their own SpellVisualAnim.
                     -- previewAnimationID is only a fallback for unmapped spells.
                     previewAnimationID = entry.previewAnimationID,
@@ -98,7 +98,7 @@ function UI_Transmog:PopulateHearthstoneList()
                     previewEffectModels = entry.previewEffectModels,
                 }
             end
-        else
+        elseif eligible then
             C_Item.RequestLoadItemDataByID(entry.id)
             retry = true
         end
@@ -233,11 +233,6 @@ function UI_Transmog:InitializeHearthstonePaged()
                 GameTooltip:AddLine(
                     "You have not collected this Hearthstone.",
                     .6, .6, .6, true)
-                if frame.item.requiredRace then
-                    GameTooltip:AddLine(
-                        "Requires " .. frame.item.requiredRace .. ".",
-                        .8, .2, .2, true)
-                end
             end
             GameTooltip:Show()
         end)

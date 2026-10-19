@@ -27,7 +27,7 @@ ns.Constants.KNOWN_HEARTHSTONES = {
     {id = 166747, previewSpellVisualKitID = 106588, previewAnimationID = 69,
         previewEquipItemID = 33864},
     {id = 168907, previewSpellVisualKitID = 112576, previewAnimationID = 113},
-    {id = 172179, previewSpellVisualKitID = 118950, previewAnimationID = 879},
+    {id = 172179, previewSpellVisualKitID = 118950, previewAnimationID = 878},
     {id = 180290, previewSpellVisualKitID = 128103, previewAnimationKitID = 11602},
     {id = 182773, previewSpellVisualKitID = 142152, previewAnimationKitID = 11603},
     -- previewEffectModels: kit models placed by positioners, which the
@@ -53,10 +53,17 @@ ns.Constants.KNOWN_HEARTHSTONES = {
     {id = 190237, previewSpellVisualKitID = 154740, previewAnimationID = 52},
     {id = 193588, previewSpellVisualKitID = 159673, previewAnimationID = 52},
     {id = 200630, previewSpellVisualKitID = 167276, previewAnimationID = 52},
-    {id = 206195, previewSpellVisualKitID = 180823, previewAnimationID = 879},
+    {id = 206195, previewSpellVisualKitID = 180823, previewAnimationID = 878},
     {id = 208704, previewSpellVisualKitID = 185670, previewAnimationKitID = 27823},
     {id = 209035, previewSpellVisualKitID = 186691, previewAnimationID = 52},
-    {id = 210455, race = "Draenei", previewSpellVisualKitID = 198294, previewAnimationKitID = 28517},
+    -- Both kit models use positioners: the summoning circle sweeps from the
+    -- head to the feet over the cast, and the projector is in the left hand,
+    -- which is approximated here.
+    {id = 210455, races = {11, 30}, previewSpellVisualKitID = 198294, previewAnimationKitID = 28517,
+        previewEffectModels = {
+            {fileID = 4226513, z = 0, animationKitID = 29400, rise = {from = 1, duration = 10}},
+            {fileID = 5479266, x = 0.2, y = 0.12, z = 0.75, animationID = 158},
+        }},
     {id = 212337, previewSpellVisualKitID = 174334, previewAnimationKitID = 26649},
     {id = 228940, previewSpellVisualKitID = 210248, previewAnimationKitID = 30897},
     {id = 263489, previewSpellVisualKitID = 251306, previewAnimationID = 52},
@@ -82,6 +89,27 @@ ns.Constants.KNOWN_HEARTHSTONES = {
             {fileID = 5635867, x = 0.8, scale = 0.8, delay = 8.5},
         }},
     {id = 263933, previewSpellVisualKitID = 251445, previewAnimationID = 52},
+    -- The toadstool ring (kit 259619) and Fungarians come from aura 1271852.
+    -- It spawns a Fungarian area trigger at the caster's front-right,
+    -- front-left, back-left and back-right every 0.5s from 0.5s to 2s. Each
+    -- beams a spore orb at the caster, shown here as the orb at its hands.
+    -- They spawn 5 yards out in game and are pulled in to stay on camera.
+    {id = 264367, previewSpellVisualKitID = {268818, 259619}, previewAnimationKitID = 26949,
+        previewEffectModels = {
+            {fileID = 7525314, animationID = 158},
+            {displayID = 139419, x = 0.9,  y = -0.9, yaw = 3 * math.pi / 4,
+                animationID = 125, delay = 0.5, rise = {from = -0.6, duration = 0.4}},
+            {displayID = 139418, x = 0.9,  y = 0.9,  yaw = -3 * math.pi / 4,
+                animationID = 125, delay = 1,   rise = {from = -0.6, duration = 0.4}},
+            {displayID = 139438, x = -0.9, y = 0.9,  yaw = -math.pi / 4,
+                animationID = 125, delay = 1.5, rise = {from = -0.6, duration = 0.4}},
+            {displayID = 139445, x = -0.9, y = -0.9, yaw = math.pi / 4,
+                animationID = 125, delay = 2,   rise = {from = -0.6, duration = 0.4}},
+            {fileID = 6920502, x = 0.58,  y = -0.58, z = 0.6, animationID = 158, delay = 1.5},
+            {fileID = 6920502, x = 0.58,  y = 0.58,  z = 0.6, animationID = 158, delay = 2},
+            {fileID = 6920502, x = -0.58, y = 0.58,  z = 0.6, animationID = 158, delay = 2.5},
+            {fileID = 6920502, x = -0.58, y = -0.58, z = 0.6, animationID = 158, delay = 3},
+        }},
     -- Spell 1310234 casts 1310241, which transforms the caster into the
     -- Aqir Scuttler (creature 272289) at the start of the cast.
     {id = 281136, previewSpellVisualKitID = 276054, previewAnimationKitID = 2194,

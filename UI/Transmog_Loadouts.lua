@@ -51,7 +51,7 @@ end
 
 local function IsHearthstoneAvailable(itemID)
     local rule = hearthstoneRules[itemID]
-    if rule and rule.race and rule.race ~= ns.state.playerRace then return false end
+    if rule and not ns.Macro.IsHearthstoneRaceEligible(rule) then return false end
     if rule and rule.baseItem then
         return C_Item.GetItemCount(itemID, false, false, false) > 0
     end

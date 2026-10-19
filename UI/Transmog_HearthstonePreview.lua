@@ -112,7 +112,11 @@ local function ShowPreviewEffects(actor, effects, request)
         effectActor:SetScale((effect.scale or 1) * actorScale)
 
         local function Activate()
-            effectActor:SetModelByFileID(effect.fileID)
+            if effect.displayID then
+                effectActor:SetModelByCreatureDisplayID(effect.displayID)
+            else
+                effectActor:SetModelByFileID(effect.fileID)
+            end
             if effect.animationKitID and effectActor.PlayAnimationKit then
                 pcall(effectActor.PlayAnimationKit, effectActor,
                     effect.animationKitID, true)
