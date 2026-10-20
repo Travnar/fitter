@@ -97,7 +97,7 @@ function Zones.UpdateCache()
     state.currentZoneOutfitID = zoneOutfitID
 
     if not InCombatLockdown() and ns.Macro then
-        state.nextMountToSummon = ns.Mount.SelectNext(false, state.currentZoneOutfitID)
+        state.nextMountToSummon = ns.Mount.SelectNext(false, ns.GetMountOutfitID())
         ns.Macro.UpdateMacroForMount(state.nextMountToSummon)
         ns.Macro.UpdateHearthstone()
         ns.Macro.UpdateOutfitUpdateMacro()

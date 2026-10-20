@@ -246,7 +246,7 @@ function Mount.OnSpellcastSucceeded(spellID)
             if ns.MarkMacroRefreshPending then ns.MarkMacroRefreshPending() end
             return
         end
-        ns.state.nextMountToSummon = SelectNextMount(false, ns.state.currentZoneOutfitID)
+        ns.state.nextMountToSummon = SelectNextMount(false, ns.GetMountOutfitID())
         ns.Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
     end)
 end
@@ -289,7 +289,7 @@ function Mount.MonitorSoarCooldown()
 
     state.soarCooldownTimer = C_Timer.NewTimer(remaining + 0.5, function()
         if not InCombatLockdown() then
-            state.nextMountToSummon = SelectNextMount(false, state.currentZoneOutfitID)
+            state.nextMountToSummon = SelectNextMount(false, ns.GetMountOutfitID())
             ns.Macro.UpdateMacroForMount(state.nextMountToSummon)
         elseif ns.MarkMacroRefreshPending then
             ns.MarkMacroRefreshPending()

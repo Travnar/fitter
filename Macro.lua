@@ -295,7 +295,7 @@ function Macro.UpdateForCurrentState()
         return
     end
     Macro.MigrateLegacyNames()
-    ns.state.nextMountToSummon = ns.Mount.SelectNext(false, ns.state.currentZoneOutfitID)
+    ns.state.nextMountToSummon = ns.Mount.SelectNext(false, ns.GetMountOutfitID())
     Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
     Macro.UpdateOutfitUpdateMacro()
 end

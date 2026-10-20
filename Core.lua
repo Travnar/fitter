@@ -84,6 +84,17 @@ function ns.IsClassMountMacroEnabled()
         or (FitterSaved.UseMonkMacro and class == "MONK")
 end
 
+-- A locked outfit takes precedence over the zone outfit for mount selection.
+function ns.GetMountOutfitID()
+    local activeOutfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
+        and C_TransmogOutfitInfo.GetActiveOutfitID()
+    if activeOutfitID and C_TransmogOutfitInfo.IsLockedOutfit
+        and C_TransmogOutfitInfo.IsLockedOutfit(activeOutfitID) then
+        return activeOutfitID
+    end
+    return ns.state.currentZoneOutfitID
+end
+
 function Fitter:CreateEmptyOutfit(outfitID)
     if not FitterCharacterSaved then
         FitterCharacterSaved = {}
@@ -132,7 +143,7 @@ function Fitter:UpdateHearthstoneMacro() ns.Macro.UpdateHearthstone() end
 function Fitter:EnsureHearthstoneMacro() ns.Macro.EnsureHearthstone() end
 
 function Fitter:SelectNextMount(excludeSoar)
-    local mountID = ns.Mount.SelectNext(excludeSoar, ns.state.currentZoneOutfitID)
+    local mountID = ns.Mount.SelectNext(excludeSoar, ns.GetMountOutfitID())
     ns.state.nextMountToSummon = mountID
     return mountID
 end
@@ -143,7 +154,7 @@ local function RerollMountMacro()
         return
     end
     if ns.IsClassMountMacroEnabled() then return end
-    ns.state.nextMountToSummon = ns.Mount.SelectNext(false, ns.state.currentZoneOutfitID)
+    ns.state.nextMountToSummon = ns.Mount.SelectNext(false, ns.GetMountOutfitID())
     ns.Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
 end
 

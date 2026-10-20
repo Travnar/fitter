@@ -4,7 +4,7 @@ local Macro = ns.Macro
 local G99_BREAKNECK_SPELL_ID = 1215279
 
 local function OutfitGroundMountInfo()
-    local outfitID = ns.state.currentZoneOutfitID
+    local outfitID = ns.GetMountOutfitID()
         or (C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
             and C_TransmogOutfitInfo.GetActiveOutfitID())
     if not outfitID or outfitID == 0 or not FitterCharacterSaved then return false, false end
@@ -24,7 +24,7 @@ local function OutfitGroundMountInfo()
 end
 
 local function PreRollGroundIsRunningWild()
-    local outfitID = ns.state.currentZoneOutfitID
+    local outfitID = ns.GetMountOutfitID()
         or (C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
             and C_TransmogOutfitInfo.GetActiveOutfitID())
     if not outfitID or outfitID == 0 or not FitterCharacterSaved then return false end
@@ -148,14 +148,9 @@ function Macro.UpdateMacroForMount(mountID, outfitIDOverride)
         return
     end
 
-    local toyOutfitID = ns.state.currentZoneOutfitID
     local activeOutfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
         and C_TransmogOutfitInfo.GetActiveOutfitID()
-    if activeOutfitID and C_TransmogOutfitInfo.IsLockedOutfit
-        and C_TransmogOutfitInfo.IsLockedOutfit(activeOutfitID) then
-        toyOutfitID = activeOutfitID
-    end
-    local resolvedToyOutfitID = outfitIDOverride or toyOutfitID
+    local resolvedToyOutfitID = outfitIDOverride or ns.GetMountOutfitID()
         or activeOutfitID or ns.state.outfitUpdateResolvedID
 
     local index = GetMacroIndexByName(Macro.MOUNT_MACRO_NAME)
