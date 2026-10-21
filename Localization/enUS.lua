@@ -123,6 +123,7 @@ local strings = {
     "Lunar Festival", "Love is in the Air", "Noblegarden", "Children's Week",
     "Midsummer Fire Festival", "Brewfest", "Hallow's End", "Day of the Dead",
     "Pilgrim's Bounty", "Feast of Winter Veil", "Darkmoon Faire",
+    "WoW Anniversary",
 }
 
 for _, text in ipairs(strings) do
