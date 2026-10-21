@@ -8,8 +8,25 @@ local BIOME_GROUPS = ns.Zones.BIOME_GROUPS
 local EXPANSION_ZONES = ns.Zones.EXPANSION_ZONES
 local CONTINENT_ZONES = ns.Zones.CONTINENT_ZONES
 
-local PAGE_SIZE = 30
-local START_X, START_Y = 30, -103
+local MODES = {
+    { key = "zones", label = "Zones", dataKey = "Zones", idField = "mapID",
+        favoritesKey = "FavoriteZones",
+        selectAllTip = "Selects all currently filtered zones for this outfit.",
+        clearTip = "Removes all currently filtered zones from this outfit." },
+    { key = "holidays", label = "Holidays", dataKey = "Holidays", idField = "key",
+        favoritesKey = "FavoriteHolidays", items = ns.Constants.HOLIDAYS,
+        selectAllTip = "Selects all currently filtered holidays for this outfit.",
+        clearTip = "Removes all currently filtered holidays from this outfit." },
+    { key = "activities", label = "Activities", dataKey = "Activities", idField = "key",
+        favoritesKey = "FavoriteActivities", items = ns.Constants.ACTIVITIES,
+        selectAllTip = "Selects all currently filtered activities for this outfit.",
+        clearTip = "Removes all currently filtered activities from this outfit." },
+}
+local MODES_BY_KEY = {}
+for _, mode in ipairs(MODES) do MODES_BY_KEY[mode.key] = mode end
+
+local PAGE_SIZE = 27
+local START_X, START_Y = 30, -155
 local GAP_X, BOTTOM_PADDING = 14, 65
 local ICON_PATH = "Interface\\Icons\\"
 
@@ -35,6 +52,25 @@ for _, expansion in ipairs(EXPANSION_ZONES) do
     end
 end
 
+local function AddBlackIconBackground(button)
+    local icon = button.IconFrame.Icon
+    local background = button.IconFrame:CreateTexture(nil, "ARTWORK", nil, -8)
+    background:SetColorTexture(0, 0, 0, 1)
+    background:SetAllPoints(icon)
+    local mask = icon.GetNumMaskTextures and icon:GetNumMaskTextures() > 0
+        and icon:GetMaskTexture(1)
+    if mask then background:AddMaskTexture(mask) end
+end
+
+local function CurrentMode()
+    return MODES_BY_KEY[s.zonesMode] or MODES[1]
+end
+
+local function IsFavorite(mode, id)
+    local favorites = FitterSaved and FitterSaved[mode.favoritesKey]
+    return favorites ~= nil and favorites[id] == true
+end
+
 local function GetZoneIcon(zone)
     local name = zone.icon
         or EXPANSION_FALLBACKS[ZONE_EXPANSIONS[zone.mapID]]
@@ -48,7 +84,11 @@ local function CurrentData(create)
     if not outfitID then return nil end
     if create then Fitter:CreateEmptyOutfit(outfitID) end
     local data = FitterCharacterSaved and FitterCharacterSaved["Outfit" .. outfitID]
-    if data and type(data.Zones) ~= "table" then data.Zones = {} end
+    if data then
+        for _, mode in ipairs(MODES) do
+            if type(data[mode.dataKey]) ~= "table" then data[mode.dataKey] = {} end
+        end
+    end
     return data, outfitID
 end
 
@@ -61,12 +101,12 @@ local function GetOutfitNameByID(outfitID)
     end
 end
 
-local function GetOutfitIDsForZone(mapID)
+local function GetAssociatedOutfitIDs(dataKey, id)
     local outfitIDs = {}
     for key, data in pairs(FitterCharacterSaved or {}) do
         local outfitID = type(key) == "string" and tonumber(key:match("^Outfit(%d+)$"))
-        if outfitID and type(data.Zones) == "table"
-            and tContains(data.Zones, mapID) then
+        if outfitID and type(data[dataKey]) == "table"
+            and tContains(data[dataKey], id) then
             outfitIDs[#outfitIDs + 1] = outfitID
         end
     end
@@ -141,21 +181,33 @@ local function RefreshAfterSelection()
     UI_Transmog:UpdateMountIcons()
     PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
     if Fitter and Fitter.RefreshZoneCache then Fitter:RefreshZoneCache() end
+    ns.Macro.UpdateFishing()
 end
 
-local function ToggleZone(button)
+local function ToggleItem(button)
     local item = button.item
     local data, outfitID = CurrentData(true)
     if not item or not data then return end
+    local mode = CurrentMode()
+    local list, id = data[mode.dataKey], item[mode.idField]
 
-    if tContains(data.Zones, item.mapID) then
-        tDeleteItem(data.Zones, item.mapID)
-        UI_Transmog:TryDisableZoneSituation(item.mapID, outfitID)
+    if mode.key == "zones" then
+        if tContains(list, id) then
+            tDeleteItem(list, id)
+            UI_Transmog:TryDisableZoneSituation(id, outfitID)
+        else
+            list[#list + 1] = id
+            UI_Transmog:UpdateZoneSituation(id, true)
+        end
+        RefreshAfterSelection()
     else
-        data.Zones[#data.Zones + 1] = item.mapID
-        UI_Transmog:UpdateZoneSituation(item.mapID, true)
+        if tContains(list, id) then
+            tDeleteItem(list, id)
+        else
+            list[#list + 1] = id
+        end
+        RefreshAfterSelection()
     end
-    RefreshAfterSelection()
 
     local onEnter = button:GetScript("OnEnter")
     if button:IsShown() and button:IsMouseOver() and onEnter then
@@ -165,18 +217,65 @@ local function ToggleZone(button)
     end
 end
 
+local function GetFilteredModeItems(mode, selected)
+    local search = s.additionalSearchString or ""
+    local items = {}
+    for _, item in ipairs(mode.items) do
+        local searchMatch = search == ""
+            or item.name:lower():find(search, 1, true)
+        local filterMatch = not s.additionalCheckedOnly
+            or selected[item[mode.idField]]
+        if searchMatch and filterMatch then
+            items[#items + 1] = item
+        end
+    end
+    return items
+end
+
+local function ApplyModeSelection(add)
+    local mode = CurrentMode()
+    local data = CurrentData(true)
+    if not data then return end
+    local list = data[mode.dataKey]
+    local selected = {}
+    for _, id in ipairs(list) do selected[id] = true end
+    for _, item in ipairs(GetFilteredModeItems(mode, selected)) do
+        local id = item[mode.idField]
+        if add and not selected[id] then
+            list[#list + 1] = id
+            selected[id] = true
+        elseif not add then
+            tDeleteItem(list, id)
+        end
+    end
+    RefreshAfterSelection()
+end
+
+local function SetMode(modeKey)
+    s.zonesMode = modeKey
+    s.zoneCurrentPage = 1
+    s.zonesHeaderLabel:SetText(L[CurrentMode().label])
+    UI_Transmog:RefreshZonesList()
+    if s.zonesFilterDropdown.ValidateResetState then
+        s.zonesFilterDropdown:ValidateResetState()
+    end
+end
+
 function UI_Transmog:RefreshZonesList()
     if not s.zoneButtons then return end
-    if self.CacheViewedZoneSituations then
+    local mode = CurrentMode()
+    local isZones = mode.key == "zones"
+    if isZones and self.CacheViewedZoneSituations then
         self:CacheViewedZoneSituations()
     end
-    local data, outfitID = CurrentData(true)
+    local data = CurrentData(true)
     local selected = {}
-    for _, mapID in ipairs(data and data.Zones or {}) do selected[mapID] = true end
-    s.zonePagedItems = self:GetFilteredZones(selected)
+    for _, id in ipairs(data and data[mode.dataKey] or {}) do selected[id] = true end
+    s.zonePagedItems = isZones and self:GetFilteredZones(selected)
+        or GetFilteredModeItems(mode, selected)
     self._PagedShared.SortFavoritesFirst(
-        s.zonePagedItems, "mapID",
-        FitterSaved and FitterSaved.FavoriteZones or {})
+        s.zonePagedItems, mode.idField,
+        FitterSaved and FitterSaved[mode.favoritesKey] or {})
     s.zoneTotalPages = math.max(1, math.ceil(#s.zonePagedItems / PAGE_SIZE))
     s.zoneCurrentPage = math.min(s.zoneCurrentPage or 1, s.zoneTotalPages)
 
@@ -186,7 +285,8 @@ function UI_Transmog:RefreshZonesList()
         button.item = item
         button:SetShown(item ~= nil)
         if item then
-            button.associatedOutfitIDs = GetOutfitIDsForZone(item.mapID)
+            local id = item[mode.idField]
+            button.associatedOutfitIDs = GetAssociatedOutfitIDs(mode.dataKey, id)
             button:SetText(item.name)
             button.IconFrame.Icon:SetTexture(GetZoneIcon(item))
             button.IconFrame.Icon:SetDesaturated(false)
@@ -200,10 +300,9 @@ function UI_Transmog:RefreshZonesList()
                 button:SetMotionScriptsWhileDisabled(true)
             end
             if button.StateTexture then
-                button.StateTexture:SetShown(selected[item.mapID] == true)
+                button.StateTexture:SetShown(selected[id] == true)
             end
-            button.favoriteStar:SetShown(
-                self._PagedShared.IsZoneFavorite(item.mapID))
+            button.favoriteStar:SetShown(IsFavorite(mode, id))
         else
             button.favoriteStar:Hide()
         end
@@ -215,7 +314,7 @@ function UI_Transmog:RefreshZonesList()
 end
 
 function UI_Transmog:InitializeZoneSection()
-    local _, _, search = self._PagedShared.CreateHeader(
+    local label, _, search = self._PagedShared.CreateHeader(
         s.zonesFrame, "Zones", function(text)
             s.additionalSearchString = text
             s.zoneCurrentPage = 1
@@ -223,10 +322,15 @@ function UI_Transmog:InitializeZoneSection()
         end)
     search.Instructions:SetText(L["Search"])
     s.zonesSearchBox = search
+    s.zonesHeaderLabel = label
+    label:SetText(L[CurrentMode().label])
 
     local filter = self._PagedShared.CreateFilterDropdown(
         s.zonesFrame, search, {
             isDefault = function()
+                if CurrentMode().key ~= "zones" then
+                    return not s.additionalCheckedOnly
+                end
                 return not s.additionalCheckedOnly
                     and next(s.zonesSelectedBiomes) == nil
                     and next(s.zonesSelectedExpansions) == nil
@@ -244,6 +348,7 @@ function UI_Transmog:InitializeZoneSection()
                 self._PagedShared.AddSelectedCheckbox(
                     root, s, "additionalCheckedOnly",
                     function() s.zoneCurrentPage = 1; self:RefreshZonesList() end)
+                if CurrentMode().key ~= "zones" then return end
                 self._PagedShared.AddCheckboxFilterSubmenu(
                     root, "Continents", CONTINENT_ZONES, s,
                     "zonesSelectedContinents",
@@ -259,35 +364,60 @@ function UI_Transmog:InitializeZoneSection()
         })
     s.zonesFilterDropdown = filter
 
-    local selectAll = CreateFrame("Button", nil, s.zonesFrame, "UIPanelButtonTemplate")
-    selectAll:SetSize(105, 24)
-    self._PagedShared.AnchorTopLeftControl(selectAll, s.zonesFrame)
+    local modeDropdown = CreateFrame("DropdownButton", nil, s.zonesFrame,
+        "WowStyle1DropdownTemplate")
+    modeDropdown:SetWidth(168)
+    modeDropdown:SetPoint("TOPRIGHT", s.zonesFrame, "TOPRIGHT", -31, -106)
+    modeDropdown:SetupMenu(function(_, root)
+        for _, mode in ipairs(MODES) do
+            local modeKey = mode.key
+            root:CreateRadio(L[mode.label], function()
+                return CurrentMode().key == modeKey
+            end, function()
+                SetMode(modeKey)
+            end)
+        end
+    end)
+    s.zonesModeDropdown = modeDropdown
+
+    local selectAll = CreateFrame("Button", nil, s.zonesFrame, "DisplayTypeButtonTemplate")
+    self._PagedShared.AnchorDisplayTypeButton(selectAll, label)
     selectAll:SetText(L["Select All"])
-    selectAll:SetScript("OnClick", function() self:ApplyBiomeSelection("all") end)
-    selectAll:SetScript("OnEnter", function(button)
+    selectAll.IconFrame.Icon:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+    AddBlackIconBackground(selectAll)
+    selectAll:SetScript("OnClick", function()
+        if CurrentMode().key == "zones" then
+            self:ApplyBiomeSelection("all")
+        else
+            ApplyModeSelection(true)
+        end
+    end)
+    selectAll:HookScript("OnEnter", function(button)
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
         GameTooltip:SetText(L["Select All"], 1, 1, 1)
-        GameTooltip:AddLine(
-            "Selects all currently filtered zones for this outfit.",
-            1, 0.82, 0, true)
+        GameTooltip:AddLine(CurrentMode().selectAllTip, 1, 0.82, 0, true)
         GameTooltip:Show()
     end)
-    selectAll:SetScript("OnLeave", GameTooltip_Hide)
+    selectAll:HookScript("OnLeave", GameTooltip_Hide)
 
-    local clear = CreateFrame("Button", nil, s.zonesFrame, "UIPanelButtonTemplate")
-    clear:SetSize(105, 24)
-    clear:SetPoint("LEFT", selectAll, "RIGHT", 8, 0)
+    local clear = CreateFrame("Button", nil, s.zonesFrame, "DisplayTypeButtonTemplate")
+    clear:SetPoint("LEFT", selectAll, "RIGHT", 25, 0)
     clear:SetText(L["Clear"])
-    clear:SetScript("OnClick", function() self:ApplyBiomeSelection("uncheck") end)
-    clear:SetScript("OnEnter", function(button)
+    clear.IconFrame.Icon:SetTexture("Interface\\RaidFrame\\ReadyCheck-NotReady")
+    AddBlackIconBackground(clear)    clear:SetScript("OnClick", function()
+        if CurrentMode().key == "zones" then
+            self:ApplyBiomeSelection("uncheck")
+        else
+            ApplyModeSelection(false)
+        end
+    end)
+    clear:HookScript("OnEnter", function(button)
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
         GameTooltip:SetText(L["Clear"], 1, 1, 1)
-        GameTooltip:AddLine(
-            "Removes all currently filtered zones from this outfit.",
-            1, 0.82, 0, true)
+        GameTooltip:AddLine(CurrentMode().clearTip, 1, 0.82, 0, true)
         GameTooltip:Show()
     end)
-    clear:SetScript("OnLeave", GameTooltip_Hide)
+    clear:HookScript("OnLeave", GameTooltip_Hide)
 
     s.zoneButtons = {}
     for index = 1, PAGE_SIZE do
@@ -304,20 +434,20 @@ function UI_Transmog:InitializeZoneSection()
             if mouseButton == "RightButton" then
                 if not owner.item or not MenuUtil
                     or not MenuUtil.CreateContextMenu then return end
-                local item = owner.item
+                local mode = CurrentMode()
+                local id = owner.item[mode.idField]
                 MenuUtil.CreateContextMenu(owner, function(_, root)
-                    local favorite =
-                        self._PagedShared.IsZoneFavorite(item.mapID)
+                    local favorite = IsFavorite(mode, id)
                     root:CreateButton(
                         favorite and L["Remove Favorite"] or L["Set Favorite"],
                         function()
                             self._PagedShared.SetFavorite(
-                                "FavoriteZones", item.mapID, not favorite)
+                                mode.favoritesKey, id, not favorite)
                             self:RefreshZonesList()
                         end)
                 end)
             else
-                ToggleZone(owner)
+                ToggleItem(owner)
             end
         end)
         button.favoriteStar =
@@ -332,8 +462,9 @@ function UI_Transmog:InitializeZoneSection()
             GameTooltip:SetText(owner.item.name, 1, 0.82, 0)
             if owner.associatedOutfitIDs
                 and #owner.associatedOutfitIDs > 0 then
-                local warnings = GetOutfitSituationWarnings(
-                    owner.item.mapID, owner.associatedOutfitIDs)
+                local warnings = CurrentMode().key == "zones"
+                    and GetOutfitSituationWarnings(
+                        owner.item.mapID, owner.associatedOutfitIDs) or {}
                 local viewedOutfitID = C_TransmogOutfitInfo
                     and C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID
                     and C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()

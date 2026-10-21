@@ -15,6 +15,8 @@ Macro.OUTFIT_UPDATE_MACRO_NAME = "Outfit Update"
 Macro.OUTFIT_UPDATE_MACRO_ICON = 4624566
 Macro.OUTFIT_SETTINGS_MACRO_NAME = "Outfit Window"
 Macro.OUTFIT_SETTINGS_MACRO_ICON = 1602705
+Macro.FISHING_MACRO_NAME = "Outfit Fishing"
+Macro.FISHING_MACRO_ICON = 134400
 
 -- Macro names used through 2.5.2.
 local LEGACY_MACRO_NAMES = {
@@ -82,6 +84,7 @@ local function SpellName(spellID, fallback)
     local info = C_Spell.GetSpellInfo(spellID)
     return (info and info.name) or fallback
 end
+Macro.SpellName = SpellName
 
 function Macro.GetDruidMacroBody()
     return "/stopmacro [flying,combat]\n"
@@ -230,8 +233,8 @@ local function GetOutfitPosition(outfitID)
     return nil
 end
 
-function Macro.GetOutfitMacroPrefix()
-    local outfitID = ns.state.currentZoneOutfitID
+function Macro.GetOutfitMacroPrefix(outfitID)
+    outfitID = outfitID or ns.state.currentZoneOutfitID
     if not outfitID or not C_TransmogOutfitInfo then return "" end
 
     local activeOutfitID = C_TransmogOutfitInfo.GetActiveOutfitID
@@ -321,6 +324,7 @@ function Macro.RebuildForCurrentCharacter()
     Macro.MigrateLegacyNames()
     Macro.rebuildForCharacter = true
     Macro.UpdateHearthstone()
+    Macro.UpdateFishing()
     Macro.UpdateForCurrentState()
     Macro.rebuildForCharacter = false
 end

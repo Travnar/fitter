@@ -9,31 +9,42 @@ Zones.MAJOR_ZONES = ns.Constants.MAJOR_ZONES
 Zones.BIOME_GROUPS = ns.Constants.BIOME_GROUPS
 Zones.EXPANSION_ZONES = ns.Constants.EXPANSION_ZONES
 Zones.CONTINENT_ZONES = ns.Constants.CONTINENT_ZONES
-local hasZoneAssignments
+local hasAssignments
+
+local function HasAssignments(outfitData)
+    return (type(outfitData.Zones) == "table" and #outfitData.Zones > 0)
+        or (type(outfitData.Holidays) == "table" and #outfitData.Holidays > 0)
+end
 
 local function HasZoneAssignments()
-    if hasZoneAssignments ~= nil then return hasZoneAssignments end
+    if hasAssignments ~= nil then return hasAssignments end
     if not FitterCharacterSaved then return false end
     for key, outfitData in pairs(FitterCharacterSaved) do
         if type(key) == "string" and key:match("^Outfit%d+$")
             and type(outfitData) == "table"
-            and type(outfitData.Zones) == "table"
-            and #outfitData.Zones > 0 then
-            hasZoneAssignments = true
+            and HasAssignments(outfitData) then
+            hasAssignments = true
             return true
         end
     end
-    hasZoneAssignments = false
+    hasAssignments = false
     return false
 end
 
 function Zones.InvalidateTrackingCache()
-    hasZoneAssignments = nil
+    hasAssignments = nil
 end
 
 function Zones.IsTrackingEnabled()
     return (FitterSaved and FitterSaved.UseZoneSpecificMounts) == true
         or HasZoneAssignments()
+end
+
+local function ContainsAny(list, lookup)
+    for _, value in ipairs(list) do
+        if lookup[value] then return true end
+    end
+    return false
 end
 
 function Zones.GetZoneSituation(mapID)
@@ -61,34 +72,33 @@ function Zones.UpdateCache()
     local mapID = C_Map.GetBestMapForUnit("player")
     state.currentZoneMapID = mapID
 
-    if not mapID then
-        state.currentZoneOutfitID = nil
-        return
-    end
-
-    local zoneOutfitIDs = {}
+    local activeHolidays = ns.Holidays.GetActiveKeys()
+    local holidayOutfitIDs, zoneOutfitIDs = {}, {}
     for key, outfitData in pairs(FitterCharacterSaved) do
         if type(key) == "string" and key:match("^Outfit%d+$")
-            and type(outfitData) == "table"
-            and type(outfitData.Zones) == "table" then
-            for _, zoneMapID in ipairs(outfitData.Zones) do
-                if zoneMapID == mapID then
-                    zoneOutfitIDs[#zoneOutfitIDs + 1] = tonumber(key:match("%d+"))
-                    break
-                end
+            and type(outfitData) == "table" then
+            local outfitID = tonumber(key:match("%d+"))
+            if type(outfitData.Holidays) == "table"
+                and ContainsAny(outfitData.Holidays, activeHolidays) then
+                holidayOutfitIDs[#holidayOutfitIDs + 1] = outfitID
+            end
+            if mapID and type(outfitData.Zones) == "table"
+                and tContains(outfitData.Zones, mapID) then
+                zoneOutfitIDs[#zoneOutfitIDs + 1] = outfitID
             end
         end
     end
 
+    local candidates = #holidayOutfitIDs > 0 and holidayOutfitIDs or zoneOutfitIDs
     local zoneOutfitID
-    if #zoneOutfitIDs > 0 then
+    if #candidates > 0 then
         -- Keep the selection stable while the player remains in the same zone.
         -- A fresh random outfit is selected each time the player enters a zone.
         if mapID == previousMapID
-            and tContains(zoneOutfitIDs, state.currentZoneOutfitID) then
+            and tContains(candidates, state.currentZoneOutfitID) then
             zoneOutfitID = state.currentZoneOutfitID
         else
-            zoneOutfitID = zoneOutfitIDs[math.random(#zoneOutfitIDs)]
+            zoneOutfitID = candidates[math.random(#candidates)]
         end
     end
 

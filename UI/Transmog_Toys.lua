@@ -5,9 +5,9 @@ local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
 local Fitter = ns.Fitter
 
-local PAGE_SIZE = 30
+local PAGE_SIZE = 27
 local BUTTON_START_X = 30
-local BUTTON_START_Y = -103
+local BUTTON_START_Y = -155
 local BUTTON_GAP_X = 14
 local BUTTON_BOTTOM_PADDING = 65
 
@@ -300,7 +300,7 @@ function UI_Transmog:InitializeToyPaged()
         s.toyRefreshAfterCombat = true
         return false
     end
-    local _, _, search = UI_Transmog._PagedShared.CreateHeader(s.toyFrame, L["Cosmetic Toys"], function(text)
+    local label, _, search = UI_Transmog._PagedShared.CreateHeader(s.toyFrame, L["Cosmetic Toys"], function(text)
         s.toySearchString = text
         UI_Transmog:RefreshToyList()
     end)
@@ -337,12 +337,12 @@ function UI_Transmog:InitializeToyPaged()
             end,
         })
 
-    local add = CreateFrame("Button", nil, s.toyFrame, "UIPanelButtonTemplate")
-    add:SetSize(130, 26)
-    UI_Transmog._PagedShared.AnchorTopLeftControl(add, s.toyFrame)
+    local add = CreateFrame("Button", nil, s.toyFrame, "DisplayTypeButtonTemplate")
+    UI_Transmog._PagedShared.AnchorDisplayTypeButton(add, label)
     add:SetText(L["Add Toy By ID"])
+    add.IconFrame.Icon:SetTexture("Interface\\PaperDollInfoFrame\\Character-Plus")
     add:SetScript("OnClick", ShowAddToyPopup)
-    add:SetScript("OnEnter", function(self)
+    add:HookScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText(L["Add Toy By ID"], 1, .82, 0)
         GameTooltip:AddLine(
@@ -353,7 +353,7 @@ function UI_Transmog:InitializeToyPaged()
             .6, .6, .6, true)
         GameTooltip:Show()
     end)
-    add:SetScript("OnLeave", GameTooltip_Hide)
+    add:HookScript("OnLeave", GameTooltip_Hide)
     s.toyAddButton = add
 
     for i = 1, PAGE_SIZE do

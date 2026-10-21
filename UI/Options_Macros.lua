@@ -30,6 +30,13 @@ local function GetRowDefs()
             reportsOwnErrors = true,
         },
         {
+            label = "Outfit Fishing Macro",
+            tooltip = "Creates a macro that casts Fishing. If an outfit on this character"
+                .. " has the Fishing activity selected, it switches to that outfit first.",
+            exists = function() return Macro.Exists(Macro.FISHING_MACRO_NAME) end,
+            create = Macro.EnsureFishing,
+        },
+        {
             label = "Outfit Window Macro",
             tooltip = "Creates a macro that opens the transmog window anywhere to change"
                 .. " Fitter settings for your outfits. Appearances and situations can"

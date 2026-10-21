@@ -32,10 +32,6 @@ local function IsToyFavorite(itemID)
     return GetFavorites("FavoriteToys")[itemID] == true
 end
 
-local function IsZoneFavorite(mapID)
-    return GetFavorites("FavoriteZones")[mapID] == true
-end
-
 local function IsEmoteFavorite(emoteID)
     return GetFavorites("FavoriteEmotes")[emoteID] == true
 end
@@ -303,7 +299,6 @@ end
 -- (ActiveSlotTitle / Divider / SearchBox / FilterButton) so the Fitter pages
 -- line up with the native tabs.
 local HEADER_LEFT = 23
-local TOP_ROW_CENTER_Y = -33
 local FILTER_WIDTH = 135
 
 -- Creates the header row used by each paged frame:
@@ -357,13 +352,6 @@ local function AnchorDisplayTypeButton(button, label)
     button:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 16, -21)
 end
 
-
--- Places a top-left control (macro icon, add/select buttons) on the same row
--- as the search box and flush with the header label.
-local function AnchorTopLeftControl(control, parentFrame)
-    control:ClearAllPoints()
-    control:SetPoint("LEFT", parentFrame, "TOPLEFT", HEADER_LEFT, TOP_ROW_CENTER_Y)
-end
 
 
 -- Adds a "Selected"-only checkbox to `rootDescription` that toggles
@@ -523,7 +511,6 @@ UI_Transmog._PagedShared = {
     CreateHeader = CreateHeader,
     CreateFilterDropdown = CreateFilterDropdown,
     AnchorDisplayTypeButton = AnchorDisplayTypeButton,
-    AnchorTopLeftControl = AnchorTopLeftControl,
     GetGridCardOffset = GetGridCardOffset,
     GRID_CARD_WIDTH = GRID_CARD_WIDTH,
     GRID_CARD_HEIGHT = GRID_CARD_HEIGHT,
@@ -543,7 +530,6 @@ UI_Transmog._PagedShared = {
     IsHunterPetFavorite = IsHunterPetFavorite,
     IsHearthstoneFavorite = IsHearthstoneFavorite,
     IsToyFavorite = IsToyFavorite,
-    IsZoneFavorite = IsZoneFavorite,
     IsEmoteFavorite = IsEmoteFavorite,
     SetFavorite = SetFavorite,
     SortFavoritesFirst = SortFavoritesFirst,

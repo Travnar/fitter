@@ -15,6 +15,16 @@ for _, zone in ipairs(ns.Zones.MAJOR_ZONES) do
     ZONE_NAMES[zone.mapID] = zone.name
     ZONE_ICONS[zone.mapID] = zone.icon
 end
+local CONDITION_LOOKUPS = {}
+for dataKey, items in pairs({
+    Holidays = ns.Constants.HOLIDAYS,
+    Activities = ns.Constants.ACTIVITIES,
+}) do
+    CONDITION_LOOKUPS[dataKey] = {}
+    for _, item in ipairs(items) do
+        CONDITION_LOOKUPS[dataKey][item.key] = item
+    end
+end
 
 local function GetSelectedHearthstones(data)
     if not data then return {} end
@@ -23,15 +33,43 @@ local function GetSelectedHearthstones(data)
     return {}
 end
 
-local function GetZonesIcon(mapID)
-    local zoneIcon = mapID and ZONE_ICONS[mapID]
-    if type(zoneIcon) == "string" and zoneIcon ~= "" then
-        return "Interface\\Icons\\" .. zoneIcon
-    end
+local function GetConditionsBaseIcon()
     if UnitFactionGroup("player") == "Horde" then
-        return "Interface\\Icons\\achievement_zone_kalimdor_01"
+        return "Interface\\Icons\\inv_10_specialization_tailoring2_outfits_color1"
     end
-    return "Interface\\Icons\\achievement_zone_easternkingdoms_01"
+    return "Interface\\Icons\\inv_10_specialization_tailoring2_outfits_color2"
+end
+
+local function GetConditionsIcon(data)
+    local total, singleIcon = 0, nil
+    for _, mapID in ipairs(data and data.Zones or {}) do
+        total = total + 1
+        singleIcon = ZONE_ICONS[mapID]
+    end
+    for dataKey, lookup in pairs(CONDITION_LOOKUPS) do
+        for _, key in ipairs(data and data[dataKey] or {}) do
+            total = total + 1
+            singleIcon = lookup[key] and lookup[key].icon
+        end
+    end
+    if total == 1 and type(singleIcon) == "string" and singleIcon ~= "" then
+        return "Interface\\Icons\\" .. singleIcon, true
+    end
+    return GetConditionsBaseIcon(), total > 0
+end
+
+local function GetConditionNames(data, dataKey)
+    local names = {}
+    for _, id in ipairs(data and data[dataKey] or {}) do
+        if dataKey == "Zones" then
+            names[#names + 1] = ZONE_NAMES[id] or ("Zone " .. tostring(id))
+        else
+            local item = CONDITION_LOOKUPS[dataKey][id]
+            names[#names + 1] = item and item.name or tostring(id)
+        end
+    end
+    table.sort(names)
+    return names
 end
 
 local function GetAssignedEmotes(data)
@@ -62,7 +100,7 @@ local function GetMountSlotIconState(category)
         if category == "Hearthstone" then return 134414, false end
         if category == "Toy" then return 133015, false end
         if category == "Zones" then
-            return GetZonesIcon(), false
+            return GetConditionsBaseIcon(), false
         end
         if category == "Emotes" then
             return ns.Constants.EMOTE_CATEGORY_ICON, false
@@ -70,11 +108,7 @@ local function GetMountSlotIconState(category)
         return categoryIcon, false
     end
     if category == "Zones" then
-        local zones = data.Zones or {}
-        if #zones == 1 then
-            return GetZonesIcon(zones[1]), true
-        end
-        return GetZonesIcon(), #zones > 0
+        return GetConditionsIcon(data)
     end
     if category == "Emotes" then
         local emotes = GetAssignedEmotes(data)
@@ -256,16 +290,15 @@ local function AcquireMountSlot(charPreview, def)
                 if name then GameTooltip:AddLine(name, 1, 1, 1) end
             end
         elseif def.category == "Zones" then
-            local zones = data and data.Zones or {}
-            GameTooltip:SetText(L["Zones"], 1, 0.82, 0, 1, true)
-            local zoneNames = {}
-            for _, mapID in ipairs(zones) do
-                zoneNames[#zoneNames + 1] = ZONE_NAMES[mapID]
-                    or ("Zone " .. tostring(mapID))
-            end
-            table.sort(zoneNames)
-            for _, name in ipairs(zoneNames) do
-                GameTooltip:AddLine(name, 1, 1, 1)
+            GameTooltip:SetText(L["Conditions"], 1, 0.82, 0, 1, true)
+            for _, dataKey in ipairs({ "Zones", "Holidays", "Activities" }) do
+                local names = GetConditionNames(data, dataKey)
+                if #names > 0 then
+                    GameTooltip:AddLine(L[dataKey], 0.7, 0.7, 0.7)
+                    for _, name in ipairs(names) do
+                        GameTooltip:AddLine(name, 1, 1, 1)
+                    end
+                end
             end
         elseif def.category == "Emotes" then
             local emotes = GetAssignedEmotes(data)

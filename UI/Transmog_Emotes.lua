@@ -4,8 +4,8 @@ local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
 local Fitter = ns.Fitter
 
-local PAGE_SIZE = 30
-local START_X, START_Y = 30, -103
+local PAGE_SIZE = 27
+local START_X, START_Y = 30, -155
 local GAP_X = 14
 local BOTTOM_PADDING = 65
 local ICONS_PER_PAGE = 24
@@ -555,7 +555,7 @@ local function ShowCreatePopup()
 end
 
 function UI_Transmog:InitializeEmotesView()
-    local _, _, search = self._PagedShared.CreateHeader(
+    local label, _, search = self._PagedShared.CreateHeader(
         s.emotesFrame, "Emotes", function(text)
             s.emoteSearchString = text
             UI_Transmog:RefreshEmoteList()
@@ -646,10 +646,10 @@ function UI_Transmog:InitializeEmotesView()
             end,
         })
 
-    local add = CreateFrame("Button", nil, s.emotesFrame, "UIPanelButtonTemplate")
-    add:SetSize(130, 26)
-    self._PagedShared.AnchorTopLeftControl(add, s.emotesFrame)
+    local add = CreateFrame("Button", nil, s.emotesFrame, "DisplayTypeButtonTemplate")
+    self._PagedShared.AnchorDisplayTypeButton(add, label)
     add:SetText(L["Add New Emote"])
+    add.IconFrame.Icon:SetTexture("Interface\\PaperDollInfoFrame\\Character-Plus")
     add:SetScript("OnClick", ShowCreatePopup)
     s.emoteAddButton = add
 

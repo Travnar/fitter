@@ -109,12 +109,17 @@ local strings = {
     "Macros", "Create",
     "Outfit Mount Macro",
     "Outfit Hearthstone Macro",
+    "Outfit Fishing Macro",
     "Outfit Update Macro",
     "Outfit Window Macro",
     "Character Outfit Update Macro",
     "Displays the transmog window without gear slots to adjust Fitter outfit configurations.",
     "Open Outfit Window",
     "Click to open the outfit window.",
+    "Holidays", "Activities", "Fishing", "Conditions",
+    "Lunar Festival", "Love is in the Air", "Noblegarden", "Children's Week",
+    "Midsummer Fire Festival", "Brewfest", "Hallow's End", "Day of the Dead",
+    "Pilgrim's Bounty", "Feast of Winter Veil", "Darkmoon Faire",
 }
 
 for _, text in ipairs(strings) do

@@ -214,6 +214,7 @@ s.additionalCheckedOnly = false
 s.zonesSelectedBiomes = {}    
 s.zonesSelectedExpansions = {} 
 s.zonesSelectedContinents = {}
+s.zonesMode = "zones"
 
 s.flyingCheckedOnly = false
 s.groundCheckedOnly = false

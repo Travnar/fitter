@@ -282,6 +282,7 @@ local function OnDisplayedOutfitChanged()
         Fitter:RefreshFeatureEvents()
         ns.Pet.Apply(nil, "outfitChange")
         ns.Macro.UpdateHearthstone()
+        ns.Macro.UpdateFishing()
         ns.Macro.UpdateOutfitUpdateMacro()
         RerollMountMacro()
     end)
@@ -410,6 +411,10 @@ function Fitter:OnEvent(event, ...)
             InitializeSettings()
             Fitter:RefreshFeatureEvents()
             InitializeStealthDriver()
+            ns.Holidays.RequestCalendarData()
+            C_Timer.NewTicker(60, function()
+                if ns.Zones.IsTrackingEnabled() then ns.Zones.UpdateCache() end
+            end)
             -- Build the transmog UI as soon as Blizzard_Transmog loads, before
             -- TransmogFrame is first shown.  Gamepad SmartNavigation hooks
             -- CreateFrame and rebuilds an open panel's navigation data inside
@@ -452,6 +457,10 @@ function Fitter:OnEvent(event, ...)
             ns.Emote.OnZoneChanged()
             ns.Pet.Apply(nil, "zoneChange")
         end)
+    elseif event == "CALENDAR_UPDATE_EVENT_LIST" then
+        if state.loaded and ns.Zones.IsTrackingEnabled() then
+            ns.Zones.UpdateCache()
+        end
     elseif event == "MOUNT_JOURNAL_USABILITY_CHANGED"
         or event == "NEW_MOUNT_ADDED" then
         ns.Mount.UpdateWaterState()
@@ -487,6 +496,7 @@ function Fitter:OnEvent(event, ...)
             ns.Macro.UpdateForCurrentState()
         end
         ns.Macro.UpdateHearthstone()
+        ns.Macro.UpdateFishing()
         if ns.UI_Transmog and ns.UI_Transmog.RefreshCombatDeferredToyUI then
             ns.UI_Transmog:RefreshCombatDeferredToyUI()
         end
@@ -645,6 +655,7 @@ local EVENTS = {
     "ZONE_CHANGED",
     "ZONE_CHANGED_INDOORS",
     "ZONE_CHANGED_NEW_AREA",
+    "CALENDAR_UPDATE_EVENT_LIST",
     "MOUNT_JOURNAL_USABILITY_CHANGED",
     "NEW_MOUNT_ADDED",
     "TRANSMOGRIFY_OPEN",

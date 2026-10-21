@@ -25,6 +25,7 @@ Bindings_Frames.xml
 
 # Static data tables (pure data; loaded first so modules can alias them).
 Constants\Zones.lua
+Constants\Holidays.lua
 Constants\Toys.lua
 Constants\Hearthstones.lua
 Constants\Mounts.lua
@@ -44,6 +45,8 @@ Macro.lua
 Macro\Mount.lua
 Macro\Hearthstone.lua
 Macro\Update.lua
+Macro\Fishing.lua
+Holidays.lua
 Zones.lua
 
 # Bootstrap / event dispatch.
