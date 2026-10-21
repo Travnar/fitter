@@ -4,10 +4,15 @@ local addonName, ns = ...
 -- keybind and any action bar key holding the Outfit Fishing macro are rebound
 -- to Interact With Target, so the next press reels in the bobber.
 
+-- Retail channel spells, then World of Warcraft Forever's Fishing ranks.
 local FISHING_CHANNEL_SPELLS = {
     [131474] = true,
     [131476] = true,
     [131490] = true,
+    [7620] = true,
+    [7731] = true,
+    [7732] = true,
+    [18248] = true,
 }
 
 -- Soft-target interact is what lets Interact With Target pick up the bobber.
@@ -15,6 +20,7 @@ local CVARS = {
     SoftTargetInteract = "3",
     SoftTargetInteractArc = "2",
     SoftTargetInteractRange = "30",
+    SoftTargetInteractRangeIsHard = "0",
 }
 
 local handler = CreateFrame("Frame", nil, nil,
@@ -45,10 +51,11 @@ end
 local function ApplyCVars()
     storedCVars = storedCVars or {}
     for name, value in pairs(CVARS) do
-        if storedCVars[name] == nil then
-            storedCVars[name] = C_CVar.GetCVar(name)
+        local current = C_CVar.GetCVar(name)
+        if current ~= nil then
+            if storedCVars[name] == nil then storedCVars[name] = current end
+            C_CVar.SetCVar(name, value)
         end
-        C_CVar.SetCVar(name, value)
     end
 end
 
