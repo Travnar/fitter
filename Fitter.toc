@@ -47,6 +47,7 @@ Macro\Hearthstone.lua
 Macro\Update.lua
 Macro\Fishing.lua
 Holidays.lua
+Fishing.lua
 Zones.lua
 
 # Bootstrap / event dispatch.

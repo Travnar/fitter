@@ -25,6 +25,31 @@ local MODES = {
 local MODES_BY_KEY = {}
 for _, mode in ipairs(MODES) do MODES_BY_KEY[mode.key] = mode end
 
+local ACTIVITY_MACROS = {
+    fishing = { name = ns.Macro.FISHING_MACRO_NAME, ensure = ns.Macro.EnsureFishing },
+}
+
+local function GetActivityMacro(mode, item)
+    return mode.key == "activities" and item and ACTIVITY_MACROS[item.key] or nil
+end
+
+-- Returns the macro index, creating the macro if needed; nil when it cannot
+-- be created.
+local function EnsureActivityMacro(macro)
+    if InCombatLockdown() then
+        UIErrorsFrame:AddMessage(ERR_NOT_IN_COMBAT, 1, 0.1, 0.1, 1)
+        return nil
+    end
+    macro.ensure()
+    local index = GetMacroIndexByName(macro.name)
+    if index == 0 then
+        print("|cff00ff00Fitter:|r "
+            .. L["Cannot create macro: maximum number of account macros reached."])
+        return nil
+    end
+    return index
+end
+
 local PAGE_SIZE = 27
 local START_X, START_Y = 30, -155
 local GAP_X, BOTTOM_PADDING = 14, 65
@@ -436,6 +461,7 @@ function UI_Transmog:InitializeZoneSection()
                     or not MenuUtil.CreateContextMenu then return end
                 local mode = CurrentMode()
                 local id = owner.item[mode.idField]
+                local macro = GetActivityMacro(mode, owner.item)
                 MenuUtil.CreateContextMenu(owner, function(_, root)
                     local favorite = IsFavorite(mode, id)
                     root:CreateButton(
@@ -445,10 +471,21 @@ function UI_Transmog:InitializeZoneSection()
                                 mode.favoritesKey, id, not favorite)
                             self:RefreshZonesList()
                         end)
+                    if macro then
+                        root:CreateButton(L["Create Activity Macro"], function()
+                            EnsureActivityMacro(macro)
+                        end)
+                    end
                 end)
             else
                 ToggleItem(owner)
             end
+        end)
+        button:RegisterForDrag("LeftButton")
+        button:SetScript("OnDragStart", function(owner)
+            local macro = GetActivityMacro(CurrentMode(), owner.item)
+            local macroIndex = macro and EnsureActivityMacro(macro)
+            if macroIndex then PickupMacro(macroIndex) end
         end)
         button.favoriteStar =
             self._PagedShared.CreateFavoriteStar(button)
@@ -479,6 +516,11 @@ function UI_Transmog:InitializeZoneSection()
                         or ("Outfit " .. outfitID)
                     GameTooltip:AddLine(name, 1, 0.82, 0)
                 end
+            end
+            if GetActivityMacro(CurrentMode(), owner.item) then
+                GameTooltip:AddLine(
+                    L["Drag to your action bar to place this activity's macro."],
+                    0.7, 0.7, 0.7, true)
             end
             GameTooltip:Show()
         end)

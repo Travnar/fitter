@@ -38,6 +38,7 @@ ns.Fitter = Fitter
 -- References to secure keybind buttons (created in Bindings_Frames.xml).
 ns.MountButton = FitterMountButton
 ns.HearthstoneButton = FitterHearthstoneButton
+ns.FishingButton = FitterFishingButton
 ns.OutfitUpdateButton = FitterOutfitUpdateButton
 if ns.MountButton then
     ns.MountButton:HookScript("PostClick", function()

@@ -19,5 +19,5 @@ ns.Constants.HOLIDAYS = {
 }
 
 ns.Constants.ACTIVITIES = {
-    { key = "fishing", name = L["Fishing"], icon = "trade_fishing" },
+    { key = "fishing", name = L["Fishing"], icon = "ui_profession_fishing" },
 }

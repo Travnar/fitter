@@ -19,6 +19,15 @@
             </OnLoad>
         </Scripts>
     </Button>
+    <Button name="FitterFishingButton" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <OnLoad>
+                self:SetAttribute("type", "macro")
+                self:SetAttribute("macrotext", "/cast Fishing")
+                self:RegisterForClicks("AnyUp", "AnyDown")
+            </OnLoad>
+        </Scripts>
+    </Button>
     <Button name="FitterOutfitUpdateButton" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
         <Scripts>
             <OnLoad>
