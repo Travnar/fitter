@@ -24,6 +24,7 @@ local function EnsureDefaults()
     if FitterSaved.AstralRecallFallback == nil then FitterSaved.AstralRecallFallback = false end
     if FitterSaved.CancelNonOutfitToys == nil then FitterSaved.CancelNonOutfitToys = false end
     if FitterSaved.ApplyToyOnSelect == nil then FitterSaved.ApplyToyOnSelect = false end
+    if FitterSaved.SearchableTitles == nil then FitterSaved.SearchableTitles = false end
     if FitterSaved.DismissPetOnStealth == nil then FitterSaved.DismissPetOnStealth = false end
     if FitterSaved.DismissPetInInstancesWhileGrouped == nil then FitterSaved.DismissPetInInstancesWhileGrouped = false end
     if FitterSaved.ReviveHunterPet == nil then FitterSaved.ReviveHunterPet = false end
@@ -443,14 +444,27 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         .. " immediately activate or cancel the toy.",
         OPTION_X, -802)
 
+    -- ===== Title Features =====
+
+    MakeSectionHeader(rest, "Titles", HEADER_X, -852)
+    local cbSearchableTitles = MakeCheckbox(rest, "SearchableTitles",
+        "Searchable Title Selection",
+        "Replace the title dropdown in the outfit window with a search box. Click it"
+        .. " to list every known title, then type to filter the list.",
+        OPTION_X, -882, function()
+            if ns.UI_Transmog and ns.UI_Transmog.RefreshTitleMode then
+                ns.UI_Transmog:RefreshTitleMode()
+            end
+        end)
+
     -- ===== Zone Features =====
 
-    MakeSectionHeader(rest, "Zones", HEADER_X, -852)
+    MakeSectionHeader(rest, "Zones", HEADER_X, -932)
     local cbAutoEnable = MakeCheckbox(rest, "AutoEnableZoneSituations",
         "Auto Enable Zone Situations",
         "When enabled, associating zones with an outfit will automatically enable their"
         .. " respective Location situations: Rest for cities and World for others.",
-        OPTION_X, -882)
+        OPTION_X, -962)
     local cbAutoDisable = MakeCheckbox(rest, "AutoDisableZoneSituations",
         "Auto Disable Zone Situations",
         {
@@ -460,7 +474,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
             .. " others. Only situations that were enabled by Fitter are disabled, determined"
             .. " by the situation state captured before auto-enabling.", 1, 0.82, 0, true},
         },
-        OPTION_X, -912)
+        OPTION_X, -992)
 
     cbAutoEnable:HookScript("OnClick", function(self)
         if not self:GetChecked() and FitterSaved then
@@ -482,7 +496,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Account Wide (below Zone Features) =====
 
-    local AW_Y_START = 970
+    local AW_Y_START = 1050
     local restOffset, awHeight = 0, 218
 
     local function UpdateContentHeight(newAwHeight)
@@ -529,6 +543,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         SetEmoteCooldown(FitterSaved.EmoteGlobalCooldown, false)
         cbCancelToys:SetChecked(FitterSaved.CancelNonOutfitToys)
         cbApplyToy:SetChecked(FitterSaved.ApplyToyOnSelect)
+        cbSearchableTitles:SetChecked(FitterSaved.SearchableTitles)
         cbAutoEnable:SetChecked(FitterSaved.AutoEnableZoneSituations)
         cbAutoDisable:SetChecked(FitterSaved.AutoDisableZoneSituations)
         if FitterSaved.AutoEnableZoneSituations then
