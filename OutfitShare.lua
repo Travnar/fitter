@@ -14,6 +14,7 @@ local PREFIX = "Fitter"
 -- Matches Blizzard's transmog outfit links.
 local LINK_COLOR = TRANSMOGRIFY_FONT_COLOR and TRANSMOGRIFY_FONT_COLOR.GenerateHexColor
     and TRANSMOGRIFY_FONT_COLOR:GenerateHexColor() or "ffff80ff"
+local LINK_ICON = "|TInterface\\AddOns\\Fitter\\FitterIcon:0|t"
 local TOKEN_PATTERN = "%[(Fitter[%a ]-): ([^%]#|]-) #(%w+)%]"
 -- Token label for each kind of shared snapshot, and the reverse lookup.
 local KIND_LABELS = {outfit = "Fitter", preview = "Fitter Preview"}
@@ -416,8 +417,9 @@ local function ChatFilter(_, event, message, author, ...)
     local linked = message:gsub(TOKEN_PATTERN, function(label, name, id)
         local kind = LABEL_KINDS[label]
         if not kind then return nil end
-        return string.format("|c%s|Haddon:%s:%s:%s:%s|h[%s: %s]|h|r",
-            LINK_COLOR, addonName, kind, owner, id, label, name)
+        local text = kind == "preview" and "Custom Fit" or label .. ": " .. name
+        return string.format("|c%s|Haddon:%s:%s:%s:%s|h[%s %s]|h|r",
+            LINK_COLOR, addonName, kind, owner, id, LINK_ICON, text)
     end)
     return false, linked, author, ...
 end
@@ -438,7 +440,7 @@ if EventRegistry then
             link:match("^addon:" .. addonName .. ":(%a+):([^:]+):(%w+)$")
         local open = kind and OutfitShare.linkHandlers[kind]
         if open then
-            local name = type(text) == "string" and text:match("%[Fitter[%a ]-: (.-)%]")
+            local name = type(text) == "string" and text:match("%|t Fitter[%a ]-: (.-)%]")
             open(owner, id, name)
         end
     end)
