@@ -19,5 +19,20 @@ jobs:
           # Full history so the packager can build the changelog from commits since the last tag
           fetch-depth: 0
 
+      - name: Release notes from CHANGELOG.md
+        # The packager uploads .changelog as the release notes (see .pkgmeta).
+        run: |
+          awk -v heading="## [$GITHUB_REF_NAME] - " '
+            index($0, heading) == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found && !started && $0 == "" { next }
+            found { started = 1; print }
+            END { if (!found) exit 1 }
+          ' CHANGELOG.md > .changelog || {
+            echo "::error::CHANGELOG.md has no '## [$GITHUB_REF_NAME] - yyyy-MM-dd' section."
+            exit 1
+          }
+          cat .changelog
+
       - name: Package and upload
         uses: BigWigsMods/packager@v2

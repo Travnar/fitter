@@ -1,9 +1,9 @@
 package-as: Fitter
 
-# Empty on purpose: uploads with no release notes instead of a commit-generated changelog.
+# The release workflow fills .changelog with the tag's CHANGELOG.md section.
 manual-changelog:
   filename: .changelog
-  markup-type: text
+  markup-type: markdown
 
 ignore:
   - dev
