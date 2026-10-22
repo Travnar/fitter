@@ -7,4 +7,5 @@ manual-changelog:
 
 ignore:
   - dev
+  - tests
   - README.md
