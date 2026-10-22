@@ -1,0 +1,33 @@
+name: Bug report
+description: Something in Fitter isn't working
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Fitter version
+      placeholder: "2.10.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: Game client
+      options:
+        - Retail
+        - World of Warcraft Forever
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: errors
+    attributes:
+      label: Lua errors
+      description: Paste any errors from BugSack or /console scriptErrors 1.
+      render: text
