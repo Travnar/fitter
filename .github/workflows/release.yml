@@ -36,6 +36,7 @@ jobs:
             echo "::error::CHANGELOG.md has no '## [$GITHUB_REF_NAME] - yyyy-MM-dd' section."
             exit 1
           }
+          printf '\n[Full changelog](https://github.com/Travnar/fitter/blob/main/CHANGELOG.md)\n' >> .changelog
           cat .changelog
 
       - name: Package and upload
