@@ -61,6 +61,8 @@ UI\Transmog.lua
 UI\Transmog_Loadouts.lua
 UI\Transmog_CharacterExport.lua
 UI\Transmog_OutfitShare.lua
+UI\Transmog_PreviewOutfitDetails.lua
+UI\Transmog_PreviewShare.lua
 UI\Transmog_MountConditionals.lua
 UI\Transmog_MountSlots.lua
 UI\Transmog_Titles.lua

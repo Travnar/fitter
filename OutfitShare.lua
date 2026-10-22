@@ -1,6 +1,7 @@
--- Shared outfit links. Chat messages cannot hold a configuration, so sharing
--- posts a plain [Fitter: Name #id] token that Fitter clients turn into a
--- link. Clicking it fetches the snapshot from the sender over addon whispers.
+-- Shared outfit and preview links. Chat messages cannot hold the data, so
+-- sharing posts a plain [Fitter: Name #id] or [Fitter Preview: Name #id]
+-- token that Fitter clients turn into a link. Clicking it fetches the
+-- snapshot from the sender over addon whispers.
 local addonName, ns = ...
 
 local OutfitShare = {}
@@ -10,8 +11,14 @@ local Codec = ns.Codec
 
 local FORMAT_VERSION = 1
 local PREFIX = "Fitter"
-local LINK_COLOR = "ff71d5ff"
-local TOKEN_PATTERN = "%[Fitter: ([^%]#|]-) #(%w+)%]"
+-- Matches Blizzard's transmog outfit links.
+local LINK_COLOR = TRANSMOGRIFY_FONT_COLOR and TRANSMOGRIFY_FONT_COLOR.GenerateHexColor
+    and TRANSMOGRIFY_FONT_COLOR:GenerateHexColor() or "ffff80ff"
+local TOKEN_PATTERN = "%[(Fitter[%a ]-): ([^%]#|]-) #(%w+)%]"
+-- Token label for each kind of shared snapshot, and the reverse lookup.
+local KIND_LABELS = {outfit = "Fitter", preview = "Fitter Preview"}
+local LABEL_KINDS = {}
+for kind, label in pairs(KIND_LABELS) do LABEL_KINDS[label] = kind end
 local MAX_SAVED_SHARES = 30
 local MAX_CHUNKS = 100
 -- Addon messages are limited to 255 bytes, including the "D:id:i:n:" header.
@@ -93,21 +100,11 @@ local function CleanName(name)
     return name:sub(1, 40)
 end
 
--- Snapshots outfitID's configuration and returns the chat token for it.
-function OutfitShare.Share(outfitID, outfitName)
-    local data = FitterCharacterSaved and FitterCharacterSaved["Outfit" .. outfitID]
-    if type(data) ~= "table" then return nil end
-    local snapshot = {}
-    for key, value in pairs(data) do
-        if key ~= "SituationBaseline" then snapshot[key] = value end
-    end
-    local name = CleanName(outfitName)
-    local encoded = Codec.Encode({
-        version = FORMAT_VERSION,
-        kind = "outfit",
-        name = name,
-        data = snapshot,
-    })
+-- Saves a snapshot and returns the chat token that links to it.
+local function StoreShare(kind, name, fields)
+    local payload = {version = FORMAT_VERSION, kind = kind, name = name}
+    for key, value in pairs(fields) do payload[key] = value end
+    local encoded = Codec.Encode(payload)
 
     local store = Store()
     local id
@@ -117,7 +114,24 @@ function OutfitShare.Share(outfitID, outfitName)
     id = id or NewID(store)
     store[id] = {encoded = encoded, time = GetServerTime()}
     PruneStore(store)
-    return string.format("[Fitter: %s #%s]", name, id)
+    return string.format("[%s: %s #%s]", KIND_LABELS[kind], name, id)
+end
+
+-- Snapshots outfitID's configuration and returns the chat token for it.
+function OutfitShare.Share(outfitID, outfitName)
+    local data = FitterCharacterSaved and FitterCharacterSaved["Outfit" .. outfitID]
+    if type(data) ~= "table" then return nil end
+    local snapshot = {}
+    for key, value in pairs(data) do
+        if key ~= "SituationBaseline" then snapshot[key] = value end
+    end
+    return StoreShare("outfit", CleanName(outfitName), {data = snapshot})
+end
+
+-- preview: {transmog = {[slot] = {appearanceID, secondaryAppearanceID,
+-- illusionID}}, mountID = number} or {transmog, petDisplayID = number}.
+function OutfitShare.SharePreview(preview, label)
+    return StoreShare("preview", CleanName(label), {preview = preview})
 end
 
 local CHAT_TARGET_ATTRIBUTES = {"chatType", "tellTarget", "channelTarget"}
@@ -181,16 +195,12 @@ function OutfitShare.InsertIntoChat(text)
     end
 end
 
-local function DecodeShare(encoded)
-    local payload, err = Codec.Decode(encoded)
-    if not payload then return nil, err end
-    if type(payload) ~= "table" or payload.kind ~= "outfit"
-        or type(payload.data) ~= "table" then
-        return nil, "This is not a Fitter outfit configuration."
-    end
-    if payload.version ~= FORMAT_VERSION then
-        return nil, "This outfit was shared by a different version of Fitter."
-    end
+local function IsID(value)
+    return type(value) == "number" and value >= 0 and value == math.floor(value)
+end
+
+local function SanitizeOutfit(payload)
+    if type(payload.data) ~= "table" then return false end
     for key, value in pairs(payload.data) do
         local expected = FIELD_TYPES[key]
         if type(key) ~= "string" or key == "SituationBaseline"
@@ -198,6 +208,40 @@ local function DecodeShare(encoded)
             payload.data[key] = nil
         end
     end
+    return true
+end
+
+local function SanitizePreview(payload)
+    local preview = payload.preview
+    if type(preview) ~= "table" or type(preview.transmog) ~= "table" then
+        return false
+    end
+    local transmog = {}
+    for slot, info in pairs(preview.transmog) do
+        if IsID(slot) and type(info) == "table" and IsID(info[1])
+            and IsID(info[2] or 0) and IsID(info[3] or 0) then
+            transmog[slot] = {info[1], info[2] or 0, info[3] or 0}
+        end
+    end
+    local mountID = IsID(preview.mountID) and preview.mountID or nil
+    local petDisplayID = IsID(preview.petDisplayID) and preview.petDisplayID or nil
+    if not mountID and not petDisplayID then return false end
+    payload.preview = {transmog = transmog, mountID = mountID,
+        petDisplayID = not mountID and petDisplayID or nil}
+    return true
+end
+
+local SANITIZERS = {outfit = SanitizeOutfit, preview = SanitizePreview}
+
+local function DecodeShare(encoded)
+    local payload, err = Codec.Decode(encoded)
+    if not payload then return nil, err end
+    local sanitize = type(payload) == "table" and SANITIZERS[payload.kind]
+    if not sanitize then return nil, "This is not a Fitter link." end
+    if payload.version ~= FORMAT_VERSION then
+        return nil, "This was shared by a different version of Fitter."
+    end
+    if not sanitize(payload) then return nil, "This Fitter link is corrupt." end
     payload.name = CleanName(payload.name)
     return payload
 end
@@ -301,14 +345,22 @@ local function OnChunk(sender, id, index, total, chunk)
 end
 
 -- Calls callback(payload) or callback(nil, message), possibly immediately.
-function OutfitShare.Fetch(owner, id, callback)
+-- Payloads of a kind other than the link's are rejected.
+function OutfitShare.Fetch(owner, id, kind, callback)
+    local inner = callback
+    callback = function(payload, err)
+        if payload and payload.kind ~= kind then
+            payload, err = nil, "This Fitter link is corrupt."
+        end
+        inner(payload, err)
+    end
     local entry = Store()[id]
     if entry then
         callback(DecodeShare(entry.encoded))
         return
     end
     if owner == PlayerFullName() then
-        callback(nil, "This shared outfit is no longer saved.")
+        callback(nil, "This shared link is no longer saved.")
         return
     end
     local key = owner .. ":" .. id
@@ -339,7 +391,7 @@ events:SetScript("OnEvent", function(_, _, prefix, message, channel, sender)
     id = message:match("^N:(%w+)$")
     if id then
         Finish(sender .. ":" .. id, nil, string.format(
-            "%s no longer has this outfit configuration.", sender))
+            "%s no longer has this shared link saved.", sender))
         return
     end
     local index, total, chunk
@@ -354,19 +406,24 @@ C_ChatInfo.RegisterAddonMessagePrefix(PREFIX)
 
 local function ChatFilter(_, event, message, author, ...)
     if not IsReadable(message) or not IsReadable(author)
-        or not message:find("[Fitter: ", 1, true) then
+        or not message:find("[Fitter", 1, true) then
         return false
     end
     -- For whispers you send, the author argument is the recipient.
     local owner = event == "CHAT_MSG_WHISPER_INFORM" and PlayerFullName()
         or FullName(author)
     if not owner then return false end
-    local linked = message:gsub(TOKEN_PATTERN, function(name, id)
-        return string.format("|c%s|Haddon:%s:outfit:%s:%s|h[Fitter: %s]|h|r",
-            LINK_COLOR, addonName, owner, id, name)
+    local linked = message:gsub(TOKEN_PATTERN, function(label, name, id)
+        local kind = LABEL_KINDS[label]
+        if not kind then return nil end
+        return string.format("|c%s|Haddon:%s:%s:%s:%s|h[%s: %s]|h|r",
+            LINK_COLOR, addonName, kind, owner, id, label, name)
     end)
     return false, linked, author, ...
 end
+
+-- Window opener for each kind, set by the UI files.
+OutfitShare.linkHandlers = {}
 
 local addFilter = ChatFrameUtil and ChatFrameUtil.AddMessageEventFilter
     or ChatFrame_AddMessageEventFilter
@@ -377,10 +434,12 @@ end
 if EventRegistry then
     EventRegistry:RegisterCallback("SetItemRef", function(_, link, text)
         if type(link) ~= "string" then return end
-        local owner, id = link:match("^addon:" .. addonName .. ":outfit:([^:]+):(%w+)$")
-        if owner and ns.OutfitShareUI then
-            local name = type(text) == "string" and text:match("%[Fitter: (.-)%]")
-            ns.OutfitShareUI.Open(owner, id, name)
+        local kind, owner, id =
+            link:match("^addon:" .. addonName .. ":(%a+):([^:]+):(%w+)$")
+        local open = kind and OutfitShare.linkHandlers[kind]
+        if open then
+            local name = type(text) == "string" and text:match("%[Fitter[%a ]-: (.-)%]")
+            open(owner, id, name)
         end
     end)
 end

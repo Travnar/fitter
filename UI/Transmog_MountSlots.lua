@@ -1211,6 +1211,59 @@ function UI_Transmog:ClearMountPreview()
     s.previewMountID = nil
 end
 
+-- Sizes petActor relative to the loaded playerActor and places it beside the
+-- player. Returns the player's height and Y bounds and the pet's scaled
+-- width, or nil when either model has no usable bounding box.
+function UI_Transmog._PlacePetBesidePlayer(petActor, playerActor, isHunterPreview)
+    local petBottomX, petBottomY, petBottomZ,
+        petTopX, petTopY, petTopZ =
+        petActor:GetActiveBoundingBox()
+    local playerBottomX, playerBottomY, playerBottomZ,
+        playerTopX, playerTopY, playerTopZ =
+        playerActor:GetActiveBoundingBox()
+    local petHeight = petBottomZ and petTopZ and petTopZ - petBottomZ
+    local playerHeight = playerBottomZ and playerTopZ
+        and playerTopZ - playerBottomZ
+
+    if not petHeight or petHeight <= 0
+        or not playerHeight or playerHeight <= 0
+        or not petBottomX or not petTopX
+        or not petBottomY or not petTopY then
+        petActor:SetScale(isHunterPreview and 0.14 or 0.08)
+        return nil
+    end
+
+    local targetHeight = isHunterPreview and 0.38 or 0.22
+    local scale = (playerHeight * targetHeight) / petHeight
+    scale = math.max(0.015, math.min(scale,
+        isHunterPreview and 0.55 or 0.35))
+    local petCenterX = (petBottomX + petTopX) * 0.5
+    -- Keep the pet slightly in front of the player's depth plane so wide
+    -- models do not intersect with or disappear beneath the character.
+    local petPositionX = -petCenterX * scale + playerHeight * 0.12
+    -- Anchor the pet's visible right edge beside the character. Centering
+    -- very wide models (crabs, crawlers, and hares with long effects)
+    -- pushes their entire body too far toward the edge of the preview.
+    local petPositionY
+    if isHunterPreview and playerBottomY then
+        -- Put the pet's nearest model-space edge beyond the player's edge
+        -- with a proportional gap. Bounding-box placement prevents broad
+        -- pets from intersecting the character despite their larger size.
+        local gap = playerHeight * 0.08
+        petPositionY = playerBottomY - gap - petTopY * scale
+    else
+        petPositionY = -1.8 - petTopY * scale
+    end
+
+    petActor:SetScale(scale)
+    petActor:SetPosition(petPositionX, petPositionY, -petBottomZ * scale)
+    if playerActor.GetYaw then
+        petActor:SetYaw(playerActor:GetYaw())
+    end
+    return playerHeight, playerBottomY, playerTopY,
+        math.max((petTopY - petBottomY) * scale, 0)
+end
+
 function UI_Transmog:PreviewSelectedPet(petGUID, previewDisplayID, previewKey)
     if type(petGUID) ~= "string"
         and (type(previewDisplayID) ~= "number" or previewDisplayID == 0) then
@@ -1275,51 +1328,9 @@ function UI_Transmog:PreviewSelectedPet(petGUID, previewDisplayID, previewKey)
             return
         end
 
-        local petBottomX, petBottomY, petBottomZ,
-            petTopX, petTopY, petTopZ =
-            petActor:GetActiveBoundingBox()
-        local playerBottomX, playerBottomY, playerBottomZ,
-            playerTopX, playerTopY, playerTopZ =
-            playerActor:GetActiveBoundingBox()
-        local petHeight = petBottomZ and petTopZ and petTopZ - petBottomZ
-        local playerHeight = playerBottomZ and playerTopZ
-            and playerTopZ - playerBottomZ
-
-        if not petHeight or petHeight <= 0
-            or not playerHeight or playerHeight <= 0
-            or not petBottomX or not petTopX
-            or not petBottomY or not petTopY then
-            petActor:SetScale(isHunterPreview and 0.14 or 0.08)
-            return
-        end
-
-        local targetHeight = isHunterPreview and 0.38 or 0.22
-        local scale = (playerHeight * targetHeight) / petHeight
-        scale = math.max(0.015, math.min(scale,
-            isHunterPreview and 0.55 or 0.35))
-        local petCenterX = (petBottomX + petTopX) * 0.5
-        -- Keep the pet slightly in front of the player's depth plane so wide
-        -- models do not intersect with or disappear beneath the character.
-        local petPositionX = -petCenterX * scale + playerHeight * 0.12
-        -- Anchor the pet's visible right edge beside the character. Centering
-        -- very wide models (crabs, crawlers, and hares with long effects)
-        -- pushes their entire body too far toward the edge of the preview.
-        local petPositionY
-        if isHunterPreview and playerBottomY then
-            -- Put the pet's nearest model-space edge beyond the player's edge
-            -- with a proportional gap. Bounding-box placement prevents broad
-            -- pets from intersecting the character despite their larger size.
-            local gap = playerHeight * 0.08
-            petPositionY = playerBottomY - gap - petTopY * scale
-        else
-            petPositionY = -1.8 - petTopY * scale
-        end
-
-        petActor:SetScale(scale)
-        petActor:SetPosition(petPositionX, petPositionY, -petBottomZ * scale)
-        if playerActor.GetYaw then
-            petActor:SetYaw(playerActor:GetYaw())
-        end
+        local playerHeight, playerBottomY, playerTopY, petWidth =
+            UI_Transmog._PlacePetBesidePlayer(petActor, playerActor, isHunterPreview)
+        if not playerHeight then return end
 
         if isHunterPreview then
             local camera = scene.GetActiveCamera and scene:GetActiveCamera()
@@ -1331,7 +1342,6 @@ function UI_Transmog:PreviewSelectedPet(petGUID, previewDisplayID, previewKey)
                     and camera:GetMaxZoomDistance() or nil
                 local playerWidth = playerBottomY and playerTopY
                     and math.max(playerTopY - playerBottomY, 0.01) or 1
-                local petWidth = math.max((petTopY - petBottomY) * scale, 0)
                 local zoomFactor = math.max(1.22,
                     math.min(1.65, (playerWidth + petWidth
                         + playerHeight * 0.08) / playerWidth * 0.9))

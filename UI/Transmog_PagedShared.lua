@@ -497,6 +497,9 @@ local function ShowMountContextMenu(owner, mountData, refresh)
             rootDescription:CreateButton(L["Preview"], function()
                 UI_Transmog:PreviewSelectedMount(mountID)
             end)
+            rootDescription:CreateButton(L["Send Preview"], function()
+                UI_Transmog:SendPreview({mountID = mountID}, mountData.name)
+            end)
         end
         if mountData.isCollected ~= false and type(mountID) == "number" then
             rootDescription:CreateButton(L["Summon Mount"], function()

@@ -155,7 +155,7 @@ function OutfitShareUI.Open(owner, id, name)
     UpdateApplyButton()
     window:Show()
 
-    OutfitShare.Fetch(owner, id, function(payload, err)
+    OutfitShare.Fetch(owner, id, "outfit", function(payload, err)
         if window.request ~= request then return end
         if not payload then
             SetStatus(err, true)
@@ -168,3 +168,5 @@ function OutfitShareUI.Open(owner, id, name)
         UpdateApplyButton()
     end)
 end
+
+OutfitShare.linkHandlers.outfit = OutfitShareUI.Open

@@ -285,6 +285,12 @@ function UI_Transmog:InitializePetPaged()
                         UI_Transmog:PreviewSelectedPet(
                             petGUID, petData.displayID, petGUID)
                     end)
+                    if petData.displayID and petData.displayID ~= 0 then
+                        rootDescription:CreateButton(L["Send Preview"], function()
+                            UI_Transmog:SendPreview(
+                                {petDisplayID = petData.displayID}, petData.name)
+                        end)
+                    end
                     rootDescription:CreateButton(L["Summon Pet"], function()
                         C_PetJournal.SummonPetByGUID(petGUID)
                     end)

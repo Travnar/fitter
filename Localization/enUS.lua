@@ -143,6 +143,9 @@ local strings = {
     "|cffffd200%s|r shared by %s", "Requesting the configuration from %s...",
     "Put a link to the selected outfit's Fitter configuration in the chat box. Other Fitter users can click it to apply it to one of their outfits.",
     "This replaces the outfit's current Fitter configuration. Anything this character has not collected is skipped.",
+    "Send Preview", "Requesting the preview from %s...",
+    "This mount cannot be previewed.", "This pet cannot be previewed.",
+    "Open in Dressing Room",
 }
 
 for _, text in ipairs(strings) do
