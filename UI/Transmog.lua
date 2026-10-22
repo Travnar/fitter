@@ -54,7 +54,9 @@ end
 function UI_Transmog:HideTransientPopups()
     self:HideEmoteCreatePopup()
     if s.loadoutPopup then s.loadoutPopup:Hide() end
+    if s.characterExportPopup then s.characterExportPopup:Hide() end
     if StaticPopup_Hide then
+        StaticPopup_Hide("FITTER_IMPORT_CHARACTER_CONFIGURATION")
         StaticPopup_Hide("FITTER_APPLY_LOADOUT")
         StaticPopup_Hide("FITTER_DELETE_LOADOUT")
         StaticPopup_Hide("FITTER_RESET_CHARACTER_CONFIGURATION")

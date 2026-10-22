@@ -195,16 +195,12 @@ local function ShowLoadoutTooltip(owner, elementData)
     GameTooltip:Show()
 end
 
-local function ApplyLoadout(loadout)
-    local destination, outfitID = CurrentOutfit(true)
-    local source = loadout and loadout.data
-    if not destination or type(source) ~= "table" then
-        UIErrorsFrame:AddMessage("Select an outfit before applying a loadout.",
-            1, 0.2, 0.2)
-        return
-    end
-
-    local oldZones = Copy(destination.Zones or {})
+-- Replaces outfitID's configuration with source, dropping anything this
+-- character cannot use. Used by loadouts and shared outfit links.
+function UI_Transmog:ApplyOutfitConfiguration(source, outfitID)
+    Fitter:CreateEmptyOutfit(outfitID)
+    local destination = FitterCharacterSaved["Outfit" .. outfitID]
+    local oldZones = Copy(type(destination.Zones) == "table" and destination.Zones or {})
     local oldSituationBaseline = Copy(destination.SituationBaseline)
     local applied = Copy(source)
     applied.Flying = FilterList(source.Flying, IsMountAvailable)
@@ -213,7 +209,7 @@ local function ApplyLoadout(loadout)
     applied.Pets = FilterList(source.Pets, IsPetAvailable)
     local availablePets = {}
     for _, petGUID in ipairs(applied.Pets) do availablePets[petGUID] = true end
-    applied.PetSummonTriggers = applied.PetSummonTriggers or {}
+    if type(applied.PetSummonTriggers) ~= "table" then applied.PetSummonTriggers = {} end
     for petGUID in pairs(applied.PetSummonTriggers) do
         if not availablePets[petGUID] then
             applied.PetSummonTriggers[petGUID] = nil
@@ -232,23 +228,31 @@ local function ApplyLoadout(loadout)
     for key, value in pairs(applied) do destination[key] = value end
     destination.SituationBaseline = oldSituationBaseline
 
-    for _, mapID in ipairs(oldZones) do
-        if not tContains(applied.Zones, mapID)
-            and UI_Transmog.TryDisableZoneSituation then
-            UI_Transmog:TryDisableZoneSituation(mapID, outfitID)
+    -- Zone situations are edited through the transmog panel's viewed outfit,
+    -- so they are only synced when that is the outfit being changed.
+    local syncSituations = TransmogFrame and TransmogFrame:IsShown()
+        and self:GetViewedOutfitID() == outfitID
+    if syncSituations then
+        for _, mapID in ipairs(oldZones) do
+            if not tContains(applied.Zones, mapID)
+                and UI_Transmog.TryDisableZoneSituation then
+                UI_Transmog:TryDisableZoneSituation(mapID, outfitID)
+            end
         end
-    end
-    if UI_Transmog.UpdateZoneSituation then
-        for _, mapID in ipairs(applied.Zones) do
-            if not tContains(oldZones, mapID) then
-                UI_Transmog:UpdateZoneSituation(mapID, true)
+        if UI_Transmog.UpdateZoneSituation then
+            for _, mapID in ipairs(applied.Zones) do
+                if not tContains(oldZones, mapID) then
+                    UI_Transmog:UpdateZoneSituation(mapID, true)
+                end
             end
         end
     end
 
     UI_Transmog:UpdateMountIcons()
     UI_Transmog:UpdateTitleDropdown()
-    if UI_Transmog.RefreshEmoteRows then UI_Transmog:RefreshEmoteRows() end
+    if UI_Transmog.RefreshEmoteRows and s.emotesViewInitialized then
+        UI_Transmog:RefreshEmoteRows()
+    end
     if Fitter.RefreshZoneCache then Fitter:RefreshZoneCache() end
     Fitter:RefreshFeatureEvents()
     if UI_Transmog:GetActiveOutfitID() == outfitID
@@ -259,6 +263,17 @@ local function ApplyLoadout(loadout)
         Fitter:UpdateOutfitUpdateMacro()
     end
     PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
+end
+
+local function ApplyLoadout(loadout)
+    local _, outfitID = CurrentOutfit(false)
+    local source = loadout and loadout.data
+    if not outfitID or type(source) ~= "table" then
+        UIErrorsFrame:AddMessage("Select an outfit before applying a loadout.",
+            1, 0.2, 0.2)
+        return
+    end
+    UI_Transmog:ApplyOutfitConfiguration(source, outfitID)
     s.selectedApplyLoadoutElement = nil
     UI_Transmog:RefreshLoadouts()
 end
@@ -422,7 +437,7 @@ local function ConfirmDeleteLoadout(elementData)
         elementData.loadout.name or L["Unnamed"], nil, elementData)
 end
 
-local function RefreshAfterConfigurationReset()
+function UI_Transmog:RefreshAfterConfigurationReset()
     UI_Transmog:UpdateTitleDropdown()
     UI_Transmog:UpdateMountIcons()
     if UI_Transmog.RefreshEmoteRows then UI_Transmog:RefreshEmoteRows() end
@@ -454,7 +469,7 @@ local function ResetCharacterConfiguration()
         end
     end
 
-    RefreshAfterConfigurationReset()
+    UI_Transmog:RefreshAfterConfigurationReset()
 end
 
 local function ResetOutfitConfiguration(_, outfitID)
@@ -462,7 +477,7 @@ local function ResetOutfitConfiguration(_, outfitID)
     FitterCharacterSaved = FitterCharacterSaved or {}
     FitterCharacterSaved["Outfit" .. outfitID] = nil
     Fitter:CreateEmptyOutfit(outfitID)
-    RefreshAfterConfigurationReset()
+    UI_Transmog:RefreshAfterConfigurationReset()
 end
 
 StaticPopupDialogs["FITTER_RESET_CHARACTER_CONFIGURATION"] = {
@@ -616,7 +631,7 @@ function UI_Transmog:InitializeLoadouts()
     characterSection:SetTextColor(1, 1, 1, 1)
     characterSection:SetText(L["Character"])
 
-    local function CreateResetRow(label, y, onClick)
+    local function CreateResetRow(label, y, onClick, buttonText)
         local row = CreateFrame("Frame", nil, parent)
         row:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, y)
         row:SetPoint("RIGHT", parent, "RIGHT", -70, 0)
@@ -628,31 +643,43 @@ function UI_Transmog:InitializeLoadouts()
             CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
         button:SetSize(80, 22)
         button:SetPoint("RIGHT")
-        button:SetText(L["Reset"])
+        button:SetText(buttonText or L["Reset"])
         button:SetScript("OnClick", onClick)
-        return row
+        return row, button
     end
 
     CreateResetRow("Reset Character Configuration", -157, function()
         StaticPopup_Show("FITTER_RESET_CHARACTER_CONFIGURATION")
     end)
+    self:InitializeCharacterExport(parent, -194)
 
     local outfitsSection = parent:CreateFontString(nil, "OVERLAY",
         "GameFontNormalLarge")
-    outfitsSection:SetPoint("TOPLEFT", parent, "TOPLEFT", 66, -285)
+    outfitsSection:SetPoint("TOPLEFT", parent, "TOPLEFT", 66, -433)
     outfitsSection:SetTextColor(1, 1, 1, 1)
     outfitsSection:SetText(L["Outfits"])
 
-    CreateResetRow("Reset Outfit Configuration", -323,
+    CreateResetRow("Reset Outfit Configuration", -471,
         ConfirmResetOutfitConfiguration)
 
+    local _, shareButton = CreateResetRow(L["Share Outfit Configuration"], -508,
+        function() UI_Transmog:ShareViewedOutfit() end, L["Share"])
+    shareButton:SetScript("OnEnter", function(button)
+        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+        GameTooltip:SetText(L["Share Outfit Configuration"])
+        GameTooltip:AddLine(L["Put a link to the selected outfit's Fitter configuration in the chat box. Other Fitter users can click it to apply it to one of their outfits."],
+            1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    shareButton:SetScript("OnLeave", GameTooltip_Hide)
+
     local addLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    addLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -366)
+    addLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -551)
     addLabel:SetText(L["Add New Loadout"])
 
     local add = CreateFrame("Button", nil, parent)
     add:SetSize(32, 32)
-    add:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -357)
+    add:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -542)
     local addIcon = add:CreateTexture(nil, "ARTWORK")
     addIcon:SetPoint("CENTER")
     addIcon:SetAtlas("128-redbutton-plus", true)
@@ -683,13 +710,13 @@ function UI_Transmog:InitializeLoadouts()
 
     local applyLabel =
         parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    applyLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -403)
+    applyLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -588)
     applyLabel:SetText(L["Apply Loadout"])
 
     local applyDropdown = CreateFrame("DropdownButton", nil, parent,
         "WowStyle1DropdownTemplate")
     applyDropdown:SetSize(220, 30)
-    applyDropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -394)
+    applyDropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -579)
     applyDropdown:SetDefaultText("Select a loadout")
     applyDropdown:SetupMenu(function(_, root)
         PopulateLoadoutMenu(root, "selectedApplyLoadoutElement",
@@ -701,13 +728,13 @@ function UI_Transmog:InitializeLoadouts()
 
     local deleteLabel =
         parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    deleteLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -440)
+    deleteLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -625)
     deleteLabel:SetText(L["Delete Loadout"])
 
     local deleteDropdown = CreateFrame("DropdownButton", nil, parent,
         "WowStyle1DropdownTemplate")
     deleteDropdown:SetSize(220, 30)
-    deleteDropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -431)
+    deleteDropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -616)
     deleteDropdown:SetDefaultText("Select a loadout")
     deleteDropdown:SetupMenu(function(_, root)
         PopulateLoadoutMenu(root, "selectedDeleteLoadoutElement",

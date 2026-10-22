@@ -426,17 +426,17 @@ function UI_Transmog:InitializeMountConditionals(parent)
     local function OnChanged() UI_Transmog:RefreshMountConditionals() end
 
     local addLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    addLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -200)
+    addLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -348)
     addLabel:SetText(L["Add a Character Condition"])
 
     local add = ConditionalsUI.CreateAddButton(parent, "character", OnChanged)
-    add:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -191)
+    add:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -339)
 
     local currentLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    currentLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -237)
+    currentLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -385)
     currentLabel:SetText(L["Current Character Conditionals"])
 
     local dropdown = ConditionalsUI.CreateListDropdown(parent, "character", 220, OnChanged)
-    dropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -228)
+    dropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -376)
     s.mountConditionalsDropdown = dropdown
 end

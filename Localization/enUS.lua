@@ -124,6 +124,22 @@ local strings = {
     "Midsummer Fire Festival", "Brewfest", "Hallow's End", "Day of the Dead",
     "Pilgrim's Bounty", "Feast of Winter Veil", "Darkmoon Faire",
     "WoW Anniversary",
+    "Generate", "Import", "Close", "Unknown",
+    "Generate Character Export String", "Generate Character Export Macros",
+    "Import Character Export String", "Import Character Export Macros",
+    "Character Export String",
+    "Press Ctrl+C to copy the export string.",
+    "Press Ctrl+V to paste an export string.",
+    "Show a string containing this character's Fitter configuration, to copy and paste.",
+    "Store this character's Fitter configuration in FITTER_CONFIG_N account macros.",
+    "Paste an export string to overwrite this character's Fitter configuration.",
+    "Overwrite this character's Fitter configuration from the FITTER_CONFIG_N macros, then delete them.",
+    "Import the Fitter configuration exported from |cffffd200%s|r?\n\nThis will overwrite all Fitter configurations for this character. This cannot be undone.",
+    "Share", "Share Outfit Configuration", "Shared Outfit", "Outfit",
+    "Select an outfit", "What outfit do you want to apply this to?",
+    "|cffffd200%s|r shared by %s", "Requesting the configuration from %s...",
+    "Put a link to the selected outfit's Fitter configuration in the chat box. Other Fitter users can click it to apply it to one of their outfits.",
+    "This replaces the outfit's current Fitter configuration. Anything this character has not collected is skipped.",
 }
 
 for _, text in ipairs(strings) do
