@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.11.0] - 2026-10-22
+
+### Added
+- Send Preview, in the right-click menu of mount and pet cards. It puts a Custom Fit link in the chat box; another Fitter user clicks it to see their own character in your current transmog, riding the mount or beside the pet. The window lists each appearance like the Dressing Room, and Open in Dressing Room loads the outfit there to save as a custom set.
+- Searchable Title Selection option, under Titles. It replaces the title dropdown in the outfit window with a search box that lists every known title and filters as you type.
+
 ## [2.10.0] - 2026-10-22
 
 ### Added
