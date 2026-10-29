@@ -59,6 +59,7 @@ local translations = {
     ["Use Zone Specific Mounts"] = "使用特定区域坐骑",
     ["Show Tooltip in Hearthstone Macro"] = "在炉石宏中显示鼠标提示",
     ["Astral Recall Fallback"] = "备用星界传送",
+    ["Guild Cloak"] = "公会披风",
     ["Dismiss Pet On Stealth"] = "进入潜行时解散宠物",
     ["Dismiss Pet In Instances While Grouped"] = "组队进入副本时解散宠物",
     ["Revive Pet"] = "复活宠物",

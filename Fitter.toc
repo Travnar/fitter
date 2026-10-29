@@ -41,6 +41,7 @@ Mount.lua
 MountConditionals.lua
 Emote.lua
 Housing.lua
+GuildCloak.lua
 Macro.lua
 Macro\Mount.lua
 Macro\Hearthstone.lua

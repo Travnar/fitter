@@ -27,7 +27,7 @@ local strings = {
     "Mounts", "Remove Macro Changes On Update", "Show Tooltip in Mount Macro",
     "Use Druid Macro", "Use Shaman Macro", "Use Monk Macro", "Use Zone Specific Mounts",
     "Copy Target Player's Mount",
-    "Show Tooltip in Hearthstone Macro", "Astral Recall Fallback",
+    "Show Tooltip in Hearthstone Macro", "Astral Recall Fallback", "Guild Cloak",
     "Dismiss Pet On Stealth", "Dismiss Pet In Instances While Grouped", "Revive Pet",
     "Cancel Non-Outfit Cosmetic Toys", "Apply Toy On Select",
     "Titles", "Searchable Title Selection",

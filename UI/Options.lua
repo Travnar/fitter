@@ -250,8 +250,8 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         for _, option in ipairs(ns.Constants.HEARTHSTONE_CONDITIONS) do
             if value == (option.id or "None") then return option.label end
         end
-        if ns.Housing then
-            for _, option in ipairs(ns.Housing.GetConditions()) do
+        for _, provider in ipairs({ns.GuildCloak, ns.Housing}) do
+            for _, option in ipairs(provider.GetConditions()) do
                 if value == option.key then return option.label end
             end
         end
@@ -287,8 +287,8 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
                         option.id or "None")
                 end
             end
-            if ns.Housing then
-                for _, option in ipairs(ns.Housing.GetConditions()) do
+            for _, provider in ipairs({ns.GuildCloak, ns.Housing}) do
+                for _, option in ipairs(provider.GetConditions()) do
                     rootDescription:CreateRadio(option.label,
                         function(value)
                             return FitterSaved and FitterSaved[key] == value

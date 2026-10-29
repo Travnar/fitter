@@ -124,6 +124,22 @@ T.test("modifier hearthstones and housing teleports", function()
         .. "/use [mod:shift] item:2002; item:2001")
 end)
 
+T.test("guild cloak teleport on a modifier", function()
+    local w, Macro = Setup()
+    w.itemCounts[DEFAULT_HEARTHSTONE] = 1
+    w.env.FitterSaved.CtrlHearthstoneCondition = "GUILD_CLOAK"
+    w.ns.GuildCloak = {
+        GetMacroAction = function(key)
+            return key == "GUILD_CLOAK" and "/click FitterGuildCloakButton" or nil
+        end,
+    }
+    Macro.UpdateHearthstone()
+    T.eq(Body(w),
+        "/click [mod:ctrl] FitterGuildCloakButton\n"
+        .. "/stopmacro [mod:ctrl]\n"
+        .. "/use item:6948")
+end)
+
 T.test("shaman uses Astral Recall while the hearthstone is on cooldown", function()
     local w, Macro = Setup()
     w.ns.state.playerClass = "SHAMAN"

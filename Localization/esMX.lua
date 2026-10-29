@@ -59,6 +59,7 @@ local translations = {
     ["Use Zone Specific Mounts"] = "Usar monturas específicas de zona",
     ["Show Tooltip in Hearthstone Macro"] = "Mostrar descripción en la macro de piedra de hogar",
     ["Astral Recall Fallback"] = "Usar Regreso astral como alternativa",
+    ["Guild Cloak"] = "Capa de hermandad",
     ["Dismiss Pet On Stealth"] = "Retirar mascota al entrar en sigilo",
     ["Dismiss Pet In Instances While Grouped"] = "Retirar mascota en instancias al estar en grupo",
     ["Revive Pet"] = "Revivir mascota",

@@ -126,3 +126,14 @@ ns.Constants.HEARTHSTONE_CONDITIONS = {
     {label = "Garrison Hearthstone", id = 110560},
     {label = "Delver's Mana-Bound Ethergate", id = 243056},
 }
+
+-- Guild cloaks that teleport to the faction capital, in the order Fitter
+-- tries them: shortest cooldown first.
+ns.Constants.GUILD_CLOAKS = {
+    {id = 65360, faction = "Alliance"}, -- Cloak of Coordination
+    {id = 65274, faction = "Horde"},
+    {id = 63206, faction = "Alliance"}, -- Wrap of Unity
+    {id = 63207, faction = "Horde"},
+    {id = 63352, faction = "Alliance"}, -- Shroud of Cooperation
+    {id = 63353, faction = "Horde"},
+}

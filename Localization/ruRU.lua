@@ -103,6 +103,7 @@ local translations = {
     ["Use Zone Specific Mounts"] = "Использовать транспорт, привязанный к зоне",
     ["Show Tooltip in Hearthstone Macro"] = "Показывать подсказку в макросе камня возвращения",
     ["Astral Recall Fallback"] = "Резервное использование Астрального возвращения",
+    ["Guild Cloak"] = "Плащ гильдии",
     ["Dismiss Pet On Stealth"] = "Отпускать питомца при входе в незаметность",
     ["Dismiss Pet In Instances While Grouped"] = "Отпускать питомца в подземельях, находясь в группе",
     ["Revive Pet"] = "Воскрешение питомца",

@@ -154,8 +154,10 @@ local function ResolveHearthstoneMacro()
         if type(conditionItemID) == "number" and PlayerHasToy(conditionItemID) then
             uses[#uses + 1] = "[" .. condition.macro .. "] "
                 .. GetHearthstoneAction(conditionItemID)
-        elseif type(conditionItemID) == "string" and ns.Housing then
-            local action = ns.Housing.GetMacroAction(conditionItemID)
+        elseif type(conditionItemID) == "string" then
+            local action = ns.GuildCloak
+                and ns.GuildCloak.GetMacroAction(conditionItemID)
+                or ns.Housing and ns.Housing.GetMacroAction(conditionItemID)
             if action then
                 modifierTeleports[#modifierTeleports + 1] = action:gsub(
                     "^/click ", "/click [" .. condition.macro .. "] ")
