@@ -222,6 +222,7 @@ function T.NewWorld()
     env.GetBindingKey = function(command) return w.bindings[command] end
     env.IsPlayerSpell = function(spellID) return w.knownSpells[spellID] == true end
     env.PlayerHasToy = function(itemID) return w.ownedToys[itemID] == true end
+    env.GetBuildInfo = function() return "12.0.5", "0", "", 120105 end
     env.CreateFrame = function() return Inert() end
     env.hooksecurefunc = function() end
     env.print = function(...)
@@ -341,6 +342,8 @@ function T.NewWorld()
         end
         return ns
     end
+
+    w:Load({"Flavor.lua"})
 
     -- Loads the macro modules, plus the feature modules that build lines for
     -- the macros unless the test supplies its own.
