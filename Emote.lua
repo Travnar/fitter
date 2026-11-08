@@ -28,12 +28,7 @@ end
 
 local builtInEmoteTokens
 
--- Combat-related API results can be secret in WoW 12.0.  Secret values may
--- be passed through, but addons cannot compare them or use them as table keys.
-local function CanAccessValue(value)
-    if canaccessvalue then return canaccessvalue(value) end
-    return not issecretvalue or not issecretvalue(value)
-end
+local CanAccessValue = ns.CanAccessValue
 
 local CONSUMPTION_KEYWORDS = {
     enUS = { eating = { "eating", "food" }, drinking = { "drinking", "drink" } },

@@ -120,7 +120,7 @@ local function GetTargetPlayerMount()
         local aura = C_UnitAuras.GetAuraDataByIndex("target", index, "HELPFUL")
         if not aura then return nil end
         local spellID = aura.spellId
-        if spellID and not (issecretvalue and issecretvalue(spellID)) then
+        if spellID and ns.CanAccessValue(spellID) then
             local mountID = C_MountJournal.GetMountFromSpell(spellID)
             if mountID then
                 if IsMountCurrentlyUsable(mountID) then return mountID end

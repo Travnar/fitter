@@ -51,8 +51,7 @@ local FIELD_TYPES = {
 }
 
 local function IsReadable(value)
-    return type(value) == "string"
-        and (not issecretvalue or not issecretvalue(value))
+    return type(value) == "string" and ns.CanAccessValue(value)
 end
 
 local function FullName(name)

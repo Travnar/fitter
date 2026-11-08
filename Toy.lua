@@ -34,10 +34,7 @@ function Toy.IsCatalogToy(toyID)
     return false
 end
 
-local function CanAccessValue(value)
-    if canaccessvalue then return canaccessvalue(value) end
-    return not issecretvalue or not issecretvalue(value)
-end
+local CanAccessValue = ns.CanAccessValue
 
 function Toy.ScheduleMacroRefresh()
     local outfitID = ns.state.currentZoneOutfitID

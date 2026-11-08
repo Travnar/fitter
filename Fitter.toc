@@ -12,7 +12,8 @@
 ## AddonCompartmentFuncOnEnter: FitterCompartment_OnEnter
 ## AddonCompartmentFuncOnLeave: FitterCompartment_OnLeave
 
-# Client detection (retail vs. World of Warcraft Forever); loaded first.
+# Client detection (retail vs. World of Warcraft Forever) and secret-value
+# access check; loaded first.
 Flavor.lua
 
 Localization\Localization.lua
