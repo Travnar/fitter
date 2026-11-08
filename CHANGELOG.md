@@ -3,7 +3,7 @@
 ## [2.12.0] - 2026-11-08
 
 ### Added
-- Guild Cloak as a Shift, Ctrl or Alt Condition for the hearthstone macro. Holding the modifier puts on your guild cloak (the one with the shortest cooldown that is ready) and the next press teleports you to your faction's capital; your previous cloak is put back afterwards.
+- Guild Cloak as a Shift, Ctrl or Alt Condition for the hearthstone macro. Pressing your hearthstone button with the modifier puts on your guild cloak (the one with the shortest cooldown that is ready) and the next press teleports you to your faction's capital; your previous cloak is put back afterwards.
 
 ### Fixed
 - An "attempt to compare a secret string value" error from Fitter while in combat in instances, caused by the holiday check. Holiday outfits now stay on until the calendar can be read again.
