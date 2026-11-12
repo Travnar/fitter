@@ -127,6 +127,9 @@ function T.NewWorld()
         itemCounts = {},     -- C_Item.GetItemCount
         itemIcons = {},
         cooldowns = {},      -- [itemID] = {start, duration}
+        items = {},          -- [itemID] = {classID, subclassID, level}
+        inventory = {},      -- [slot] = itemID
+        bags = {},           -- [bag] = {itemID, ...}
         races = {},          -- [raceID] = clientFileString
         bindings = {},       -- [command] = key
         time = 1000,
@@ -286,6 +289,32 @@ function T.NewWorld()
         GetItemSpell = function(itemID)
             local toy = w.toys[itemID]
             return toy and toy.spell
+        end,
+        GetItemInfoInstant = function(item)
+            local itemID = tonumber(item) or tonumber(tostring(item):match("item:(%d+)"))
+            local info = w.items[itemID]
+            if not info then return itemID end
+            return itemID, nil, nil, nil, nil, info.classID, info.subclassID
+        end,
+        GetDetailedItemLevelInfo = function(item)
+            local itemID = tonumber(tostring(item):match("item:(%d+)"))
+            return w.items[itemID] and w.items[itemID].level
+        end,
+        GetItemSubClassInfo = function(classID, subclassID)
+            if classID == 2 and subclassID == 20 then return "Fishing Poles" end
+        end,
+    }
+
+    env.GetInventoryItemID = function(_, slot) return w.inventory[slot] end
+    env.GetInventoryItemLink = function(_, slot)
+        return w.inventory[slot] and ("item:" .. w.inventory[slot])
+    end
+    env.C_Container = {
+        GetContainerNumSlots = function(bag) return w.bags[bag] and #w.bags[bag] or 0 end,
+        GetContainerItemInfo = function(bag, slot)
+            local itemID = w.bags[bag] and w.bags[bag][slot]
+            if not itemID then return nil end
+            return {itemID = itemID, hyperlink = "item:" .. itemID}
         end,
     }
 

@@ -251,6 +251,9 @@ local translations = {
     ["Displays the transmog window without gear slots to adjust Fitter outfit configurations."] = "Показывает окно трансмогрификации без ячеек снаряжения для настройки параметров Fitter для комплектов.",
     ["Open Outfit Window"] = "Открыть окно комплектов",
     ["Click to open the outfit window."] = "Нажмите, чтобы открыть окно комплектов.",
+    ["Equip Fishing Pole"] = "Надевать удочку",
+    ["When casting Fishing from Fitter's macro or key binding, equip the best fishing pole in your bags. Your weapons are put back 10 seconds after you stop fishing."] =
+        "При применении «Рыбной ловли» через макрос или назначенную клавишу Fitter надевает лучшую удочку из ваших сумок. Через 10 секунд после окончания рыбалки оружие возвращается на место.",
 }
 
 for key, value in pairs(translations) do

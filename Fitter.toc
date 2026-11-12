@@ -43,6 +43,7 @@ MountConditionals.lua
 Emote.lua
 Housing.lua
 GuildCloak.lua
+FishingPole.lua
 Macro.lua
 Macro\Mount.lua
 Macro\Hearthstone.lua
@@ -62,6 +63,7 @@ Core.lua
 UI\Transmog.lua
 UI\Transmog_Loadouts.lua
 UI\Transmog_CharacterExport.lua
+UI\Transmog_FishingPole.lua
 UI\Transmog_OutfitShare.lua
 UI\Transmog_PreviewOutfitDetails.lua
 UI\Transmog_PreviewShare.lua

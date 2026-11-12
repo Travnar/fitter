@@ -511,6 +511,7 @@ function Fitter:OnEvent(event, ...)
         end
     elseif event == "BAG_UPDATE_DELAYED" then
         ns.Macro.UpdateHearthstone()
+        if ns.FishingPole.IsEnabled() then ns.Macro.UpdateFishing() end
         ns.Emote.RefreshHearthstoneSpells()
     elseif event == "BAG_UPDATE_COOLDOWN" then
         -- Item cooldowns only alter Fitter's hearthstone macro when a Shaman

@@ -170,6 +170,9 @@ local translations = {
     ["Displays the transmog window without gear slots to adjust Fitter outfit configurations."] = "显示不含装备栏位的幻化窗口，用于调整 Fitter 套装配置。",
     ["Open Outfit Window"] = "打开套装窗口",
     ["Click to open the outfit window."] = "点击打开套装窗口。",
+    ["Equip Fishing Pole"] = "装备鱼竿",
+    ["When casting Fishing from Fitter's macro or key binding, equip the best fishing pole in your bags. Your weapons are put back 10 seconds after you stop fishing."] =
+        "通过Fitter的宏或按键绑定施放钓鱼时，装备背包中最好的鱼竿。停止钓鱼10秒后会重新装备你的武器。",
 }
 
 for key, value in pairs(translations) do

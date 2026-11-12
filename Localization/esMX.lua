@@ -170,6 +170,9 @@ local translations = {
     ["Displays the transmog window without gear slots to adjust Fitter outfit configurations."] = "Muestra la ventana de transfiguración sin las ranuras de equipo para ajustar la configuración de Fitter de tus conjuntos.",
     ["Open Outfit Window"] = "Abrir ventana de conjuntos",
     ["Click to open the outfit window."] = "Haz clic para abrir la ventana de conjuntos.",
+    ["Equip Fishing Pole"] = "Equipar caña de pescar",
+    ["When casting Fishing from Fitter's macro or key binding, equip the best fishing pole in your bags. Your weapons are put back 10 seconds after you stop fishing."] =
+        "Al lanzar Pesca desde la macro o el atajo de teclado de Fitter, equipa la mejor caña de pescar de tus bolsas. Tus armas se vuelven a equipar 10 segundos después de que dejas de pescar.",
 }
 
 for key, value in pairs(translations) do

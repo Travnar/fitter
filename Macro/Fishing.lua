@@ -44,7 +44,8 @@ local function BuildFishingMacroBody()
         Macro.SpellName(LEGACY_FISHING_SPELL_ID, "Fishing"))
     local outfitID = ResolveFishingOutfitID()
     local prefix = outfitID and Macro.GetOutfitMacroPrefix(outfitID) or ""
-    return "#showtooltip " .. fishing .. "\n" .. prefix .. "/cast " .. fishing
+    local equip = ns.FishingPole and ns.FishingPole.GetMacroLine() or ""
+    return "#showtooltip " .. fishing .. "\n" .. prefix .. equip .. "/cast " .. fishing
 end
 
 function Macro.UpdateFishing()

@@ -58,3 +58,64 @@ T.test("EnsureFishing creates the macro", function()
     T.eq(w:MacroBody(Macro.FISHING_MACRO_NAME), "#showtooltip Fishing\n/cast Fishing")
     T.eq(w.env.FitterCharacterSaved.LastFishingMacroBody, "#showtooltip Fishing\n/cast Fishing")
 end)
+
+local function PoleSetup(enabled)
+    local w, Macro = Setup()
+    w:Load({"FishingPole.lua"})
+    w.ns.Features.EquipFishingPole = true
+    w.env.FitterCharacterSaved.EquipFishingPole = enabled
+    w.items[6256] = {classID = 2, subclassID = 20, level = 1}
+    w.items[6365] = {classID = 2, subclassID = 20, level = 20}
+    w.items[2131] = {classID = 2, subclassID = 7, level = 30}
+    return w, Macro
+end
+
+T.test("equips the best fishing pole in the bags before casting", function()
+    local w, Macro = PoleSetup(true)
+    w.inventory[16] = 2131
+    w.bags[0] = {6256, 2131}
+    w.bags[1] = {6365}
+    Macro.UpdateFishing()
+    T.eq(w:MacroBody(Macro.FISHING_MACRO_NAME),
+        "#showtooltip Fishing\n/equip [noequipped:Fishing Poles] item:6365\n/cast Fishing")
+    T.eq(w.ns.FishingButton:GetAttribute("macrotext"),
+        "/equip [noequipped:Fishing Poles] item:6365\n/cast Fishing")
+end)
+
+T.test("keeps the equipped fishing pole", function()
+    local w, Macro = PoleSetup(true)
+    w.inventory[16] = 6256
+    w.bags[0] = {6365}
+    Macro.UpdateFishing()
+    T.eq(w:MacroBody(Macro.FISHING_MACRO_NAME),
+        "#showtooltip Fishing\n/equip [noequipped:Fishing Poles] item:6256\n/cast Fishing")
+end)
+
+T.test("switches outfit before equipping the fishing pole", function()
+    local w, Macro = PoleSetup(true)
+    w.outfits = {{outfitID = 5}, {outfitID = 7}}
+    w.activeOutfitID = 5
+    w:SetOutfit(7, {Activities = {"fishing"}})
+    w.env.FitterCharacterSaved.EquipFishingPole = true
+    w.bags[0] = {6256}
+    Macro.UpdateFishing()
+    T.eq(w:MacroBody(Macro.FISHING_MACRO_NAME),
+        "#showtooltip Fishing\n/outfit 2\n/equip [noequipped:Fishing Poles] item:6256\n/cast Fishing")
+end)
+
+T.test("no equip line when disabled, without a pole, or off Forever", function()
+    local w, Macro = PoleSetup(nil)
+    w.bags[0] = {6256}
+    Macro.UpdateFishing()
+    T.eq(w:MacroBody(Macro.FISHING_MACRO_NAME), "#showtooltip Fishing\n/cast Fishing")
+
+    w.env.FitterCharacterSaved.EquipFishingPole = true
+    w.bags[0] = {2131}
+    Macro.UpdateFishing()
+    T.eq(w:MacroBody(Macro.FISHING_MACRO_NAME), "#showtooltip Fishing\n/cast Fishing")
+
+    w.bags[0] = {6256}
+    w.ns.Features.EquipFishingPole = false
+    Macro.UpdateFishing()
+    T.eq(w:MacroBody(Macro.FISHING_MACRO_NAME), "#showtooltip Fishing\n/cast Fishing")
+end)

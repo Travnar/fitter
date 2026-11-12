@@ -146,6 +146,8 @@ local strings = {
     "Send Preview", "Requesting the preview from %s...",
     "This mount cannot be previewed.", "This pet cannot be previewed.",
     "Open in Dressing Room",
+    "Equip Fishing Pole",
+    "When casting Fishing from Fitter's macro or key binding, equip the best fishing pole in your bags. Your weapons are put back 10 seconds after you stop fishing.",
 }
 
 for _, text in ipairs(strings) do

@@ -652,17 +652,20 @@ function UI_Transmog:InitializeLoadouts()
         StaticPopup_Show("FITTER_RESET_CHARACTER_CONFIGURATION")
     end)
     self:InitializeCharacterExport(parent, -194)
+    -- The fishing pole row follows the mount conditional rows.
+    self:InitializeFishingPoleOption(parent, -416)
+    local shift = ns.Features.EquipFishingPole and 37 or 0
 
     local outfitsSection = parent:CreateFontString(nil, "OVERLAY",
         "GameFontNormalLarge")
-    outfitsSection:SetPoint("TOPLEFT", parent, "TOPLEFT", 66, -433)
+    outfitsSection:SetPoint("TOPLEFT", parent, "TOPLEFT", 66, -433 - shift)
     outfitsSection:SetTextColor(1, 1, 1, 1)
     outfitsSection:SetText(L["Outfits"])
 
-    CreateResetRow("Reset Outfit Configuration", -471,
+    CreateResetRow("Reset Outfit Configuration", -471 - shift,
         ConfirmResetOutfitConfiguration)
 
-    local _, shareButton = CreateResetRow(L["Share Outfit Configuration"], -508,
+    local _, shareButton = CreateResetRow(L["Share Outfit Configuration"], -508 - shift,
         function() UI_Transmog:ShareViewedOutfit() end, L["Share"])
     shareButton:SetScript("OnEnter", function(button)
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
@@ -674,12 +677,12 @@ function UI_Transmog:InitializeLoadouts()
     shareButton:SetScript("OnLeave", GameTooltip_Hide)
 
     local addLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    addLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -551)
+    addLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -551 - shift)
     addLabel:SetText(L["Add New Loadout"])
 
     local add = CreateFrame("Button", nil, parent)
     add:SetSize(32, 32)
-    add:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -542)
+    add:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -542 - shift)
     local addIcon = add:CreateTexture(nil, "ARTWORK")
     addIcon:SetPoint("CENTER")
     addIcon:SetAtlas("128-redbutton-plus", true)
@@ -710,13 +713,13 @@ function UI_Transmog:InitializeLoadouts()
 
     local applyLabel =
         parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    applyLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -588)
+    applyLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -588 - shift)
     applyLabel:SetText(L["Apply Loadout"])
 
     local applyDropdown = CreateFrame("DropdownButton", nil, parent,
         "WowStyle1DropdownTemplate")
     applyDropdown:SetSize(220, 30)
-    applyDropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -579)
+    applyDropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -579 - shift)
     applyDropdown:SetDefaultText("Select a loadout")
     applyDropdown:SetupMenu(function(_, root)
         PopulateLoadoutMenu(root, "selectedApplyLoadoutElement",
@@ -728,13 +731,13 @@ function UI_Transmog:InitializeLoadouts()
 
     local deleteLabel =
         parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    deleteLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -625)
+    deleteLabel:SetPoint("TOPLEFT", parent, "TOPLEFT", 86, -625 - shift)
     deleteLabel:SetText(L["Delete Loadout"])
 
     local deleteDropdown = CreateFrame("DropdownButton", nil, parent,
         "WowStyle1DropdownTemplate")
     deleteDropdown:SetSize(220, 30)
-    deleteDropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -616)
+    deleteDropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -616 - shift)
     deleteDropdown:SetDefaultText("Select a loadout")
     deleteDropdown:SetupMenu(function(_, root)
         PopulateLoadoutMenu(root, "selectedDeleteLoadoutElement",
