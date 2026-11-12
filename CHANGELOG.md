@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.12.1] - 2026-11-12
+
+### Added
+- Equip Fishing Pole option on World of Warcraft Forever, in the Character section of the Fitter tab in the outfit window. When it is on, the Outfit Fishing macro and the Cast Fishing key binding put on the best fishing pole in your bags (press again to cast), and your weapons go back on 10 seconds after you stop fishing unless you cast again.
+
 ## [2.12.0] - 2026-11-08
 
 ### Added
