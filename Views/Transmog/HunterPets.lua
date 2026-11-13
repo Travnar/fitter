@@ -70,7 +70,7 @@ local function ApplySelection(mode, info)
     if not InCombatLockdown() then
         ns.Macro.UpdateOutfitUpdateMacro(outfitID)
         ns.Macro.UpdateMacroForMount(ns.state.nextMountToSummon, outfitID)
-    elseif ns.MarkMacroRefreshPending then
+    else
         ns.MarkMacroRefreshPending()
     end
     PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)

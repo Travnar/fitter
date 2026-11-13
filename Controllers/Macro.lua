@@ -294,7 +294,7 @@ end
 
 function Macro.UpdateForCurrentState()
     if InCombatLockdown() then
-        if ns.MarkMacroRefreshPending then ns.MarkMacroRefreshPending() end
+        ns.MarkMacroRefreshPending()
         return
     end
     Macro.MigrateLegacyNames()

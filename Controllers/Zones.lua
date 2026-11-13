@@ -111,12 +111,37 @@ function Zones.UpdateCache()
 
     state.currentZoneOutfitID = zoneOutfitID
 
-    if not InCombatLockdown() and ns.Macro then
+    ns.RunOutOfCombat(function()
         state.nextMountToSummon = ns.Mount.SelectNext(false, ns.GetMountOutfitID())
         ns.Macro.UpdateMacroForMount(state.nextMountToSummon)
         ns.Macro.UpdateHearthstone()
         ns.Macro.UpdateOutfitUpdateMacro()
-    elseif InCombatLockdown() and ns.MarkMacroRefreshPending then
-        ns.MarkMacroRefreshPending()
+    end)
+end
+
+-- Zone events arrive in bursts while the map settles; act once after the last.
+function Zones.OnZoneChanged()
+    if not Zones.IsTrackingEnabled()
+        and not ns.Emote.IsConditionConfigured("BIOMES") then
+        return
+    end
+    local state = ns.state
+    if state.zoneUpdateTimer then
+        state.zoneUpdateTimer:Cancel()
+    end
+    state.zoneGeneration = state.zoneGeneration + 1
+    local zoneGeneration = state.zoneGeneration
+    state.zoneUpdateTimer = C_Timer.NewTimer(1, function()
+        state.zoneUpdateTimer = nil
+        if zoneGeneration ~= state.zoneGeneration then return end
+        Zones.UpdateCache()
+        ns.Emote.OnZoneChanged()
+        ns.Pet.Apply(nil, "zoneChange")
+    end)
+end
+
+function Zones.OnCalendarUpdated()
+    if ns.state.loaded and Zones.IsTrackingEnabled() then
+        Zones.UpdateCache()
     end
 end

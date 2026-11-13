@@ -163,3 +163,44 @@ function Pet.Apply(outfitIDOverride, trigger)
     -- Ignore Pet: leave the currently summoned pet alone. Global dismissal
     -- settings above still take precedence.
 end
+
+local stealthDriver
+
+local function ResummonPetAfterStealth()
+    local state = ns.state
+    state.petResummonAfterStealth = (state.petResummonAfterStealth or 0) + 1
+    local resummonID = state.petResummonAfterStealth
+
+    C_Timer.After(0.25, function()
+        if state.petResummonAfterStealth ~= resummonID then return end
+        if Pet.IsPlayerStealthed() then return end
+        if C_PetJournal.GetSummonedPetGUID() then return end
+        Pet.Apply(nil, "stealthEnd")
+    end)
+end
+
+local function OnPlayerStealthChanged(isStealthed)
+    local state = ns.state
+
+    if isStealthed then
+        Pet.DismissIfStealthed()
+    elseif state.wasStealthed then
+        ResummonPetAfterStealth()
+    end
+
+    state.wasStealthed = isStealthed
+end
+
+function Pet.InitializeStealthDriver()
+    if stealthDriver or not RegisterStateDriver then return end
+
+    stealthDriver = CreateFrame("Frame", nil, UIParent)
+    stealthDriver:Hide()
+    stealthDriver:SetScript("OnShow", function()
+        OnPlayerStealthChanged(true)
+    end)
+    stealthDriver:SetScript("OnHide", function()
+        OnPlayerStealthChanged(false)
+    end)
+    RegisterStateDriver(stealthDriver, "visibility", "[stealth] show; hide")
+end

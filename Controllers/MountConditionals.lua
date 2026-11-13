@@ -453,7 +453,7 @@ function Conditionals.Refresh()
         if active then SetFallingActive(false) end
     end
     if InCombatLockdown() then
-        if ns.MarkMacroRefreshPending then ns.MarkMacroRefreshPending() end
+        ns.MarkMacroRefreshPending()
     elseif ns.Macro and ns.state.loaded then
         ns.Macro.UpdateForCurrentState()
     end

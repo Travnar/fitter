@@ -212,6 +212,22 @@ function Macro.UpdateHearthstone()
     end
 end
 
+-- Item cooldowns only alter the hearthstone macro when a Shaman uses the
+-- Astral Recall fallback. Ignore this noisy event otherwise, and coalesce
+-- bursts when the feature is active.
+function Macro.OnBagCooldownUpdate()
+    local state = ns.state
+    if state.playerClass == "SHAMAN"
+        and FitterSaved
+        and FitterSaved.AstralRecallFallback
+        and not state.hearthstoneCooldownTimer then
+        state.hearthstoneCooldownTimer = C_Timer.NewTimer(0.1, function()
+            state.hearthstoneCooldownTimer = nil
+            Macro.UpdateHearthstone()
+        end)
+    end
+end
+
 function Macro.EnsureHearthstone()
     if InCombatLockdown() then return end
     Macro.MigrateLegacyNames()

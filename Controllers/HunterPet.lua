@@ -395,16 +395,76 @@ function HunterPet.ResolveSlot(data)
     return pet and tonumber(pet.activeSlot) or nil
 end
 
+local function RefreshPetMacros()
+    ns.Macro.UpdateOutfitUpdateMacro()
+    ns.Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
+end
+
+local function ClearSelectionCaches()
+    wipe(ns.state.hunterPetFallbacks or {})
+    wipe(ns.state.hunterPetSelectionRolls or {})
+end
+
+local function IsPetPanelShown()
+    local uiState = ns.UI_Transmog and ns.UI_Transmog._s
+    return uiState and uiState.hunterPetFrame
+        and uiState.hunterPetFrame:IsShown()
+end
+
 function HunterPet.RerollRandomMacro()
     wipe(ns.state.hunterPetFallbacks or {})
     C_Timer.After(0, function()
-        if InCombatLockdown() then
-            if ns.MarkMacroRefreshPending then ns.MarkMacroRefreshPending() end
-            return
-        end
-        ns.Macro.UpdateOutfitUpdateMacro()
-        ns.Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
+        ns.RunOutOfCombat(RefreshPetMacros)
     end)
+end
+
+-- PET_INFO_UPDATE can arrive in bursts for changes that do not affect secure
+-- macros, so it refreshes the visible UI only. A stable roster change also
+-- refreshes macros, once after the burst.
+local function OnRosterEvent(rosterChanged)
+    if not HunterPet.IsAvailable() then return end
+    local state = ns.state
+    HunterPet.InvalidateCache()
+    if rosterChanged then
+        state.hunterPetRosterChanged = true
+        ClearSelectionCaches()
+    end
+    if (rosterChanged or IsPetPanelShown())
+        and not state.hunterPetRefreshTimer then
+        state.hunterPetRefreshTimer = C_Timer.NewTimer(0.1, function()
+            state.hunterPetRefreshTimer = nil
+            if IsPetPanelShown() then
+                ns.UI_Transmog:RefreshHunterPets()
+                ns.UI_Transmog:UpdateMountIcons()
+            end
+            if not state.hunterPetRosterChanged then return end
+            state.hunterPetRosterChanged = nil
+            ns.RunOutOfCombat(RefreshPetMacros)
+        end)
+    end
+end
+
+function HunterPet.OnStableUpdate()
+    OnRosterEvent(true)
+end
+
+function HunterPet.OnPetInfoUpdate()
+    OnRosterEvent(false)
+end
+
+function HunterPet.OnUnitPet(unit)
+    if unit ~= "player" or not HunterPet.IsAvailable() then return end
+    HunterPet.InvalidateCache()
+    ClearSelectionCaches()
+    ns.RunOutOfCombat(C_Timer.After, 0, function()
+        ns.RunOutOfCombat(RefreshPetMacros)
+    end)
+end
+
+function HunterPet.OnSpecializationChanged(unit)
+    if unit ~= "player" or not HunterPet.IsAvailable() then return end
+    ClearSelectionCaches()
+    ns.RunOutOfCombat(ns.Macro.UpdateMacroForMount, ns.state.nextMountToSummon)
 end
 
 _G.FitterHunterPetReroll = HunterPet.RerollRandomMacro

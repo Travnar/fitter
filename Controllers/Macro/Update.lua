@@ -24,7 +24,7 @@ function Macro.UpdateOutfitUpdateMacro(outfitIDOverride)
     local index, hasBinding = GetConsumers()
     if (not index or index == 0) and not hasBinding then return end
     if InCombatLockdown() then
-        if ns.MarkMacroRefreshPending then ns.MarkMacroRefreshPending() end
+        ns.MarkMacroRefreshPending()
         return
     end
     local rawBody = BuildOutfitUpdateMacroBody()
@@ -102,7 +102,7 @@ function Macro.UpdateOutfitUpdateMacro(outfitIDOverride)
                 ns.state.outfitUpdateCooldownTimer = false
                 if not InCombatLockdown() then
                     Macro.UpdateOutfitUpdateMacro(resolvedToyOutfitID)
-                elseif ns.MarkMacroRefreshPending then
+                else
                     ns.MarkMacroRefreshPending()
                 end
             end)

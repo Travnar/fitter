@@ -243,7 +243,7 @@ function Mount.OnSpellcastSucceeded(spellID)
     if spellID ~= SOAR_SPELL_ID then return end
     C_Timer.After(0.25, function()
         if InCombatLockdown() then
-            if ns.MarkMacroRefreshPending then ns.MarkMacroRefreshPending() end
+            ns.MarkMacroRefreshPending()
             return
         end
         ns.state.nextMountToSummon = SelectNextMount(false, ns.GetMountOutfitID())
@@ -291,7 +291,7 @@ function Mount.MonitorSoarCooldown()
         if not InCombatLockdown() then
             state.nextMountToSummon = SelectNextMount(false, ns.GetMountOutfitID())
             ns.Macro.UpdateMacroForMount(state.nextMountToSummon)
-        elseif ns.MarkMacroRefreshPending then
+        else
             ns.MarkMacroRefreshPending()
         end
         state.soarCooldownTimer = nil

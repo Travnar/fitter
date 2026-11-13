@@ -144,7 +144,7 @@ Macro.BuildMountMacroBody = BuildMountMacroBody
 
 function Macro.UpdateMacroForMount(mountID, outfitIDOverride)
     if InCombatLockdown() then
-        if ns.MarkMacroRefreshPending then ns.MarkMacroRefreshPending() end
+        ns.MarkMacroRefreshPending()
         return
     end
 
@@ -222,7 +222,7 @@ function Macro.UpdateMacroForMount(mountID, outfitIDOverride)
                 ns.state.toyCooldownTimer = false
                 if not InCombatLockdown() and ns.state.nextMountToSummon then
                     ns.Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
-                elseif InCombatLockdown() and ns.MarkMacroRefreshPending then
+                elseif InCombatLockdown() then
                     ns.MarkMacroRefreshPending()
                 end
             end)

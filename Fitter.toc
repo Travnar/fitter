@@ -15,6 +15,7 @@
 # Client detection (retail vs. World of Warcraft Forever) and secret-value
 # access check; loaded first.
 Controllers\Flavor.lua
+Controllers\State.lua
 
 Locales\Localization.lua
 Locales\enUS.lua

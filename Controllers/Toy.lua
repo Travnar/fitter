@@ -50,7 +50,7 @@ function Toy.ScheduleMacroRefresh()
     ns.state.toyMacroRefreshTimer = C_Timer.NewTimer(0.25, function()
         ns.state.toyMacroRefreshTimer = nil
         if InCombatLockdown() then
-            if ns.MarkMacroRefreshPending then ns.MarkMacroRefreshPending() end
+            ns.MarkMacroRefreshPending()
             return
         end
         ns.Macro.UpdateForCurrentState()

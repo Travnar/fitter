@@ -1,37 +1,5 @@
 local addonName, ns = ...
 
-ns.state = {
-    nextMountToSummon = nil,
-    wasSubmerged = nil,
-    waterExitGraceUntil = 0,
-    wasMounted = false,
-    soarCooldownTimer = nil,
-    currentZoneMapID = nil,
-    currentZoneOutfitID = nil,
-    loaded = false,
-    playerClass = nil,
-    playerRace = nil,
-    wasStealthed = false,
-    zoneUpdateTimer = nil,
-    outfitUpdateCooldownTimer = false,
-    toyMacroRefreshTimer = nil,
-    hearthstoneCooldownTimer = nil,
-    macroRefreshPending = false,
-    transmogInitTimer = nil,
-    worldGeneration = 0,
-    viewedOutfitGeneration = 0,
-    displayedOutfitGeneration = 0,
-    mountGeneration = 0,
-    outfitMacroGeneration = 0,
-    zoneGeneration = 0,
-    hunterPetRefreshTimer = nil,
-    featureEvents = {},
-}
-
-function ns.MarkMacroRefreshPending()
-    ns.state.macroRefreshPending = true
-end
-
 local Fitter = CreateFrame("Frame", "FitterAddonFrame", UIParent)
 ns.Fitter = Fitter
 
@@ -45,8 +13,6 @@ if ns.MountButton then
         ns.Toy.ScheduleMacroRefresh()
     end)
 end
-
-local stealthDriver
 
 -- Global callable from /run in a WoW macro.
 function FitterOutfitUpdate()
@@ -65,11 +31,7 @@ function FitterOutfitUpdate()
     local generation = ns.state.outfitMacroGeneration
     C_Timer.After(0.1, function()
         if generation ~= ns.state.outfitMacroGeneration then return end
-        if not InCombatLockdown() then
-            ns.Macro.UpdateOutfitUpdateMacro()
-        else
-            ns.MarkMacroRefreshPending()
-        end
+        ns.RunOutOfCombat(ns.Macro.UpdateOutfitUpdateMacro)
     end)
 end
 _G.FitterOutfitUpdate = FitterOutfitUpdate
@@ -304,45 +266,6 @@ local function OnMountDisplayChanged()
     state.wasMounted = currentlyMounted
 end
 
-local function ResummonPetAfterStealth()
-    local state = ns.state
-    state.petResummonAfterStealth = (state.petResummonAfterStealth or 0) + 1
-    local resummonID = state.petResummonAfterStealth
-
-    C_Timer.After(0.25, function()
-        if state.petResummonAfterStealth ~= resummonID then return end
-        if ns.Pet.IsPlayerStealthed() then return end
-        if C_PetJournal.GetSummonedPetGUID() then return end
-        ns.Pet.Apply(nil, "stealthEnd")
-    end)
-end
-
-local function OnPlayerStealthChanged(isStealthed)
-    local state = ns.state
-
-    if isStealthed then
-        ns.Pet.DismissIfStealthed()
-    elseif state.wasStealthed then
-        ResummonPetAfterStealth()
-    end
-
-    state.wasStealthed = isStealthed
-end
-
-local function InitializeStealthDriver()
-    if stealthDriver or not RegisterStateDriver then return end
-
-    stealthDriver = CreateFrame("Frame", nil, UIParent)
-    stealthDriver:Hide()
-    stealthDriver:SetScript("OnShow", function()
-        OnPlayerStealthChanged(true)
-    end)
-    stealthDriver:SetScript("OnHide", function()
-        OnPlayerStealthChanged(false)
-    end)
-    RegisterStateDriver(stealthDriver, "visibility", "[stealth] show; hide")
-end
-
 local function SetFeatureEvent(event, enabled, unit)
     local registered = ns.state.featureEvents[event] == true
     if registered == enabled then return end
@@ -382,231 +305,146 @@ function Fitter:RefreshFeatureEvents()
     emote.RefreshRuntimeState()
 end
 
-function Fitter:OnEvent(event, ...)
+local function OnPlayerEnteringWorld()
     local state = ns.state
-    if event == "PLAYER_ENTERING_WORLD" then
-        state.worldGeneration = state.worldGeneration + 1
-        ns.Mount.UpdateWaterState()
-        local worldGeneration = state.worldGeneration
-        if not state.loaded then
-            state.loaded = true
-            local _, pClass = UnitClass("player")
-            local _, pRace = UnitRace("player")
-            state.playerClass = pClass
-            state.playerRace = pRace
-            state.wasStealthed = ns.Pet.IsPlayerStealthed()
-            InitializeSettings()
-            Fitter:RefreshFeatureEvents()
-            InitializeStealthDriver()
-            ns.Holidays.RequestCalendarData()
-            C_Timer.NewTicker(60, function()
-                if ns.Zones.IsTrackingEnabled() then ns.Zones.UpdateCache() end
-            end)
-            -- Build the transmog UI as soon as Blizzard_Transmog loads, before
-            -- TransmogFrame is first shown.  Gamepad SmartNavigation hooks
-            -- CreateFrame and rebuilds an open panel's navigation data inside
-            -- the caller's execution, so creating our frames while the panel
-            -- is open taints that data and later blocks protected gamepad
-            -- calls when the panel closes.  Created beforehand, they are
-            -- picked up by SmartNavigation's own (secure) rebuild on show.
-            EventUtil.ContinueOnAddOnLoaded("Blizzard_Transmog", InitializeTransmogUI)
-            C_Timer.After(2, function()
-                if worldGeneration ~= state.worldGeneration then return end
-                ns.Zones.UpdateCache()
-                ns.Emote.OnZoneChanged()
-                ns.Pet.Apply(nil, "worldEntry")
-                ns.Macro.RebuildForCurrentCharacter()
-            end)
-        else
-            C_Timer.After(1, function()
-                if worldGeneration ~= state.worldGeneration then return end
-                ns.Zones.UpdateCache()
-                ns.Emote.OnZoneChanged()
-                ns.Pet.Apply(nil, "worldEntry")
-            end)
-        end
-    elseif event == "ZONE_CHANGED"
-        or event == "ZONE_CHANGED_INDOORS"
-        or event == "ZONE_CHANGED_NEW_AREA" then
-        if not ns.Zones.IsTrackingEnabled()
-            and not ns.Emote.IsConditionConfigured("BIOMES") then
-            return
-        end
-        if state.zoneUpdateTimer then
-            state.zoneUpdateTimer:Cancel()
-        end
-        state.zoneGeneration = state.zoneGeneration + 1
-        local zoneGeneration = state.zoneGeneration
-        state.zoneUpdateTimer = C_Timer.NewTimer(1, function()
-            state.zoneUpdateTimer = nil
-            if zoneGeneration ~= state.zoneGeneration then return end
+    state.worldGeneration = state.worldGeneration + 1
+    ns.Mount.UpdateWaterState()
+    local worldGeneration = state.worldGeneration
+    if not state.loaded then
+        state.loaded = true
+        local _, pClass = UnitClass("player")
+        local _, pRace = UnitRace("player")
+        state.playerClass = pClass
+        state.playerRace = pRace
+        state.wasStealthed = ns.Pet.IsPlayerStealthed()
+        InitializeSettings()
+        Fitter:RefreshFeatureEvents()
+        ns.Pet.InitializeStealthDriver()
+        ns.Holidays.RequestCalendarData()
+        C_Timer.NewTicker(60, function()
+            if ns.Zones.IsTrackingEnabled() then ns.Zones.UpdateCache() end
+        end)
+        -- Build the transmog UI as soon as Blizzard_Transmog loads, before
+        -- TransmogFrame is first shown.  Gamepad SmartNavigation hooks
+        -- CreateFrame and rebuilds an open panel's navigation data inside
+        -- the caller's execution, so creating our frames while the panel
+        -- is open taints that data and later blocks protected gamepad
+        -- calls when the panel closes.  Created beforehand, they are
+        -- picked up by SmartNavigation's own (secure) rebuild on show.
+        EventUtil.ContinueOnAddOnLoaded("Blizzard_Transmog", InitializeTransmogUI)
+        C_Timer.After(2, function()
+            if worldGeneration ~= state.worldGeneration then return end
             ns.Zones.UpdateCache()
             ns.Emote.OnZoneChanged()
-            ns.Pet.Apply(nil, "zoneChange")
+            ns.Pet.Apply(nil, "worldEntry")
+            ns.Macro.RebuildForCurrentCharacter()
         end)
-    elseif event == "CALENDAR_UPDATE_EVENT_LIST" then
-        if state.loaded and ns.Zones.IsTrackingEnabled() then
+    else
+        C_Timer.After(1, function()
+            if worldGeneration ~= state.worldGeneration then return end
             ns.Zones.UpdateCache()
-        end
-    elseif event == "MOUNT_JOURNAL_USABILITY_CHANGED"
-        or event == "NEW_MOUNT_ADDED" then
-        ns.Mount.UpdateWaterState()
-        ns.Mount.InvalidateMountCache()
-        if ns.UI_Transmog and ns.UI_Transmog.InvalidateMountListCache then
-            ns.UI_Transmog:InvalidateMountListCache()
-        end
-    elseif event == "TRANSMOGRIFY_OPEN" then
-        InitializeTransmogUI()
-    elseif event == "TRANSMOGRIFY_CLOSE" then
-        CancelTransmogUIInitialization()
-    elseif event == "VIEWED_TRANSMOG_OUTFIT_CHANGED" then
-        OnViewedOutfitChanged()
-    elseif event == "TRANSMOG_DISPLAYED_OUTFIT_CHANGED" then
-        OnDisplayedOutfitChanged()
-        local displayedGeneration = state.displayedOutfitGeneration
-        C_Timer.After(0.2, function()
-            if displayedGeneration ~= state.displayedOutfitGeneration then return end
-            ns.Emote.Trigger("OUTFIT_EQUIPPED")
+            ns.Emote.OnZoneChanged()
+            ns.Pet.Apply(nil, "worldEntry")
         end)
-    elseif event == "PLAYER_MOUNT_DISPLAY_CHANGED" then
+    end
+end
+
+local function OnMountJournalChanged()
+    ns.Mount.UpdateWaterState()
+    ns.Mount.InvalidateMountCache()
+    if ns.UI_Transmog and ns.UI_Transmog.InvalidateMountListCache then
+        ns.UI_Transmog:InvalidateMountListCache()
+    end
+end
+
+local function OnDisplayedOutfitEvent()
+    OnDisplayedOutfitChanged()
+    local displayedGeneration = ns.state.displayedOutfitGeneration
+    C_Timer.After(0.2, function()
+        if displayedGeneration ~= ns.state.displayedOutfitGeneration then return end
+        ns.Emote.Trigger("OUTFIT_EQUIPPED")
+    end)
+end
+
+local function OnCombatEnded()
+    local state = ns.state
+    ns.Emote.Trigger("COMBAT_END")
+    if ns.Pet.ShouldDismissInInstance() then
+        ns.Pet.Apply()
+    end
+    if state.macroRefreshPending then
+        state.macroRefreshPending = false
+        ns.Macro.UpdateForCurrentState()
+    end
+    ns.Macro.UpdateHearthstone()
+    ns.Macro.UpdateFishing()
+    if ns.UI_Transmog and ns.UI_Transmog.RefreshCombatDeferredToyUI then
+        ns.UI_Transmog:RefreshCombatDeferredToyUI()
+    end
+end
+
+local function OnBindingsUpdated()
+    if ns.Macro.IsOutfitUpdateUsed() then
+        ns.RunOutOfCombat(ns.Macro.UpdateOutfitUpdateMacro)
+    end
+end
+
+local function OnBagsUpdated()
+    ns.Macro.UpdateHearthstone()
+    if ns.FishingPole.IsEnabled() then ns.Macro.UpdateFishing() end
+    ns.Emote.RefreshHearthstoneSpells()
+end
+
+-- Wraps a handler for a unit event so it runs only for the player, once
+-- loaded, with the unit argument dropped.
+local function ForPlayer(handler)
+    return function(unit, ...)
+        if ns.state.loaded and unit == "player" then handler(...) end
+    end
+end
+
+local HANDLERS = {
+    PLAYER_ENTERING_WORLD = OnPlayerEnteringWorld,
+    ZONE_CHANGED = ns.Zones.OnZoneChanged,
+    ZONE_CHANGED_INDOORS = ns.Zones.OnZoneChanged,
+    ZONE_CHANGED_NEW_AREA = ns.Zones.OnZoneChanged,
+    CALENDAR_UPDATE_EVENT_LIST = ns.Zones.OnCalendarUpdated,
+    MOUNT_JOURNAL_USABILITY_CHANGED = OnMountJournalChanged,
+    NEW_MOUNT_ADDED = OnMountJournalChanged,
+    TRANSMOGRIFY_OPEN = InitializeTransmogUI,
+    TRANSMOGRIFY_CLOSE = CancelTransmogUIInitialization,
+    VIEWED_TRANSMOG_OUTFIT_CHANGED = OnViewedOutfitChanged,
+    TRANSMOG_DISPLAYED_OUTFIT_CHANGED = OnDisplayedOutfitEvent,
+    PLAYER_MOUNT_DISPLAY_CHANGED = function()
         OnMountDisplayChanged()
         ns.Emote.OnMountChanged()
-    elseif event == "PLAYER_REGEN_DISABLED" then
-        ns.Emote.Trigger("COMBAT_START")
-    elseif event == "PLAYER_REGEN_ENABLED" then
-        ns.Emote.Trigger("COMBAT_END")
-        if ns.Pet.ShouldDismissInInstance() then
-            ns.Pet.Apply()
-        end
-        if state.macroRefreshPending then
-            state.macroRefreshPending = false
-            ns.Macro.UpdateForCurrentState()
-        end
-        ns.Macro.UpdateHearthstone()
-        ns.Macro.UpdateFishing()
-        if ns.UI_Transmog and ns.UI_Transmog.RefreshCombatDeferredToyUI then
-            ns.UI_Transmog:RefreshCombatDeferredToyUI()
-        end
-    elseif event == "UPDATE_BINDINGS" then
-        if ns.Macro.IsOutfitUpdateUsed() then
-            if not InCombatLockdown() then
-                ns.Macro.UpdateOutfitUpdateMacro()
-            else
-                ns.MarkMacroRefreshPending()
-            end
-        end
-    elseif event == "BAG_UPDATE_DELAYED" then
-        ns.Macro.UpdateHearthstone()
-        if ns.FishingPole.IsEnabled() then ns.Macro.UpdateFishing() end
-        ns.Emote.RefreshHearthstoneSpells()
-    elseif event == "BAG_UPDATE_COOLDOWN" then
-        -- Item cooldowns only alter Fitter's hearthstone macro when a Shaman
-        -- uses the Astral Recall fallback. Ignore this noisy event otherwise,
-        -- and coalesce bursts when the feature is active.
-        if state.playerClass == "SHAMAN"
-            and FitterSaved
-            and FitterSaved.AstralRecallFallback
-            and not state.hearthstoneCooldownTimer then
-            state.hearthstoneCooldownTimer = C_Timer.NewTimer(0.1, function()
-                state.hearthstoneCooldownTimer = nil
-                ns.Macro.UpdateHearthstone()
-            end)
-        end
-    elseif event == "UNIT_AURA" then
-        local unit, updateInfo = ...
-        if state.loaded and unit == "player" then
-            ns.Emote.OnAurasChanged(updateInfo)
-        end
-    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-        local unit, _, spellID = ...
-        if state.loaded and unit == "player" then
-            ns.Mount.OnSpellcastSucceeded(spellID)
-        end
-    elseif event == "UNIT_SPELLCAST_START" then
-        local unit, _, spellID = ...
-        if state.loaded and unit == "player" then
-            ns.Emote.OnSpellcastStarted(spellID)
-        end
-    elseif event == "PLAYER_UPDATE_RESTING" then
-        ns.Emote.OnRestingChanged()
-    elseif event == "PLAYER_FLAGS_CHANGED" then
-        local unit = ...
-        if state.loaded and unit == "player" then
-            ns.Emote.OnPlayerFlagsChanged()
-        end
-    elseif event == "PLAYER_TARGET_CHANGED" then
-        ns.Emote.OnPlayerTargetChanged()
-    elseif event == "PET_STABLE_UPDATE" or event == "PET_INFO_UPDATE" then
-        if ns.HunterPet and ns.HunterPet.IsAvailable() then
-            ns.HunterPet.InvalidateCache()
-            -- PET_INFO_UPDATE can arrive in bursts for changes that do not
-            -- affect secure macros. Refresh its visible UI only. A stable
-            -- roster change also refreshes macros, once after the burst.
-            if event == "PET_STABLE_UPDATE" then
-                ns.state.hunterPetRosterChanged = true
-                wipe(ns.state.hunterPetFallbacks or {})
-                wipe(ns.state.hunterPetSelectionRolls or {})
-            end
-            local ui = ns.UI_Transmog
-            local uiState = ui and ui._s
-            local hunterPetUIVisible = uiState and uiState.hunterPetFrame
-                and uiState.hunterPetFrame:IsShown()
-            if (event == "PET_STABLE_UPDATE" or hunterPetUIVisible)
-                and not ns.state.hunterPetRefreshTimer then
-                ns.state.hunterPetRefreshTimer = C_Timer.NewTimer(0.1, function()
-                    ns.state.hunterPetRefreshTimer = nil
-                    local ui = ns.UI_Transmog
-                    local uiState = ui and ui._s
-                    if uiState and uiState.hunterPetFrame
-                        and uiState.hunterPetFrame:IsShown() then
-                        ui:RefreshHunterPets()
-                        ui:UpdateMountIcons()
-                    end
-                    if not ns.state.hunterPetRosterChanged then return end
-                    ns.state.hunterPetRosterChanged = nil
-                    if not InCombatLockdown() then
-                        ns.Macro.UpdateOutfitUpdateMacro()
-                        ns.Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
-                    else
-                        ns.MarkMacroRefreshPending()
-                    end
-                end)
-            end
-        end
-    elseif event == "UNIT_PET" then
-        local unit = ...
-        if unit == "player" and ns.HunterPet
-            and ns.HunterPet.IsAvailable() then
-            ns.HunterPet.InvalidateCache()
-            wipe(ns.state.hunterPetSelectionRolls or {})
-            wipe(ns.state.hunterPetFallbacks or {})
-            if InCombatLockdown() then
-                ns.MarkMacroRefreshPending()
-            else
-                C_Timer.After(0, function()
-                    if not InCombatLockdown() then
-                        ns.Macro.UpdateOutfitUpdateMacro()
-                        ns.Macro.UpdateMacroForMount(
-                            ns.state.nextMountToSummon)
-                    else
-                        ns.MarkMacroRefreshPending()
-                    end
-                end)
-            end
-        end
-    elseif event == "PLAYER_SPECIALIZATION_CHANGED" then
-        local unit = ...
-        if unit == "player" and ns.HunterPet
-            and ns.HunterPet.IsAvailable() then
-            wipe(ns.state.hunterPetFallbacks or {})
-            wipe(ns.state.hunterPetSelectionRolls or {})
-            if InCombatLockdown() then
-                ns.MarkMacroRefreshPending()
-            else
-                ns.Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
-            end
-        end
-    end
+    end,
+    PLAYER_REGEN_DISABLED = function() ns.Emote.Trigger("COMBAT_START") end,
+    PLAYER_REGEN_ENABLED = OnCombatEnded,
+    UPDATE_BINDINGS = OnBindingsUpdated,
+    BAG_UPDATE_DELAYED = OnBagsUpdated,
+    BAG_UPDATE_COOLDOWN = ns.Macro.OnBagCooldownUpdate,
+    UNIT_SPELLCAST_SUCCEEDED = ForPlayer(function(_, spellID)
+        ns.Mount.OnSpellcastSucceeded(spellID)
+    end),
+
+    -- Registered only while a feature needs them (see RefreshFeatureEvents).
+    UNIT_AURA = ForPlayer(ns.Emote.OnAurasChanged),
+    UNIT_SPELLCAST_START = ForPlayer(function(_, spellID)
+        ns.Emote.OnSpellcastStarted(spellID)
+    end),
+    PLAYER_UPDATE_RESTING = ns.Emote.OnRestingChanged,
+    PLAYER_FLAGS_CHANGED = ForPlayer(ns.Emote.OnPlayerFlagsChanged),
+    PLAYER_TARGET_CHANGED = ns.Emote.OnPlayerTargetChanged,
+    PET_STABLE_UPDATE = ns.HunterPet.OnStableUpdate,
+    PET_INFO_UPDATE = ns.HunterPet.OnPetInfoUpdate,
+    UNIT_PET = ns.HunterPet.OnUnitPet,
+    PLAYER_SPECIALIZATION_CHANGED = ns.HunterPet.OnSpecializationChanged,
+}
+
+function Fitter:OnEvent(event, ...)
+    local handler = HANDLERS[event]
+    if handler then handler(...) end
 end
 
 function Fitter:ResetDefaultHearthstones()
