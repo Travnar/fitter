@@ -228,7 +228,7 @@ local function SelectNextMount(excludeSoar, outfitIDOverride)
         return PickFromTypePool(category)
     end
 
-    local outfitData = FitterCharacterSaved["Outfit"..activeOutfitID]
+    local outfitData = ns.Settings.GetOutfitData(activeOutfitID)
     if not outfitData then return nil end
 
     for _, category in ipairs(GetMountCategoryOrder()) do
@@ -273,7 +273,7 @@ function Mount.MonitorSoarCooldown()
     local activeOutfitID = C_TransmogOutfitInfo.GetActiveOutfitID()
     if not activeOutfitID or activeOutfitID == 0 then return end
 
-    local outfitData = FitterCharacterSaved["Outfit"..activeOutfitID]
+    local outfitData = ns.Settings.GetOutfitData(activeOutfitID)
     if not outfitData then return end
 
     local hasSoar = false
@@ -385,7 +385,7 @@ local function SelectGroundMount(outfitIDOverride)
         return PickFromTypePool("Ground")
     end
 
-    local outfitData = FitterCharacterSaved and FitterCharacterSaved["Outfit"..activeOutfitID]
+    local outfitData = ns.Settings.GetOutfitData(activeOutfitID)
     if not outfitData then return nil end
 
     if outfitData.GroundNoMount then return nil end

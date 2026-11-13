@@ -7,9 +7,7 @@ local PAGE_SIZE = 20
 
 local function CurrentData()
     local outfitID = UI_Transmog:GetViewedOutfitID()
-    if not outfitID then return nil end
-    ns.Settings.CreateEmptyOutfit(outfitID)
-    return FitterCharacterSaved["Outfit" .. outfitID], outfitID
+    return ns.Settings.GetOutfitData(outfitID, true), outfitID
 end
 
 local function ApplySelection(mode, info)

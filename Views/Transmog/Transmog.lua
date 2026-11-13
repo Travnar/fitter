@@ -29,6 +29,12 @@ function UI_Transmog:GetViewedOutfitID()
         and api.GetCurrentlyViewedOutfitID() or nil
 end
 
+function UI_Transmog:GetViewedOutfitData(create)
+    local id = self:GetViewedOutfitID()
+    if not id or id == 0 then return nil end
+    return ns.Settings.GetOutfitData(id, create), id
+end
+
 function UI_Transmog:GetActiveOutfitID()
     local api = C_TransmogOutfitInfo
     return api and api.GetActiveOutfitID and api.GetActiveOutfitID() or nil

@@ -372,7 +372,7 @@ function T.NewWorld()
         return ns
     end
 
-    w:Load({"Controllers/Flavor.lua", "Controllers/State.lua"})
+    w:Load({"Controllers/Flavor.lua", "Controllers/State.lua", "Controllers/Settings.lua"})
 
     -- Loads the macro modules, plus the feature modules that build lines for
     -- the macros unless the test supplies its own.

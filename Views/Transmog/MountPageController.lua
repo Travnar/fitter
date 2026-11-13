@@ -97,7 +97,7 @@ local function CreateEntry(controller, index)
             return
         end
         local outfitID = UI_Transmog:GetViewedOutfitID()
-        local data = outfitID and FitterCharacterSaved["Outfit" .. outfitID]
+        local data = ns.Settings.GetOutfitData(outfitID)
         if not data then return end
         local mounts = data[controller.category] or {}
         if self:GetChecked() then
@@ -202,7 +202,7 @@ function Controller:Initialize()
     ignore.IconFrame.Icon:SetDesaturated(true)
     ignore:SetScript("OnClick", function()
         local outfitID = UI_Transmog:GetViewedOutfitID()
-        local data = outfitID and FitterCharacterSaved["Outfit" .. outfitID]
+        local data = ns.Settings.GetOutfitData(outfitID)
         if not data then return end
         data[self.category] = {}
         data[self.category .. "Random"] = false
@@ -227,7 +227,7 @@ function Controller:Initialize()
     random.IconFrame.Icon:SetTexture(1669485)
     random:SetScript("OnClick", function()
         local outfitID = UI_Transmog:GetViewedOutfitID()
-        local data = outfitID and FitterCharacterSaved["Outfit" .. outfitID]
+        local data = ns.Settings.GetOutfitData(outfitID)
         if not data then return end
         local key = self.category .. "Random"
         data[key] = not data[key]
@@ -256,7 +256,7 @@ function Controller:Initialize()
         frame, { title = string.format(L["Disable %s"], L[self.category]), centerAtlas = self.noMountAtlas },
         function(selected)
             local outfitID = UI_Transmog:GetViewedOutfitID()
-            local data = outfitID and FitterCharacterSaved["Outfit" .. outfitID]
+            local data = ns.Settings.GetOutfitData(outfitID)
             if not data then return end
             data[self.category .. "NoMount"] = selected
             if selected then
@@ -280,7 +280,7 @@ end
 
 function Controller:Show()
     local outfitID = UI_Transmog:GetViewedOutfitID()
-    local data = outfitID and FitterCharacterSaved["Outfit" .. outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     local mounts = data and data[self.category]
     local focus = mounts and #mounts > 0 and mounts[math.random(#mounts)] or nil
     self:State("FocusMountID", focus)
@@ -297,7 +297,7 @@ function Controller:Update()
     if not self:State("Frame") then return end
     local outfitID = UI_Transmog:GetViewedOutfitID()
     if not outfitID then return end
-    if not FitterCharacterSaved["Outfit" .. outfitID] then
+    if not ns.Settings.GetOutfitData(outfitID) then
         ns.Settings.CreateEmptyOutfit(outfitID)
     end
     self:ResetFilters()
@@ -318,7 +318,7 @@ function Controller:Refresh()
     self:State("TotalPages",
         UI_Transmog._PagedShared.GetSpecialCardTotalPages(#mounts, showCard))
     local outfitID = UI_Transmog:GetViewedOutfitID()
-    local data = outfitID and FitterCharacterSaved["Outfit" .. outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     local selected = data and data[self.category] or {}
     local focus = self:State("FocusMountID") or selected[1]
     if focus then
@@ -358,7 +358,7 @@ function Controller:UpdateDisplay()
     local frame = self:State("Frame")
     if not frame then return end
     local outfitID = UI_Transmog:GetViewedOutfitID()
-    local data = outfitID and FitterCharacterSaved["Outfit" .. outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     local random = self:State("RandomButton")
     if random and random.StateTexture then
         random.StateTexture:SetShown(data

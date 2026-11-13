@@ -33,7 +33,7 @@ function Title.Apply(outfitIDOverride)
         or (C_TransmogOutfitInfo.GetActiveOutfitID and C_TransmogOutfitInfo.GetActiveOutfitID())
     if not activeOutfitID or activeOutfitID == 0 then return end
 
-    local data = FitterCharacterSaved["Outfit"..activeOutfitID]
+    local data = ns.Settings.GetOutfitData(activeOutfitID)
     if not data then return end
 
     local target = data.Title

@@ -9,7 +9,7 @@ local GetPetExpansionKey = ns.Constants.GetPetExpansionKey
 
 function UI_Transmog:ShowPetPaged()
     local outfitID = self:GetViewedOutfitID()
-    local data = outfitID and FitterCharacterSaved["Outfit"..outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     local pets = data and data.Pets or nil
     local selectedPetGUID = pets and #pets > 0
         and pets[math.random(1, #pets)] or nil
@@ -78,8 +78,8 @@ function UI_Transmog:InitializePetPaged()
     s.petIgnoreButton:SetScript("OnClick", function()
         PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
         local outfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-        if outfitID and FitterCharacterSaved["Outfit"..outfitID] then
-            local data = FitterCharacterSaved["Outfit"..outfitID]
+        if ns.Settings.GetOutfitData(outfitID) then
+            local data = ns.Settings.GetOutfitData(outfitID)
             data.Pets = {}
             data.PetRandom = false
             data.PetNoPet = false
@@ -108,8 +108,8 @@ function UI_Transmog:InitializePetPaged()
     s.petRandomButton:SetScript("OnClick", function()
         PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
         local outfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-        if outfitID and FitterCharacterSaved["Outfit"..outfitID] then
-            local data = FitterCharacterSaved["Outfit"..outfitID]
+        if ns.Settings.GetOutfitData(outfitID) then
+            local data = ns.Settings.GetOutfitData(outfitID)
             local newState = not data.PetRandom
             data.PetRandom = newState
 
@@ -188,8 +188,8 @@ function UI_Transmog:InitializePetPaged()
             local isSelected = false
             if frame then
                 local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-                if outfitID and FitterCharacterSaved["Outfit"..outfitID] then
-                    local data = FitterCharacterSaved["Outfit"..outfitID]
+                if ns.Settings.GetOutfitData(outfitID) then
+                    local data = ns.Settings.GetOutfitData(outfitID)
                     local pets = data.Pets or {}
                     for _, guid in ipairs(pets) do
                         if guid == frame.petGUID then
@@ -252,7 +252,7 @@ function UI_Transmog:InitializePetPaged()
                 if not petData then return end
 
                 local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-                local data = outfitID and FitterCharacterSaved["Outfit"..outfitID]
+                local data = ns.Settings.GetOutfitData(outfitID)
 
                 local isSelected = false
                 if data then
@@ -320,9 +320,9 @@ function UI_Transmog:InitializePetPaged()
             local frame = s.petModelFrames[i]
             if not frame or not frame.petGUID then return end
             local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-            if not outfitID or not FitterCharacterSaved["Outfit"..outfitID] then return end
+            if not ns.Settings.GetOutfitData(outfitID) then return end
 
-            local data = FitterCharacterSaved["Outfit"..outfitID]
+            local data = ns.Settings.GetOutfitData(outfitID)
 
             local pets = data.Pets or {}
             if cb:GetChecked() then
@@ -395,7 +395,7 @@ function UI_Transmog:InitializePetPaged()
         function(selected)
             local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
             local data = outfitID
-                and FitterCharacterSaved["Outfit"..outfitID]
+                and ns.Settings.GetOutfitData(outfitID)
             if not data then return end
             data.PetNoPet = selected
             if selected then
@@ -426,7 +426,7 @@ function UI_Transmog:UpdatePetPaged()
         return
     end
     
-    if not FitterCharacterSaved["Outfit"..outfitID] then
+    if not ns.Settings.GetOutfitData(outfitID) then
         ns.Settings.CreateEmptyOutfit(outfitID)
     end
     
@@ -451,8 +451,8 @@ function UI_Transmog:RefreshPetPaged()
     -- Build set of selected pet GUIDs for "Selected" filter and selected visibility.
     local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
     local selectedPetSet = {}
-    if outfitID and FitterCharacterSaved["Outfit"..outfitID] then
-        local pets = FitterCharacterSaved["Outfit"..outfitID].Pets or {}
+    if ns.Settings.GetOutfitData(outfitID) then
+        local pets = ns.Settings.GetOutfitData(outfitID).Pets or {}
         for _, guid in ipairs(pets) do
             selectedPetSet[guid] = true
         end
@@ -552,8 +552,8 @@ function UI_Transmog:RefreshPetPaged()
             #s.petPagedPets, s.petShowDisabledCard)
     
 
-    if outfitID and FitterCharacterSaved["Outfit"..outfitID] then
-        local pets = FitterCharacterSaved["Outfit"..outfitID].Pets or {}
+    if ns.Settings.GetOutfitData(outfitID) then
+        local pets = ns.Settings.GetOutfitData(outfitID).Pets or {}
         if #pets > 0 then
             local selectedPetGUID = s.petFocusGUID or pets[1]
             for index, petData in ipairs(s.petPagedPets) do
@@ -579,7 +579,7 @@ function UI_Transmog:UpdatePetPageDisplay()
     local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
     if not outfitID then return end
     
-    local data = FitterCharacterSaved["Outfit"..outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     if not data then return end
 
     if s.petRandomButton and s.petRandomButton.StateTexture then

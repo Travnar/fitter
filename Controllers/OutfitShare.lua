@@ -119,7 +119,7 @@ end
 
 -- Snapshots outfitID's configuration and returns the chat token for it.
 function OutfitShare.Share(outfitID, outfitName)
-    local data = FitterCharacterSaved and FitterCharacterSaved["Outfit" .. outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     if type(data) ~= "table" then return nil end
     local snapshot = {}
     for key, value in pairs(data) do

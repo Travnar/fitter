@@ -41,7 +41,7 @@ function Toy.ScheduleMacroRefresh()
         or (C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
             and C_TransmogOutfitInfo.GetActiveOutfitID())
     local data = outfitID and FitterCharacterSaved
-        and FitterCharacterSaved["Outfit" .. outfitID]
+        and ns.Settings.GetOutfitData(outfitID)
     if not (FitterSaved and FitterSaved.CancelNonOutfitToys)
         and not (data and type(data.Toys) == "table" and #data.Toys > 0) then
         return
@@ -76,7 +76,7 @@ end
 function Toy.GetMacroLines(outfitID, maxLength)
     if not outfitID or not FitterCharacterSaved then return nil end
 
-    local data = FitterCharacterSaved["Outfit"..outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     if not data or not data.Toys or #data.Toys == 0 then return nil end
 
     local lines = {}
@@ -105,7 +105,7 @@ function Toy.GetCancelLines(outfitID, maxLength)
 
     local outfitToys = {}
     if outfitID and FitterCharacterSaved then
-        local data = FitterCharacterSaved["Outfit"..outfitID]
+        local data = ns.Settings.GetOutfitData(outfitID)
         if data and data.Toys then
             for _, id in ipairs(data.Toys) do
                 outfitToys[id] = true
@@ -136,7 +136,7 @@ end
 
 function Toy.GetEarliestUpdateDelay(outfitID)
     if not outfitID or not FitterCharacterSaved then return nil end
-    local data = FitterCharacterSaved["Outfit"..outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     if not data or not data.Toys or #data.Toys == 0 then return nil end
     local earliest = nil
     local now = GetTime()

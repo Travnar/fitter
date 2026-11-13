@@ -37,16 +37,9 @@ local function LayoutButtons()
     end
 end
 
-local function CurrentData(create)
-    local id = UI_Transmog:GetViewedOutfitID()
-    if not id or id == 0 then return nil end
-    if create and not FitterCharacterSaved["Outfit"..id] then ns.Settings.CreateEmptyOutfit(id) end
-    return FitterCharacterSaved["Outfit"..id], id
-end
-
 function UI_Transmog:PopulateToyList()
     local items, retry = {}, false
-    local data = CurrentData(false)
+    local data = UI_Transmog:GetViewedOutfitData(false)
     local selected = {}
     for _, toyID in ipairs(data and data.Toys or {}) do
         selected[toyID] = true
@@ -82,7 +75,7 @@ local function ToggleToy(button)
         s.toyRefreshAfterCombat = true
         return
     end
-    local data, outfitID = CurrentData(true)
+    local data, outfitID = UI_Transmog:GetViewedOutfitData(true)
     if not data or not button.item or not button.item.isCollected then return end
     data.Toys = data.Toys or {}
     local isSelected
@@ -116,7 +109,7 @@ end
 
 local function ConfigureToyUse(overlay)
     if InCombatLockdown() then return false end
-    local button, data, outfitID = overlay.owner, CurrentData(false)
+    local button, data, outfitID = overlay.owner, UI_Transmog:GetViewedOutfitData(false)
     if not button.item or not data
         or UI_Transmog:GetActiveOutfitID() ~= outfitID then
         overlay:SetAttribute("type", nil)
@@ -493,7 +486,7 @@ function UI_Transmog:RefreshToyList()
 end
 
 function UI_Transmog:UpdateToys()
-    if not CurrentData(true) then return end
+    if not UI_Transmog:GetViewedOutfitData(true) then return end
     self:RefreshToyList()
 end
 
@@ -503,7 +496,7 @@ function UI_Transmog:UpdateToyPageDisplay()
         s.toyRefreshAfterCombat = true
         return
     end
-    local data = CurrentData(false)
+    local data = UI_Transmog:GetViewedOutfitData(false)
     local selected = {}
     for _, id in ipairs(data and data.Toys or {}) do selected[id] = true end
     local start = (s.toyCurrentPage - 1) * PAGE_SIZE

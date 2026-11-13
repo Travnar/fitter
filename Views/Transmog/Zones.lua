@@ -103,11 +103,8 @@ local function GetZoneIcon(zone)
 end
 
 local function CurrentData(create)
-    local outfitID = C_TransmogOutfitInfo
-        and C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-    if not outfitID then return nil end
-    if create then ns.Settings.CreateEmptyOutfit(outfitID) end
-    local data = FitterCharacterSaved and FitterCharacterSaved["Outfit" .. outfitID]
+    local outfitID = UI_Transmog:GetViewedOutfitID()
+    local data = ns.Settings.GetOutfitData(outfitID, create)
     if data then
         for _, mode in ipairs(MODES) do
             if type(data[mode.dataKey]) ~= "table" then data[mode.dataKey] = {} end
@@ -153,7 +150,7 @@ local function GetOutfitSituationWarnings(mapID, associatedOutfitIDs)
     for _, info in ipairs(outfits) do
         if not info.isDisabled then
             local data = FitterCharacterSaved
-                and FitterCharacterSaved["Outfit" .. info.outfitID]
+                and ns.Settings.GetOutfitData(info.outfitID)
             local state = data and data.ZoneSituationState
             if state then
                 hasSituation[info.outfitID] = state[situation] == true

@@ -96,7 +96,7 @@ function Pet.OutfitShouldDismiss(outfitIDOverride)
         or (C_TransmogOutfitInfo.GetActiveOutfitID and C_TransmogOutfitInfo.GetActiveOutfitID())
     if not activeOutfitID or activeOutfitID == 0 then return false end
 
-    local data = FitterCharacterSaved and FitterCharacterSaved["Outfit"..activeOutfitID]
+    local data = ns.Settings.GetOutfitData(activeOutfitID)
     if not data then return false end
 
     return data.PetNoPet == true
@@ -115,7 +115,7 @@ function Pet.Apply(outfitIDOverride, trigger)
         or (C_TransmogOutfitInfo.GetActiveOutfitID and C_TransmogOutfitInfo.GetActiveOutfitID())
     if not activeOutfitID or activeOutfitID == 0 then return end
 
-    local data = FitterCharacterSaved["Outfit"..activeOutfitID]
+    local data = ns.Settings.GetOutfitData(activeOutfitID)
     if not data then return end
 
     local petRandom = data.PetRandom == true

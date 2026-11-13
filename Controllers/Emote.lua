@@ -194,7 +194,7 @@ local function GetActiveOutfitData()
         and C_TransmogOutfitInfo.GetActiveOutfitID
         and C_TransmogOutfitInfo.GetActiveOutfitID()
     if not outfitID or not FitterCharacterSaved then return nil end
-    return FitterCharacterSaved["Outfit" .. outfitID]
+    return ns.Settings.GetOutfitData(outfitID)
 end
 
 local function HasCondition(condition)
@@ -221,6 +221,13 @@ local function HasAnyCondition(...)
         if HasCondition(select(index, ...)) then return true end
     end
     return false
+end
+
+-- True when an outfit's emote entry has at least one trigger condition.
+function Emote.IsAssigned(assignment)
+    return type(assignment) == "table"
+        and type(assignment.conditions) == "table"
+        and next(assignment.conditions) ~= nil
 end
 
 function Emote.IsConditionConfigured(condition)

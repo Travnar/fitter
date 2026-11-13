@@ -1,4 +1,4 @@
-local addonName, ns = ...
+local _, ns = ...
 
 local Settings = {}
 ns.Settings = Settings
@@ -28,6 +28,28 @@ function Settings.CreateEmptyOutfit(outfitID)
     local data = {}
     ApplyDefaults(data, ns.Constants.OUTFIT_DEFAULTS)
     FitterCharacterSaved[key] = data
+end
+
+function Settings.GetOutfitData(outfitID, create)
+    if not outfitID then return nil end
+    if create then Settings.CreateEmptyOutfit(outfitID) end
+    return FitterCharacterSaved and FitterCharacterSaved["Outfit" .. outfitID]
+end
+
+-- An outfit's hearthstone list, reading the single-item format used before
+-- the list existed. With migrate, that format is converted in place.
+function Settings.GetSelectedHearthstones(data, migrate)
+    if not data then return {} end
+    if type(data.Hearthstones) ~= "table" then
+        local formerSelection = type(data.Hearthstone) == "number"
+            and data.Hearthstone or nil
+        if not migrate then
+            return formerSelection and {formerSelection} or {}
+        end
+        data.Hearthstones = formerSelection and {formerSelection} or {}
+        data.Hearthstone = nil
+    end
+    return data.Hearthstones
 end
 
 local function ForEachOutfit(fn)

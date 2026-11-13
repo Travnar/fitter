@@ -54,8 +54,8 @@ function UI_Transmog:PopulateMountList(mountType)
 
     local outfitID = self:GetViewedOutfitID()
     local selectedMounts = {}
-    if checkedOnly and outfitID and FitterCharacterSaved["Outfit"..outfitID] then
-        local mountList = FitterCharacterSaved["Outfit"..outfitID][mountType] or {}
+    if checkedOnly and ns.Settings.GetOutfitData(outfitID) then
+        local mountList = ns.Settings.GetOutfitData(outfitID)[mountType] or {}
         for _, mountID in ipairs(mountList) do
             selectedMounts[mountID] = true
         end

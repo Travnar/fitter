@@ -148,6 +148,9 @@ local strings = {
     "Open in Dressing Room",
     "Equip Fishing Pole",
     "When casting Fishing from Fitter's macro or key binding, equip the best fishing pole in your bags. Your weapons are put back 10 seconds after you stop fishing.",
+    "Use the account-wide flying selection. If none is available, continue to the next applicable mount category.",
+    "Use the account-wide ground selection. If none is available, continue to the next applicable mount category.",
+    "Use the account-wide aquatic selection. If none is configured, resolve the flying outfit or account-wide selection in flyable areas, then use the outfit's ground mount.",
 }
 
 for _, text in ipairs(strings) do

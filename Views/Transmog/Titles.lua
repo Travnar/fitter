@@ -43,11 +43,11 @@ end
 
 local function SetSelectedTitle(titleID)
     local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-    if not outfitID or not FitterCharacterSaved["Outfit"..outfitID] then
+    if not ns.Settings.GetOutfitData(outfitID) then
         return
     end
 
-    FitterCharacterSaved["Outfit"..outfitID].Title = titleID
+    ns.Settings.GetOutfitData(outfitID).Title = titleID
 
     if s.titleDropdown then
         s.titleDropdown:SetDefaultText(CreateDisplayTitle(titleID))
@@ -66,8 +66,8 @@ end
 
 local function GetViewedSavedTitle()
     local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-    if outfitID and FitterCharacterSaved and FitterCharacterSaved["Outfit"..outfitID] then
-        return FitterCharacterSaved["Outfit"..outfitID].Title
+    if ns.Settings.GetOutfitData(outfitID) then
+        return ns.Settings.GetOutfitData(outfitID).Title
     end
     return nil
 end
@@ -349,8 +349,8 @@ function UI_Transmog:InitializeTitleDropdown()
     end
 
     local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-    if outfitID and FitterCharacterSaved["Outfit"..outfitID] then
-        local savedTitle = FitterCharacterSaved["Outfit"..outfitID].Title
+    if ns.Settings.GetOutfitData(outfitID) then
+        local savedTitle = ns.Settings.GetOutfitData(outfitID).Title
         s.titleDropdown:SetDefaultText(CreateDisplayTitle(savedTitle))
     else
         s.titleDropdown:SetDefaultText(IGNORE_TITLE_LABEL)
@@ -390,12 +390,12 @@ function UI_Transmog:UpdateTitleDropdown()
     end
 
     local outfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-    if not outfitID or not FitterCharacterSaved["Outfit"..outfitID] then
+    if not ns.Settings.GetOutfitData(outfitID) then
         s.titleDropdown:SetDefaultText(IGNORE_TITLE_LABEL)
         return
     end
 
-    local savedTitle = FitterCharacterSaved["Outfit"..outfitID].Title
+    local savedTitle = ns.Settings.GetOutfitData(outfitID).Title
     s.titleDropdown:SetDefaultText(CreateDisplayTitle(savedTitle))
     s.titleDropdown:GenerateMenu()
     s.titleSearch:RefreshCurrent()

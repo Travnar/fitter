@@ -22,13 +22,6 @@ for dataKey, items in pairs({
     end
 end
 
-local function GetSelectedHearthstones(data)
-    if not data then return {} end
-    if type(data.Hearthstones) == "table" then return data.Hearthstones end
-    if type(data.Hearthstone) == "number" then return {data.Hearthstone} end
-    return {}
-end
-
 local function GetConditionsBaseIcon()
     if UnitFactionGroup("player") == "Horde" then
         return "Interface\\Icons\\inv_10_specialization_tailoring2_outfits_color1"
@@ -72,9 +65,7 @@ local function GetAssignedEmotes(data)
     local assigned = {}
     for id, assignment in pairs(data and data.Emotes or {}) do
         local definition = ns.Emote.GetDefinition(id)
-        if definition and type(assignment) == "table"
-            and type(assignment.conditions) == "table"
-            and next(assignment.conditions) then
+        if definition and ns.Emote.IsAssigned(assignment) then
             assigned[#assigned + 1] = definition
         end
     end
@@ -87,7 +78,7 @@ end
 
 local function GetMountSlotIconState(category)
     local outfitID = UI_Transmog:GetViewedOutfitID()
-    local data = outfitID and FitterCharacterSaved and FitterCharacterSaved["Outfit"..outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     local categoryIcon = (category == "Flying" and "Interface\\Icons\\ability_dragonriding_dragonridinggliding01")
         or (category == "Ground" and "Interface\\Icons\\ability_mount_ridinghorse")
         or (category == "Aquatic" and "Interface\\Icons\\item_aquaticfin_17")
@@ -142,7 +133,7 @@ local function GetMountSlotIconState(category)
         return 132598, false
     end
     if category == "Hearthstone" then
-        local hearthstones = GetSelectedHearthstones(data)
+        local hearthstones = ns.Settings.GetSelectedHearthstones(data)
         if #hearthstones > 1 then return 134414, true end
         if #hearthstones == 0 then return 134414, false end
         local itemID = hearthstones[1]
@@ -253,7 +244,7 @@ local function AcquireMountSlot(charPreview, def)
     slotFrame.OnEnter = function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         local outfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-        local data = outfitID and FitterCharacterSaved and FitterCharacterSaved["Outfit"..outfitID]
+        local data = ns.Settings.GetOutfitData(outfitID)
         local isNoSelection = data and ((def.category == "Pet" and data.PetNoPet)
             or (def.category == "HunterPet" and data.HunterPetDisabled)
             or data[def.category .. "NoMount"])
@@ -264,7 +255,7 @@ local function AcquireMountSlot(charPreview, def)
                 1, 0.82, 0, 1, true)
             GameTooltip:AddLine(L["Disabled"], 1, .5, 1, true)
         elseif def.category == "Hearthstone" then
-            local hearthstones = GetSelectedHearthstones(data)
+            local hearthstones = ns.Settings.GetSelectedHearthstones(data)
             if #hearthstones == 1 then
                 local itemID = hearthstones[1]
                 local name = itemID == 6948 and C_Item.GetItemNameByID(itemID)
@@ -390,7 +381,7 @@ local function AcquireMountSlot(charPreview, def)
         local outfitID = C_TransmogOutfitInfo
             and C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
         local data = outfitID and FitterCharacterSaved
-            and FitterCharacterSaved["Outfit"..outfitID]
+            and ns.Settings.GetOutfitData(outfitID)
         local isNoSelection = data and ((def.category == "Pet" and data.PetNoPet)
             or (def.category == "HunterPet" and data.HunterPetDisabled)
             or data[def.category .. "NoMount"])

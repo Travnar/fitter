@@ -21,7 +21,7 @@ local function CurrentOutfit(create)
     local id = UI_Transmog:GetViewedOutfitID()
     if not id or id == 0 then return nil end
     if create then ns.Settings.CreateEmptyOutfit(id) end
-    return FitterCharacterSaved and FitterCharacterSaved["Outfit" .. id], id
+    return ns.Settings.GetOutfitData(id), id
 end
 
 local function LoadoutStores()
@@ -136,9 +136,7 @@ local function EmoteSummary(emotes)
         catalogNames[item.id] = item.name
     end
     for id, assignment in pairs(type(emotes) == "table" and emotes or {}) do
-        if type(assignment) == "table"
-            and type(assignment.conditions) == "table"
-            and next(assignment.conditions) then
+        if ns.Emote.IsAssigned(assignment) then
             selected[#selected + 1] = catalogNames[id] or tostring(id)
         end
     end
@@ -199,7 +197,7 @@ end
 -- character cannot use. Used by loadouts and shared outfit links.
 function UI_Transmog:ApplyOutfitConfiguration(source, outfitID)
     ns.Settings.CreateEmptyOutfit(outfitID)
-    local destination = FitterCharacterSaved["Outfit" .. outfitID]
+    local destination = ns.Settings.GetOutfitData(outfitID)
     local oldZones = Copy(type(destination.Zones) == "table" and destination.Zones or {})
     local oldSituationBaseline = Copy(destination.SituationBaseline)
     local applied = Copy(source)

@@ -71,21 +71,8 @@ local function GetRandomAvailableHearthstone()
     return available[math.random(#available)]
 end
 
-local function GetSelectedHearthstones(data)
-    if not data then return nil end
-    if type(data.Hearthstones) == "table" then
-        return data.Hearthstones
-    end
-    -- Read the former single-selection field so existing outfits continue
-    -- to work until they are next edited in the Hearthstone picker.
-    if type(data.Hearthstone) == "number" then
-        return {data.Hearthstone}
-    end
-    return nil
-end
-
 local function GetRandomSelectedHearthstone(data)
-    local selected = GetSelectedHearthstones(data)
+    local selected = ns.Settings.GetSelectedHearthstones(data)
     if not selected or #selected == 0 then return nil end
 
     local usable = {}
@@ -120,8 +107,8 @@ local function ResolveHearthstoneMacro()
         FitterCharacterSaved.LastActiveOutfitID = activeOutfitID
     end
     local data = activeOutfitID and activeOutfitID > 0 and FitterCharacterSaved
-        and FitterCharacterSaved["Outfit"..activeOutfitID]
-    local selected = GetSelectedHearthstones(data)
+        and ns.Settings.GetOutfitData(activeOutfitID)
+    local selected = ns.Settings.GetSelectedHearthstones(data)
     local hasExplicitSelection = selected and #selected > 0
     if not hasExplicitSelection then
         icon = Macro.HEARTHSTONE_MACRO_ICON

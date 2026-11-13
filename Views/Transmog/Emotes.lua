@@ -74,10 +74,7 @@ local CONDITIONS = {
 }
 
 local function CurrentData(create)
-    local id = UI_Transmog:GetViewedOutfitID()
-    if not id or id == 0 then return nil end
-    if create then ns.Settings.CreateEmptyOutfit(id) end
-    local data = FitterCharacterSaved and FitterCharacterSaved["Outfit" .. id]
+    local data = UI_Transmog:GetViewedOutfitData(create)
     if data and type(data.Emotes) ~= "table" then data.Emotes = {} end
     return data
 end

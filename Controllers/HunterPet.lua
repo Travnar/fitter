@@ -280,7 +280,7 @@ end
 function HunterPet.GetMacroLine(outfitID, resolvedPet)
     if not HunterPet.IsAvailable() or not outfitID
         or not FitterCharacterSaved then return nil end
-    local data = FitterCharacterSaved["Outfit" .. outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     local pet = resolvedPet or HunterPet.ResolveActivePet(data)
     local slot = pet and tonumber(pet.activeSlot)
     if not slot or slot < 1 or slot > 5 then return nil end
@@ -310,7 +310,7 @@ end
 
 function HunterPet.GetOutfitMacroLines(outfitID)
     local data = FitterCharacterSaved
-        and FitterCharacterSaved["Outfit" .. outfitID]
+        and ns.Settings.GetOutfitData(outfitID)
     if data and data.HunterPetDisabled and HunterPet.HasHunterPet() then
         local info = C_Spell and C_Spell.GetSpellInfo
             and C_Spell.GetSpellInfo(2641)
@@ -326,7 +326,7 @@ end
 
 function HunterPet.GetMountMacroLines(outfitID)
     local data = FitterCharacterSaved
-        and FitterCharacterSaved["Outfit" .. outfitID]
+        and ns.Settings.GetOutfitData(outfitID)
     if data and data.HunterPetDisabled then
         if not HunterPet.HasHunterPet() then return nil end
         local info = C_Spell and C_Spell.GetSpellInfo

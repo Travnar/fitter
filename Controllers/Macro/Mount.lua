@@ -8,7 +8,7 @@ local function OutfitGroundMountInfo()
         or (C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
             and C_TransmogOutfitInfo.GetActiveOutfitID())
     if not outfitID or outfitID == 0 or not FitterCharacterSaved then return false, false end
-    local data = FitterCharacterSaved["Outfit"..outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     if not data or not data.Ground then return false, false end
     local hasRunningWild = false
     local regularCount = 0
@@ -28,7 +28,7 @@ local function PreRollGroundIsRunningWild()
         or (C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
             and C_TransmogOutfitInfo.GetActiveOutfitID())
     if not outfitID or outfitID == 0 or not FitterCharacterSaved then return false end
-    local data = FitterCharacterSaved["Outfit"..outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     if not data or not data.Ground or #data.Ground == 0 then return false end
     local pick = data.Ground[math.random(1, #data.Ground)]
     return pick == "runningwild"

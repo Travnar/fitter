@@ -22,7 +22,7 @@ function UI_Transmog:CacheViewedZoneSituations()
     if not outfitID or not categoryData then return end
 
     ns.Settings.CreateEmptyOutfit(outfitID)
-    local data = FitterCharacterSaved["Outfit" .. outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     local enabled = not C_TransmogOutfitInfo.GetOutfitSituationsEnabled
         or C_TransmogOutfitInfo.GetOutfitSituationsEnabled()
     local state = { rest = false, world = false }
@@ -57,8 +57,8 @@ end)
 -- Captures the current state of a situation type for an outfit before Fitter enables it.
 -- Only captures once per situation type per outfit; does nothing if already captured.
 local function CaptureBaselineIfNeeded(outfitID, situation, categoryData)
-    if not FitterCharacterSaved or not FitterCharacterSaved["Outfit"..outfitID] then return end
-    local outfitData = FitterCharacterSaved["Outfit"..outfitID]
+    if not ns.Settings.GetOutfitData(outfitID) then return end
+    local outfitData = ns.Settings.GetOutfitData(outfitID)
     if not outfitData.SituationBaseline then
         outfitData.SituationBaseline = {}
     end
@@ -95,7 +95,7 @@ function UI_Transmog:UpdateZoneSituation(mapID, enable)
         -- Capture the situation's baseline state before enabling it for the first time
         if outfitID then
             local situation = ns.Zones.GetZoneSituation(mapID)
-            local outfitData = FitterCharacterSaved and FitterCharacterSaved["Outfit"..outfitID]
+            local outfitData = ns.Settings.GetOutfitData(outfitID)
             if outfitData and outfitData.Zones then
                 local countOfType = 0
                 for _, zoneMapID in ipairs(outfitData.Zones) do
@@ -147,7 +147,7 @@ function UI_Transmog:UpdateZoneSituation(mapID, enable)
 
         -- Check baseline: only disable if Fitter was the one that enabled this situation
         local situation = ns.Zones.GetZoneSituation(mapID)
-        local outfitData = outfitID and FitterCharacterSaved and FitterCharacterSaved["Outfit"..outfitID]
+        local outfitData = ns.Settings.GetOutfitData(outfitID)
         local baseline = outfitData and outfitData.SituationBaseline
 
         -- If no baseline was captured for this situation, we have no record of enabling it.
@@ -232,9 +232,9 @@ end
 
 function UI_Transmog:TryDisableZoneSituation(mapID, outfitID)
     if not FitterSaved or not FitterSaved.AutoDisableZoneSituations then return end
-    if not outfitID or not FitterCharacterSaved or not FitterCharacterSaved["Outfit"..outfitID] then return end
+    if not ns.Settings.GetOutfitData(outfitID) then return end
 
-    local zones = FitterCharacterSaved["Outfit"..outfitID].Zones
+    local zones = ns.Settings.GetOutfitData(outfitID).Zones
     if not zones then return end
 
     local situation = ns.Zones.GetZoneSituation(mapID)
@@ -300,9 +300,9 @@ end
 
 function UI_Transmog:ApplyBiomeSelection(biomeKey)
     local outfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
-    if not outfitID or not FitterCharacterSaved["Outfit"..outfitID] then return end
+    if not ns.Settings.GetOutfitData(outfitID) then return end
 
-    local data = FitterCharacterSaved["Outfit"..outfitID]
+    local data = ns.Settings.GetOutfitData(outfitID)
     if not data.Zones then data.Zones = {} end
 
     local selected = {}

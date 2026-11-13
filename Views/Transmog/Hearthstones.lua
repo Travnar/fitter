@@ -36,32 +36,11 @@ local function LayoutHearthstoneButtons()
     end
 end
 
-local function CurrentData(create)
-    local id = UI_Transmog:GetViewedOutfitID()
-    if not id or id == 0 then return nil end
-    if create and not FitterCharacterSaved["Outfit"..id] then ns.Settings.CreateEmptyOutfit(id) end
-    return FitterCharacterSaved["Outfit"..id], id
-end
-
-local function GetSelectedHearthstones(data, migrate)
-    if not data then return {} end
-    if type(data.Hearthstones) ~= "table" then
-        local formerSelection = type(data.Hearthstone) == "number"
-            and data.Hearthstone or nil
-        if not migrate then
-            return formerSelection and {formerSelection} or {}
-        end
-        data.Hearthstones = formerSelection and {formerSelection} or {}
-        data.Hearthstone = nil
-    end
-    return data.Hearthstones
-end
-
 function UI_Transmog:PopulateHearthstoneList()
     local items, retry = {}, false
-    local data = CurrentData(false)
+    local data = UI_Transmog:GetViewedOutfitData(false)
     local selected = {}
-    for _, itemID in ipairs(GetSelectedHearthstones(data, false)) do
+    for _, itemID in ipairs(ns.Settings.GetSelectedHearthstones(data, false)) do
         selected[itemID] = true
     end
     for _, entry in ipairs(ns.Constants.KNOWN_HEARTHSTONES) do
@@ -165,12 +144,12 @@ function UI_Transmog:InitializeHearthstonePaged()
 
         local function ToggleSelection()
             local item = frame.item
-            local data, outfitID = CurrentData(true)
+            local data, outfitID = UI_Transmog:GetViewedOutfitData(true)
             if not data or not item then return end
             if not item.isCollected then
                 return
             end
-            local selected = GetSelectedHearthstones(data, true)
+            local selected = ns.Settings.GetSelectedHearthstones(data, true)
             local wasSelected = tContains(selected, item.id)
             if wasSelected then tDeleteItem(selected, item.id) else table.insert(selected, item.id) end
             if UI_Transmog:GetActiveOutfitID() == outfitID
@@ -275,16 +254,16 @@ function UI_Transmog:RefreshHearthstoneList()
     end
 end
 function UI_Transmog:UpdateHearthstones()
-    local data = CurrentData(true)
+    local data = UI_Transmog:GetViewedOutfitData(true)
     if not data then return end
     self:RefreshHearthstoneList()
 end
 
 function UI_Transmog:UpdateHearthstonePageDisplay()
     if not s.hearthstoneModelFrames then return end
-    local data = CurrentData(false)
+    local data = UI_Transmog:GetViewedOutfitData(false)
     local selected = {}
-    for _, itemID in ipairs(GetSelectedHearthstones(data, false)) do
+    for _, itemID in ipairs(ns.Settings.GetSelectedHearthstones(data, false)) do
         selected[itemID] = true
     end
     local start = (s.hearthstoneCurrentPage - 1) * PAGE_SIZE
