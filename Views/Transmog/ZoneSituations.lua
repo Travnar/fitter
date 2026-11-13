@@ -4,7 +4,6 @@
 local addonName, ns = ...
 local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
-local Fitter = ns.Fitter
 
 local MAJOR_ZONES = ns.Zones.MAJOR_ZONES
 local BIOME_GROUPS = ns.Zones.BIOME_GROUPS
@@ -22,7 +21,7 @@ function UI_Transmog:CacheViewedZoneSituations()
         C_TransmogOutfitInfo.GetUISituationCategoriesAndOptions()
     if not outfitID or not categoryData then return end
 
-    Fitter:CreateEmptyOutfit(outfitID)
+    ns.Settings.CreateEmptyOutfit(outfitID)
     local data = FitterCharacterSaved["Outfit" .. outfitID]
     local enabled = not C_TransmogOutfitInfo.GetOutfitSituationsEnabled
         or C_TransmogOutfitInfo.GetOutfitSituationsEnabled()

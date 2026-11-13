@@ -16,6 +16,7 @@
 # access check; loaded first.
 Controllers\Flavor.lua
 Controllers\State.lua
+Controllers\Settings.lua
 
 Locales\Localization.lua
 Locales\enUS.lua
@@ -26,6 +27,7 @@ Locales\ruRU.lua
 Views\Bindings_Frames.xml
 
 # Static data tables (pure data; loaded first so modules can alias them).
+Data\Defaults.lua
 Data\Zones.lua
 Data\Holidays.lua
 Data\Toys.lua

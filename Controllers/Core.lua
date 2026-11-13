@@ -58,39 +58,6 @@ function ns.GetMountOutfitID()
     return ns.state.currentZoneOutfitID
 end
 
-function Fitter:CreateEmptyOutfit(outfitID)
-    if not FitterCharacterSaved then
-        FitterCharacterSaved = {}
-    end
-    local key = "Outfit"..outfitID
-    if not FitterCharacterSaved[key] then
-        FitterCharacterSaved[key] = {
-            Flying = {},
-            Ground = {},
-            Aquatic = {},
-            FlyingRandom = false,
-            GroundRandom = false,
-            AquaticRandom = false,
-            FlyingNoMount = false,
-            GroundNoMount = false,
-            AquaticNoMount = false,
-            Title = -1,
-            Pets = {},
-            PetRandom = false,
-            PetNoPet = false,
-            PetSummonTriggers = {},
-            HunterPetSlot = nil,
-            HunterPets = {},
-            HunterPetMetadata = {},
-            HunterPetDisabled = false,
-            HunterPetRandom = false,
-            Hearthstones = {},
-            Toys = {},
-            Emotes = {},
-        }
-    end
-end
-
 function Fitter:SelectNextMount(excludeSoar)
     local mountID = ns.Mount.SelectNext(excludeSoar, ns.GetMountOutfitID())
     ns.state.nextMountToSummon = mountID
@@ -105,74 +72,6 @@ local function RerollMountMacro()
     if ns.IsClassMountMacroEnabled() then return end
     ns.state.nextMountToSummon = ns.Mount.SelectNext(false, ns.GetMountOutfitID())
     ns.Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
-end
-
-local function InitializeSettings()
-    FitterSaved = FitterSaved or {}
-    FitterSaved.FavoriteMounts = FitterSaved.FavoriteMounts or {}
-    FitterSaved.FavoritePets = FitterSaved.FavoritePets or {}
-    FitterSaved.FavoriteHunterPets = FitterSaved.FavoriteHunterPets or {}
-    FitterSaved.FavoriteHearthstones = FitterSaved.FavoriteHearthstones or {}
-    FitterSaved.FavoriteToys = FitterSaved.FavoriteToys or {}
-    FitterSaved.CustomToys = FitterSaved.CustomToys or {}
-    FitterSaved.FavoriteZones = FitterSaved.FavoriteZones or {}
-    FitterSaved.FavoriteEmotes = FitterSaved.FavoriteEmotes or {}
-    FitterSaved.CustomEmotes = FitterSaved.CustomEmotes or {}
-    FitterSaved.Loadouts = FitterSaved.Loadouts or {}
-
-    if not FitterCharacterSaved then
-        FitterCharacterSaved = {}
-    end
-    FitterCharacterSaved.CustomEmotes = FitterCharacterSaved.CustomEmotes or {}
-    FitterCharacterSaved.Loadouts = FitterCharacterSaved.Loadouts or {}
-
-    local resetVersion = tonumber(FitterSaved.DefaultHearthstonesResetVersion) or 0
-    local appliedVersion =
-        tonumber(FitterCharacterSaved.DefaultHearthstonesResetVersion) or 0
-    if appliedVersion < resetVersion then
-        for key, data in pairs(FitterCharacterSaved) do
-            if type(key) == "string" and key:match("^Outfit%d+$")
-                and type(data) == "table" then
-                if type(data.Hearthstones) == "table"
-                    and #data.Hearthstones == 1
-                    and data.Hearthstones[1] == 6948 then
-                    data.Hearthstones = {}
-                    data.Hearthstone = nil
-                elseif data.Hearthstones == nil and data.Hearthstone == 6948 then
-                    data.Hearthstone = nil
-                    data.Hearthstones = {}
-                end
-            end
-        end
-        FitterCharacterSaved.DefaultHearthstonesResetVersion = resetVersion
-    end
-
-    -- Earlier versions populated every outfit with the bag Hearthstone even
-    -- when the picker had never been configured. Clear that generated default
-    -- once so an empty selection reaches the macro's random fallback.
-    if not FitterSaved.EmptyHearthstoneDefaultsMigrated then
-        for key, data in pairs(FitterCharacterSaved) do
-            if type(key) == "string" and key:match("^Outfit%d+$")
-                and type(data) == "table"
-                and type(data.Hearthstones) == "table"
-                and #data.Hearthstones == 1
-                and data.Hearthstones[1] == 6948
-                and data.Hearthstone == nil then
-                data.Hearthstones = {}
-            end
-        end
-        FitterSaved.EmptyHearthstoneDefaultsMigrated = true
-    end
-
-    if C_TransmogOutfitInfo then
-        local outfits = C_TransmogOutfitInfo.GetOutfitsInfo()
-        if outfits then
-            for _, info in ipairs(outfits) do
-                Fitter:CreateEmptyOutfit(info.outfitID)
-            end
-        end
-    end
-
 end
 
 local function CancelTransmogUIInitialization()
@@ -203,7 +102,7 @@ end
 local function OnViewedOutfitChanged()
     local viewedOutfitID = C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
     if not viewedOutfitID then return end
-    Fitter:CreateEmptyOutfit(viewedOutfitID)
+    ns.Settings.CreateEmptyOutfit(viewedOutfitID)
     if ns.UI_Transmog then
         ns.state.viewedOutfitGeneration = ns.state.viewedOutfitGeneration + 1
         local generation = ns.state.viewedOutfitGeneration
@@ -317,7 +216,7 @@ local function OnPlayerEnteringWorld()
         state.playerClass = pClass
         state.playerRace = pRace
         state.wasStealthed = ns.Pet.IsPlayerStealthed()
-        InitializeSettings()
+        ns.Settings.Initialize()
         Fitter:RefreshFeatureEvents()
         ns.Pet.InitializeStealthDriver()
         ns.Holidays.RequestCalendarData()
@@ -403,7 +302,12 @@ local function ForPlayer(handler)
     end
 end
 
+local function OnAddonLoaded(name)
+    if name == addonName then ns.Settings.ApplyDefaults() end
+end
+
 local HANDLERS = {
+    ADDON_LOADED = OnAddonLoaded,
     PLAYER_ENTERING_WORLD = OnPlayerEnteringWorld,
     ZONE_CHANGED = ns.Zones.OnZoneChanged,
     ZONE_CHANGED_INDOORS = ns.Zones.OnZoneChanged,
@@ -447,36 +351,8 @@ function Fitter:OnEvent(event, ...)
     if handler then handler(...) end
 end
 
-function Fitter:ResetDefaultHearthstones()
-    FitterSaved = FitterSaved or {}
-    FitterCharacterSaved = FitterCharacterSaved or {}
-    FitterSaved.DefaultHearthstonesResetVersion =
-        (tonumber(FitterSaved.DefaultHearthstonesResetVersion) or 0) + 1
-
-    for key, data in pairs(FitterCharacterSaved) do
-        if type(key) == "string" and key:match("^Outfit%d+$")
-            and type(data) == "table" then
-            if type(data.Hearthstones) == "table"
-                and #data.Hearthstones == 1
-                and data.Hearthstones[1] == 6948 then
-                data.Hearthstones = {}
-                data.Hearthstone = nil
-            elseif data.Hearthstones == nil and data.Hearthstone == 6948 then
-                data.Hearthstone = nil
-                data.Hearthstones = {}
-            end
-        end
-    end
-
-    FitterCharacterSaved.DefaultHearthstonesResetVersion =
-        FitterSaved.DefaultHearthstonesResetVersion
-    ns.Macro.UpdateHearthstone()
-    if ns.UI_Transmog and ns.UI_Transmog.UpdateHearthstones then
-        ns.UI_Transmog:UpdateHearthstones()
-    end
-end
-
 local EVENTS = {
+    "ADDON_LOADED",
     "PLAYER_ENTERING_WORLD",
     "ZONE_CHANGED",
     "ZONE_CHANGED_INDOORS",

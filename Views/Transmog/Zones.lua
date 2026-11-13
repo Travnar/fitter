@@ -2,7 +2,6 @@ local addonName, ns = ...
 local L = ns.L
 local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
-local Fitter = ns.Fitter
 
 local BIOME_GROUPS = ns.Zones.BIOME_GROUPS
 local EXPANSION_ZONES = ns.Zones.EXPANSION_ZONES
@@ -107,7 +106,7 @@ local function CurrentData(create)
     local outfitID = C_TransmogOutfitInfo
         and C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
     if not outfitID then return nil end
-    if create then Fitter:CreateEmptyOutfit(outfitID) end
+    if create then ns.Settings.CreateEmptyOutfit(outfitID) end
     local data = FitterCharacterSaved and FitterCharacterSaved["Outfit" .. outfitID]
     if data then
         for _, mode in ipairs(MODES) do

@@ -3,7 +3,6 @@ local addonName, ns = ...
 local L = ns.L
 local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
-local Fitter = ns.Fitter
 local MOUNT_EXPANSIONS = ns.Constants.MOUNT_EXPANSIONS
 
 local PAGE_SIZE = 20
@@ -299,7 +298,7 @@ function Controller:Update()
     local outfitID = UI_Transmog:GetViewedOutfitID()
     if not outfitID then return end
     if not FitterCharacterSaved["Outfit" .. outfitID] then
-        Fitter:CreateEmptyOutfit(outfitID)
+        ns.Settings.CreateEmptyOutfit(outfitID)
     end
     self:ResetFilters()
     local search = self:State("PagedSearchBox")

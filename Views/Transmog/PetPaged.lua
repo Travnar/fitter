@@ -3,7 +3,6 @@ local L = ns.L
 
 local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
-local Fitter = ns.Fitter
 local PET_EXPANSIONS = ns.Constants.PET_EXPANSIONS
 local PET_FAMILIES = ns.Constants.PET_FAMILIES
 local GetPetExpansionKey = ns.Constants.GetPetExpansionKey
@@ -428,7 +427,7 @@ function UI_Transmog:UpdatePetPaged()
     end
     
     if not FitterCharacterSaved["Outfit"..outfitID] then
-        Fitter:CreateEmptyOutfit(outfitID)
+        ns.Settings.CreateEmptyOutfit(outfitID)
     end
     
     s.petSearchString = ""

@@ -20,7 +20,7 @@ end
 local function CurrentOutfit(create)
     local id = UI_Transmog:GetViewedOutfitID()
     if not id or id == 0 then return nil end
-    if create then Fitter:CreateEmptyOutfit(id) end
+    if create then ns.Settings.CreateEmptyOutfit(id) end
     return FitterCharacterSaved and FitterCharacterSaved["Outfit" .. id], id
 end
 
@@ -198,7 +198,7 @@ end
 -- Replaces outfitID's configuration with source, dropping anything this
 -- character cannot use. Used by loadouts and shared outfit links.
 function UI_Transmog:ApplyOutfitConfiguration(source, outfitID)
-    Fitter:CreateEmptyOutfit(outfitID)
+    ns.Settings.CreateEmptyOutfit(outfitID)
     local destination = FitterCharacterSaved["Outfit" .. outfitID]
     local oldZones = Copy(type(destination.Zones) == "table" and destination.Zones or {})
     local oldSituationBaseline = Copy(destination.SituationBaseline)
@@ -465,7 +465,7 @@ local function ResetCharacterConfiguration()
 
     if C_TransmogOutfitInfo then
         for _, info in ipairs(C_TransmogOutfitInfo.GetOutfitsInfo() or {}) do
-            Fitter:CreateEmptyOutfit(info.outfitID)
+            ns.Settings.CreateEmptyOutfit(info.outfitID)
         end
     end
 
@@ -476,7 +476,7 @@ local function ResetOutfitConfiguration(_, outfitID)
     if not outfitID then return end
     FitterCharacterSaved = FitterCharacterSaved or {}
     FitterCharacterSaved["Outfit" .. outfitID] = nil
-    Fitter:CreateEmptyOutfit(outfitID)
+    ns.Settings.CreateEmptyOutfit(outfitID)
     UI_Transmog:RefreshAfterConfigurationReset()
 end
 

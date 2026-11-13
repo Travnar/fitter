@@ -108,7 +108,7 @@ function CharacterExport.Apply(payload)
     saved.Loadouts = type(saved.Loadouts) == "table" and saved.Loadouts or {}
     if C_TransmogOutfitInfo then
         for _, info in ipairs(C_TransmogOutfitInfo.GetOutfitsInfo() or {}) do
-            ns.Fitter:CreateEmptyOutfit(info.outfitID)
+            ns.Settings.CreateEmptyOutfit(info.outfitID)
         end
     end
 end

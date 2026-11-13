@@ -4,44 +4,6 @@ local L = ns.L
 local UI_Options = {}
 ns.UI_Options = UI_Options
 
-local function EnsureDefaults()
-    if FitterSaved == nil then FitterSaved = {} end
-    if FitterSaved.UseDruidMacro == nil then FitterSaved.UseDruidMacro = false end
-    if FitterSaved.UseShamanMacro == nil then FitterSaved.UseShamanMacro = false end
-    if FitterSaved.UseMonkMacro == nil then FitterSaved.UseMonkMacro = false end
-    if FitterSaved.CopyTargetMount == nil then FitterSaved.CopyTargetMount = false end
-    if FitterSaved.ShiftHearthstoneCondition == nil then FitterSaved.ShiftHearthstoneCondition = "None" end
-    if FitterSaved.AltHearthstoneCondition == nil then FitterSaved.AltHearthstoneCondition = "None" end
-    if FitterSaved.CtrlHearthstoneCondition == nil then FitterSaved.CtrlHearthstoneCondition = "None" end
-    if FitterSaved.DefaultFlying == nil then FitterSaved.DefaultFlying = {} end
-    if FitterSaved.DefaultGround == nil then FitterSaved.DefaultGround = {} end
-    if FitterSaved.AutoEnableZoneSituations == nil then FitterSaved.AutoEnableZoneSituations = false end
-    if FitterSaved.AutoDisableZoneSituations == nil then FitterSaved.AutoDisableZoneSituations = false end
-    if FitterSaved.RemoveMacroChangesOnUpdate == nil then FitterSaved.RemoveMacroChangesOnUpdate = false end
-    if FitterSaved.ShowTooltipMount == nil then FitterSaved.ShowTooltipMount = true end
-    if FitterSaved.UseZoneSpecificMounts == nil then FitterSaved.UseZoneSpecificMounts = false end
-    if FitterSaved.ShowTooltipHearthstone == nil then FitterSaved.ShowTooltipHearthstone = true end
-    if FitterSaved.AstralRecallFallback == nil then FitterSaved.AstralRecallFallback = false end
-    if FitterSaved.CancelNonOutfitToys == nil then FitterSaved.CancelNonOutfitToys = false end
-    if FitterSaved.ApplyToyOnSelect == nil then FitterSaved.ApplyToyOnSelect = false end
-    if FitterSaved.SearchableTitles == nil then FitterSaved.SearchableTitles = false end
-    if FitterSaved.DismissPetOnStealth == nil then FitterSaved.DismissPetOnStealth = false end
-    if FitterSaved.DismissPetInInstancesWhileGrouped == nil then FitterSaved.DismissPetInInstancesWhileGrouped = false end
-    if FitterSaved.ReviveHunterPet == nil then FitterSaved.ReviveHunterPet = false end
-    if FitterSaved.AccountWideFlyingEnabled == nil then FitterSaved.AccountWideFlyingEnabled = false end
-    if FitterSaved.AccountWideFlyingMounts == nil then FitterSaved.AccountWideFlyingMounts = {} end
-    if FitterSaved.AccountWideGroundEnabled == nil then FitterSaved.AccountWideGroundEnabled = false end
-    if FitterSaved.AccountWideGroundMounts == nil then FitterSaved.AccountWideGroundMounts = {} end
-    if FitterSaved.AccountWideFlyingRandom == nil then FitterSaved.AccountWideFlyingRandom = false end
-    if FitterSaved.AccountWideGroundRandom == nil then FitterSaved.AccountWideGroundRandom = false end
-    if FitterSaved.AccountWideAquaticEnabled == nil then FitterSaved.AccountWideAquaticEnabled = false end
-    if FitterSaved.AccountWideAquaticMounts == nil then FitterSaved.AccountWideAquaticMounts = {} end
-    if FitterSaved.AccountWideAquaticRandom == nil then FitterSaved.AccountWideAquaticRandom = false end
-    if FitterSaved.EmoteGlobalCooldown == nil then FitterSaved.EmoteGlobalCooldown = 25 end
-    FitterSaved.EmoteGlobalCooldown =
-        math.max(5, math.min(60, tonumber(FitterSaved.EmoteGlobalCooldown) or 25))
-end
-
 -- Waits a moment so the saved setting is in place before the update reads it.
 local function AfterSettingChange(update, deferInCombat)
     C_Timer.After(0.1, function()
@@ -122,7 +84,6 @@ local function MakeCheckbox(frame, key, label, tooltip, x, y, onChange)
 end
 
 function UI_Options:Initialize(optionsFrame, alreadyRegistered)
-    EnsureDefaults()
 
     optionsFrame = optionsFrame or CreateFrame("Frame")
     if not alreadyRegistered then optionsFrame:Hide() end
@@ -318,9 +279,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         button1 = L["Reset"],
         button2 = L["Cancel"],
         OnAccept = function()
-            if ns.Fitter and ns.Fitter.ResetDefaultHearthstones then
-                ns.Fitter:ResetDefaultHearthstones()
-            end
+            ns.Settings.ResetDefaultHearthstones()
         end,
         timeout = 0,
         whileDead = true,
@@ -556,7 +515,6 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 end
 
 function UI_Options:Register()
-    EnsureDefaults()
     local optionsFrame = CreateFrame("Frame")
     optionsFrame:Hide()
     optionsFrame.OnCommit = function() end

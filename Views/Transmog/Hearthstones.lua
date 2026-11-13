@@ -3,7 +3,6 @@ local addonName, ns = ...
 local L = ns.L
 local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
-local Fitter = ns.Fitter
 
 local PAGE_SIZE = 30
 local DEFAULT_ID = 6948
@@ -40,7 +39,7 @@ end
 local function CurrentData(create)
     local id = UI_Transmog:GetViewedOutfitID()
     if not id or id == 0 then return nil end
-    if create and not FitterCharacterSaved["Outfit"..id] then Fitter:CreateEmptyOutfit(id) end
+    if create and not FitterCharacterSaved["Outfit"..id] then ns.Settings.CreateEmptyOutfit(id) end
     return FitterCharacterSaved["Outfit"..id], id
 end
 

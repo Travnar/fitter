@@ -19,6 +19,7 @@ local TEST_FILES = {
     "fishing_macro_test",
     "outfit_update_macro_test",
     "toy_lines_test",
+    "settings_test",
 }
 
 for _, name in ipairs(TEST_FILES) do
