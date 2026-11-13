@@ -72,6 +72,8 @@ Views\Transmog\PreviewOutfitDetails.lua
 Views\Transmog\PreviewShare.lua
 Views\Transmog\MountConditionals.lua
 Views\Transmog\MountSlots.lua
+Views\Transmog\MountIcons.lua
+Views\Transmog\MountPreview.lua
 Views\Transmog\Titles.lua
 Views\Transmog\ViewWithoutTransmog.lua
 Views\Transmog\OffVendor.lua
