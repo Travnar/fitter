@@ -92,6 +92,7 @@ Views\Transmog\FlyingPaged.lua
 Views\Transmog\GroundPaged.lua
 Views\Transmog\AquaticPaged.lua
 Views\Transmog\PetPaged.lua
+Views\Transmog\PetList.lua
 Views\Transmog\HunterPets.lua
 Views\Options\Options.lua
 Views\Options\AccountWide.lua

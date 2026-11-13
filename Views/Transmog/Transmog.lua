@@ -237,23 +237,6 @@ s.groundSelectedExpansions = {}
 s.aquaticSelectedExpansions = {}
 s.petSelectedExpansions = {}
 
-local MOUNT_EXPANSIONS = ns.Constants.MOUNT_EXPANSIONS
-local PET_EXPANSIONS = ns.Constants.PET_EXPANSIONS
-local PET_FAMILIES = ns.Constants.PET_FAMILIES
-local GetMountExpansionKey = ns.Constants.GetMountExpansionKey
-local GetPetExpansionKey = ns.Constants.GetPetExpansionKey
-
-
-local MAJOR_ZONES = ns.Zones.MAJOR_ZONES
-local BIOME_GROUPS = ns.Zones.BIOME_GROUPS
-local EXPANSION_ZONES = ns.Zones.EXPANSION_ZONES
-
-local SORTED_ZONES = {}
-for _, zoneData in ipairs(MAJOR_ZONES) do
-    table.insert(SORTED_ZONES, zoneData)
-end
-table.sort(SORTED_ZONES, function(a, b) return a.name < b.name end)
-
 function UI_Transmog:InvalidateMountListCache()
     wipe(s.mountListCache)
 end
