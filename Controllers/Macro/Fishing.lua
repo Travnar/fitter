@@ -87,7 +87,7 @@ local function GetOutfitName(outfitID)
     for _, info in ipairs(outfits or {}) do
         if info.outfitID == outfitID then return info.name end
     end
-    return "Outfit " .. outfitID
+    return string.format(L["Outfit %d"], outfitID)
 end
 
 -- Runs after the game fills in the Fishing spell tooltip from #showtooltip,

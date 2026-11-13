@@ -14,7 +14,7 @@ end
 
 local function ApplyImport(payload, fromMacros)
     if fromMacros and InCombatLockdown() then
-        Notify("Macros cannot be changed in combat.")
+        Notify(L["Macros cannot be changed in combat."])
         return
     end
     CharacterExport.Apply(payload)
@@ -130,7 +130,7 @@ local function CreateTextPopup()
     import:SetScript("OnClick", function()
         local text = editBox:GetText()
         if text:match("^%s*$") then
-            UIErrorsFrame:AddMessage("Paste an export string first.", 1, 0.2, 0.2)
+            UIErrorsFrame:AddMessage(L["Paste an export string first."], 1, 0.2, 0.2)
             return
         end
         local payload, err = CharacterExport.Decode(text)
@@ -190,13 +190,13 @@ local function ExportMacros()
     local names = result == 1 and (prefix .. "1")
         or string.format("%s1 - %s%d", prefix, prefix, result)
     Notify(string.format(
-        "Created %d account macro(s): %s.\n\nUse Import Character Export Macros on another character to apply them.",
+        L["Created %d account macro(s): %s.\n\nUse Import Character Export Macros on another character to apply them."],
         result, names))
 end
 
 local function ImportMacros()
     if InCombatLockdown() then
-        Notify("Macros cannot be changed in combat.")
+        Notify(L["Macros cannot be changed in combat."])
         return
     end
     local text, err = CharacterExport.ReadMacros()
@@ -207,8 +207,8 @@ local function ImportMacros()
     local payload
     payload, err = CharacterExport.Decode(text)
     if not payload then
-        Notify(err .. "\n\nThe " .. CharacterExport.MACRO_PREFIX
-            .. "N macros were left unchanged.")
+        Notify(err .. "\n\n" .. string.format(
+            L["The %sN macros were left unchanged."], CharacterExport.MACRO_PREFIX))
         return
     end
     ConfirmImport(payload, true)

@@ -5,6 +5,7 @@
 --   method   : "Z" = zlib via C_EncodingUtil, "R" = raw (no compression available)
 --   checksum : 8 hex digits, djb2 of the serialized (uncompressed) data
 local addonName, ns = ...
+local L = ns.L
 
 local Codec = {}
 ns.Codec = Codec
@@ -207,31 +208,31 @@ end
 
 -- Returns the value, or nil and an error message.
 function Codec.Decode(text)
-    if type(text) ~= "string" then return nil, "No data." end
+    if type(text) ~= "string" then return nil, L["No data."] end
     text = text:gsub("%s+", "")
     local method, checksum, data =
         text:match("^FITTER1:([RZ])(%x%x%x%x%x%x%x%x):(.+)$")
-    if not method then return nil, "This is not a Fitter export string." end
+    if not method then return nil, L["This is not a Fitter export string."] end
 
     local ok, body = pcall(DecodeBase64, data)
     if not ok or not body then
-        return nil, "The export string is corrupt."
+        return nil, L["The export string is corrupt."]
     end
     if method == "Z" then
         if not (ZLIB and EncodingUtil and EncodingUtil.DecompressString) then
-            return nil, "This client cannot read compressed export strings."
+            return nil, L["This client cannot read compressed export strings."]
         end
         ok, body = pcall(EncodingUtil.DecompressString, body, ZLIB)
         if not ok or not body then
-            return nil, "The export string is incomplete or was altered."
+            return nil, L["The export string is incomplete or was altered."]
         end
     end
     if Checksum(body) ~= checksum:lower() then
-        return nil, "The export string is incomplete or was altered."
+        return nil, L["The export string is incomplete or was altered."]
     end
 
     local value
     ok, value = pcall(Deserialize, body)
-    if not ok then return nil, "The export string is corrupt." end
+    if not ok then return nil, L["The export string is corrupt."] end
     return value
 end

@@ -1,4 +1,5 @@
 local addonName, ns = ...
+local L = ns.L
 
 local Housing = {}
 ns.Housing = Housing
@@ -6,12 +7,12 @@ ns.Housing = Housing
 local NEIGHBORHOODS = {
     [2352] = {
         key = "FOUNDERS_POINT",
-        label = "Founder's Point",
+        label = L["Founder's Point"],
         buttonName = "FitterHomeFP",
     },
     [2351] = {
         key = "RAZORWIND_SHORES",
-        label = "Razorwind Shores",
+        label = L["Razorwind Shores"],
         buttonName = "FitterHomeRS",
     },
 }

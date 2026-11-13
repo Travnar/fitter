@@ -213,10 +213,10 @@ function UI_Transmog:InitializePetPaged()
                     GameTooltip:SetText(petData.name, 1, 0.82, 0, 1, true)
                     if not petData.isCollected then
                         GameTooltip:AddLine(
-                            "You have not collected this pet.",
+                            L["You have not collected this pet."],
                             .6, .6, .6, true)
                     elseif isSelected then
-                        GameTooltip:AddLine("Right-click for summon settings.", 0.8, 0.8, 0.8, true)
+                        GameTooltip:AddLine(L["Right-click for summon settings."], 0.8, 0.8, 0.8, true)
                     end
                     GameTooltip:Show()
                 end
@@ -290,7 +290,7 @@ function UI_Transmog:InitializePetPaged()
                     end)
 
                     if isSelected then
-                        rootDescription:CreateTitle("Summon Pet When")
+                        rootDescription:CreateTitle(L["Summon Pet When"])
                         for _, trigger in ipairs(ns.Pet.SUMMON_TRIGGERS) do
                             local triggerKey = trigger.key
                             rootDescription:CreateCheckbox(trigger.label, function()

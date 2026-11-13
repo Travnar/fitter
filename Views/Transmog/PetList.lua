@@ -1,4 +1,5 @@
 local addonName, ns = ...
+local L = ns.L
 local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
 local GetPetExpansionKey = ns.Constants.GetPetExpansionKey
@@ -23,7 +24,7 @@ function UI_Transmog:RefreshPetPaged()
     local hasExpansionFilter = next(s.petSelectedExpansions) ~= nil
     s.petShowDisabledCard =
         UI_Transmog._PagedShared.DoesSpecialCardMatchSearch(
-            "Disable Pets", s.petSearchString)
+            L["Disable Pets"], s.petSearchString)
     local hideDuplicateNames = s.petHideDuplicateNames ~= false
     
     local seenPetNames = {}
@@ -68,7 +69,7 @@ function UI_Transmog:RefreshPetPaged()
                     displayID = select(12,
                         C_PetJournal.GetPetInfoBySpeciesID(speciesID))
                 end
-                local displayName = customName or speciesName or "Unknown Pet"
+                local displayName = customName or speciesName or L["Unknown Pet"]
                 local petGUID = owned and petID or nil
                 local isSelected = petGUID
                     and selectedPetSet[petGUID] == true or false

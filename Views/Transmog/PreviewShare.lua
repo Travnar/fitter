@@ -20,7 +20,7 @@ function UI_Transmog:SendPreview(preview, label)
     local list = actor and actor.GetItemTransmogInfoList
         and actor:GetItemTransmogInfoList()
     if not list then
-        UIErrorsFrame:AddMessage("The transmog preview is not ready yet.", 1, 0.2, 0.2)
+        UIErrorsFrame:AddMessage(L["The transmog preview is not ready yet."], 1, 0.2, 0.2)
         return
     end
     local transmog = {}

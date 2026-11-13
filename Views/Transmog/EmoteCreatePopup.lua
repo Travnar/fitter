@@ -56,7 +56,7 @@ local function CreatePopup()
     popup:SetScript("OnHide", function(self)
         self.filteredIcons = nil
     end)
-    popup:SetTitle("Add New Emote")
+    popup:SetTitle(L["Add New Emote"])
     local portrait = popup.Portrait
         or (popup.PortraitContainer and popup.PortraitContainer.portrait)
     if portrait then
@@ -93,19 +93,19 @@ local function CreatePopup()
     scope:SetSize(180, 30)
     scope:SetPoint("LEFT", scopeLabel, "RIGHT", 12, 0)
     scope.value = "character"
-    scope:SetDefaultText("This Character")
+    scope:SetDefaultText(L["This Character"])
     scope:SetupMenu(function(_, root)
         root:CreateRadio(L["This Character"], function()
             return scope.value == "character"
         end, function()
             scope.value = "character"
-            scope:SetDefaultText("This Character")
+            scope:SetDefaultText(L["This Character"])
         end)
         root:CreateRadio(L["Account"], function()
             return scope.value == "account"
         end, function()
             scope.value = "account"
-            scope:SetDefaultText("Account")
+            scope:SetDefaultText(L["Account"])
         end)
     end)
     popup.scope = scope
@@ -220,7 +220,7 @@ local function CreatePopup()
         local title = titleEdit:GetText():match("^%s*(.-)%s*$")
         local text = edit:GetText():match("^%s*(.-)%s*$")
         if text == "" then
-            UIErrorsFrame:AddMessage("Enter emote text.", 1, 0.2, 0.2)
+            UIErrorsFrame:AddMessage(L["Enter emote text."], 1, 0.2, 0.2)
             return
         end
         FitterSaved.CustomEmotes = FitterSaved.CustomEmotes or {}
@@ -250,7 +250,7 @@ function UI_Transmog:ShowEmoteCreatePopup()
     popup.titleEdit:SetText("")
     popup.edit:SetText("")
     popup.scope.value = "character"
-    popup.scope:SetDefaultText("This Character")
+    popup.scope:SetDefaultText(L["This Character"])
     popup.iconSearch:SetText("")
     popup.iconSearchText = ""
     popup.filteredIcons = GetAvailableIcons()

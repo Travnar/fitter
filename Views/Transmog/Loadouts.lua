@@ -13,16 +13,16 @@ end
 local function SummarizeNames(values, getName)
     local names = {}
     for _, value in ipairs(type(values) == "table" and values or {}) do
-        names[#names + 1] = getName(value) or ("ID " .. tostring(value))
+        names[#names + 1] = getName(value) or string.format(L["ID %s"], tostring(value))
     end
     table.sort(names, function(a, b) return a:lower() < b:lower() end)
     local shown = {}
     for index = 1, math.min(#names, 6) do shown[index] = names[index] end
     local text = table.concat(shown, ", ")
-    if text == "" then return "|cff888888None|r" end
+    if text == "" then return "|cff888888" .. L["None"] .. "|r" end
     if #names > #shown then
-        text = text .. string.format(" |cff888888(+%d more)|r",
-            #names - #shown)
+        text = text .. " |cff888888"
+            .. string.format(L["(+%d more)"], #names - #shown) .. "|r"
     end
     return text
 end
@@ -35,8 +35,8 @@ local function AddTooltipSetting(label, value)
 end
 
 local function MountSummary(data, key)
-    if data[key .. "NoMount"] then return "|cffff8080No Mount|r" end
-    if data[key .. "Random"] then return "Random" end
+    if data[key .. "NoMount"] then return "|cffff8080" .. L["No Mount"] .. "|r" end
+    if data[key .. "Random"] then return L["Random"] end
     return SummarizeNames(data[key], function(mountID)
         return C_MountJournal and C_MountJournal.GetMountInfoByID(mountID)
     end)
@@ -113,7 +113,7 @@ local function ShowLoadoutTooltip(owner, elementData)
         title = UnitName("player") or L["Character"]
     else
         title = GetTitleName(data.Title)
-            or ("ID " .. tostring(data.Title))
+            or string.format(L["ID %s"], tostring(data.Title))
     end
     AddTooltipSetting(L["Title"], title)
     AddTooltipSetting(L["Emotes"], EmoteSummary(data.Emotes))
@@ -166,7 +166,7 @@ local function ApplyLoadout(loadout)
     local _, outfitID = UI_Transmog:GetViewedOutfitData(false)
     local source = loadout and loadout.data
     if not outfitID or type(source) ~= "table" then
-        UIErrorsFrame:AddMessage("Select an outfit before applying a loadout.",
+        UIErrorsFrame:AddMessage(L["Select an outfit before applying a loadout."],
             1, 0.2, 0.2)
         return
     end
@@ -186,7 +186,7 @@ local function CreateLoadoutPopup()
     popup:SetClampedToScreen(true)
     popup:EnableMouse(true)
     popup:Hide()
-    popup:SetTitle("Save Loadout")
+    popup:SetTitle(L["Save Loadout"])
 
     local portrait = popup.Portrait
         or (popup.PortraitContainer and popup.PortraitContainer.portrait)
@@ -212,19 +212,19 @@ local function CreateLoadoutPopup()
     scope:SetSize(175, 30)
     scope:SetPoint("LEFT", scopeLabel, "RIGHT", 12, 0)
     scope.value = "character"
-    scope:SetDefaultText("Character")
+    scope:SetDefaultText(L["Character"])
     scope:SetupMenu(function(_, root)
         root:CreateRadio(L["Character"], function()
             return scope.value == "character"
         end, function()
             scope.value = "character"
-            scope:SetDefaultText("Character")
+            scope:SetDefaultText(L["Character"])
         end)
         root:CreateRadio(L["Account Wide"], function()
             return scope.value == "account"
         end, function()
             scope.value = "account"
-            scope:SetDefaultText("Account Wide")
+            scope:SetDefaultText(L["Account Wide"])
         end)
     end)
     popup.scope = scope
@@ -243,11 +243,11 @@ local function CreateLoadoutPopup()
         local name = nameEdit:GetText():match("^%s*(.-)%s*$")
         local data = UI_Transmog:GetViewedOutfitData(false)
         if name == "" then
-            UIErrorsFrame:AddMessage("Enter a loadout name.", 1, 0.2, 0.2)
+            UIErrorsFrame:AddMessage(L["Enter a loadout name."], 1, 0.2, 0.2)
             return
         end
         if not data then
-            UIErrorsFrame:AddMessage("Select an outfit before saving a loadout.",
+            UIErrorsFrame:AddMessage(L["Select an outfit before saving a loadout."],
                 1, 0.2, 0.2)
             return
         end
@@ -271,14 +271,14 @@ end
 
 local function ShowCreatePopup()
     if not UI_Transmog:GetViewedOutfitData(false) then
-        UIErrorsFrame:AddMessage("Select an outfit before saving a loadout.",
+        UIErrorsFrame:AddMessage(L["Select an outfit before saving a loadout."],
             1, 0.2, 0.2)
         return
     end
     local popup = CreateLoadoutPopup()
     popup.nameEdit:SetText("")
     popup.scope.value = "character"
-    popup.scope:SetDefaultText("Character")
+    popup.scope:SetDefaultText(L["Character"])
     popup:Show()
     popup.nameEdit:SetFocus()
 end
@@ -389,11 +389,11 @@ local function ConfirmResetOutfitConfiguration()
     local _, outfitID = UI_Transmog:GetViewedOutfitData(false)
     if not outfitID then
         UIErrorsFrame:AddMessage(
-            "Select an outfit before resetting its configuration.",
+            L["Select an outfit before resetting its configuration."],
             1, 0.2, 0.2)
         return
     end
-    local name = "Outfit " .. outfitID
+    local name = string.format(L["Outfit %d"], outfitID)
     for _, info in ipairs(C_TransmogOutfitInfo.GetOutfitsInfo() or {}) do
         if info.outfitID == outfitID then
             name = info.name or name
@@ -447,7 +447,7 @@ function UI_Transmog:RefreshLoadouts()
             end
         end
         dropdown:OverrideText(selected
-            and (selected.loadout.name or "Unnamed") or "Select a loadout")
+            and (selected.loadout.name or L["Unnamed"]) or L["Select a loadout"])
     end
     RefreshSelection("selectedApplyLoadoutElement", s.loadoutApplyDropdown)
     RefreshSelection("selectedDeleteLoadoutElement", s.loadoutDeleteDropdown)
@@ -459,11 +459,11 @@ local function PopulateLoadoutMenu(root, stateKey, onSelect)
     for _, element in ipairs(elements) do
         if not element.divider then
             if element.scope == "character" and not hasCharacter then
-                root:CreateTitle("Character")
+                root:CreateTitle(L["Character"])
                 hasCharacter = true
             elseif element.scope == "account" and not hasAccount then
                 if hasCharacter then root:CreateDivider() end
-                root:CreateTitle("Account Wide")
+                root:CreateTitle(L["Account Wide"])
                 hasAccount = true
             end
             local choice = element
@@ -479,7 +479,7 @@ local function PopulateLoadoutMenu(root, stateKey, onSelect)
         end
     end
     if not hasCharacter and not hasAccount then
-        root:CreateTitle("No loadouts saved")
+        root:CreateTitle(L["No loadouts saved"])
     end
 end
 
@@ -529,7 +529,7 @@ function UI_Transmog:InitializeLoadouts()
         return row, button
     end
 
-    CreateResetRow("Reset Character Configuration", -157, function()
+    CreateResetRow(L["Reset Character Configuration"], -157, function()
         StaticPopup_Show("FITTER_RESET_CHARACTER_CONFIGURATION")
     end)
     self:InitializeCharacterExport(parent, -194)
@@ -543,7 +543,7 @@ function UI_Transmog:InitializeLoadouts()
     outfitsSection:SetTextColor(1, 1, 1, 1)
     outfitsSection:SetText(L["Outfits"])
 
-    CreateResetRow("Reset Outfit Configuration", -471 - shift,
+    CreateResetRow(L["Reset Outfit Configuration"], -471 - shift,
         ConfirmResetOutfitConfiguration)
 
     local _, shareButton = CreateResetRow(L["Share Outfit Configuration"], -508 - shift,
@@ -601,7 +601,7 @@ function UI_Transmog:InitializeLoadouts()
         "WowStyle1DropdownTemplate")
     applyDropdown:SetSize(220, 30)
     applyDropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -579 - shift)
-    applyDropdown:SetDefaultText("Select a loadout")
+    applyDropdown:SetDefaultText(L["Select a loadout"])
     applyDropdown:SetupMenu(function(_, root)
         PopulateLoadoutMenu(root, "selectedApplyLoadoutElement",
             ConfirmApplyLoadout)
@@ -619,7 +619,7 @@ function UI_Transmog:InitializeLoadouts()
         "WowStyle1DropdownTemplate")
     deleteDropdown:SetSize(220, 30)
     deleteDropdown:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -70, -616 - shift)
-    deleteDropdown:SetDefaultText("Select a loadout")
+    deleteDropdown:SetDefaultText(L["Select a loadout"])
     deleteDropdown:SetupMenu(function(_, root)
         PopulateLoadoutMenu(root, "selectedDeleteLoadoutElement",
             ConfirmDeleteLoadout)

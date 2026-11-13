@@ -204,7 +204,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
                 if value == option.key then return option.label end
             end
         end
-        return "None"
+        return L["None"]
     end
     local function MakeHearthstoneConditionDropdown(modifier, y)
         local key = modifier .. "HearthstoneCondition"
@@ -215,7 +215,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
         local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         label:SetPoint("LEFT", row, "LEFT", 0, 0)
-        label:SetText(string.format(L["%s Condition:"], modifier))
+        label:SetText(string.format(L["%s Condition:"], L[modifier]))
 
         local dropdown = CreateFrame("DropdownButton", nil, row, "WowStyle1DropdownTemplate")
         dropdown:SetPoint("RIGHT", row, "RIGHT", 0, 0)
@@ -255,11 +255,10 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
         local function ShowConditionTooltip(owner)
             GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
-            GameTooltip:SetText(string.format(L["%s Condition"], modifier), 1, 1, 1)
-            GameTooltip:AddLine(
-                "Choose the teleport Fitter uses when you hold " .. modifier
-                .. " while using the hearthstone macro or key binding.",
-                1, 0.82, 0, true)
+            GameTooltip:SetText(string.format(L["%s Condition"], L[modifier]), 1, 1, 1)
+            GameTooltip:AddLine(string.format(
+                L["Choose the teleport Fitter uses when you hold %s while using the hearthstone macro or key binding."],
+                L[modifier]), 1, 0.82, 0, true)
             GameTooltip:Show()
         end
         row:SetScript("OnEnter", ShowConditionTooltip)

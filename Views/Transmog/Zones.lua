@@ -416,7 +416,7 @@ function UI_Transmog:InitializeZoneSection()
     selectAll:HookScript("OnEnter", function(button)
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
         GameTooltip:SetText(L["Select All"], 1, 1, 1)
-        GameTooltip:AddLine(CurrentMode().selectAllTip, 1, 0.82, 0, true)
+        GameTooltip:AddLine(L[CurrentMode().selectAllTip], 1, 0.82, 0, true)
         GameTooltip:Show()
     end)
     selectAll:HookScript("OnLeave", GameTooltip_Hide)
@@ -435,7 +435,7 @@ function UI_Transmog:InitializeZoneSection()
     clear:HookScript("OnEnter", function(button)
         GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
         GameTooltip:SetText(L["Clear"], 1, 1, 1)
-        GameTooltip:AddLine(CurrentMode().clearTip, 1, 0.82, 0, true)
+        GameTooltip:AddLine(L[CurrentMode().clearTip], 1, 0.82, 0, true)
         GameTooltip:Show()
     end)
     clear:HookScript("OnLeave", GameTooltip_Hide)
@@ -503,13 +503,13 @@ function UI_Transmog:InitializeZoneSection()
                     and C_TransmogOutfitInfo.GetCurrentlyViewedOutfitID()
                 if viewedOutfitID and warnings[viewedOutfitID] then
                     GameTooltip:AddLine(string.format(
-                        "This outfit does not have the %s situation enabled. The game will override it in this zone with another outfit that does.",
+                        L["This outfit does not have the %s situation enabled. The game will override it in this zone with another outfit that does."],
                         warnings[viewedOutfitID]), 1, 0.25, 0.25, true)
                 end
                 GameTooltip:AddLine(L["Associated Outfits:"], 0.7, 0.7, 0.7)
                 for _, outfitID in ipairs(owner.associatedOutfitIDs) do
                     local name = GetOutfitNameByID(outfitID)
-                        or ("Outfit " .. outfitID)
+                        or string.format(L["Outfit %d"], outfitID)
                     GameTooltip:AddLine(name, 1, 0.82, 0)
                 end
             end

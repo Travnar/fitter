@@ -309,7 +309,7 @@ function UI_Transmog:RefreshHunterPets()
     s.hunterPetPagedPets = pets
     local showDisableCard =
         UI_Transmog._PagedShared.DoesSpecialCardMatchSearch(
-            "Disable Hunter Pets", search)
+            L["Disable Hunter Pets"], search)
     s.hunterPetShowDisableCard = showDisableCard
     s.hunterPetTotalPages = UI_Transmog._PagedShared.GetSpecialCardTotalPages(
         #pets, showDisableCard)

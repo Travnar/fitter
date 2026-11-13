@@ -76,7 +76,7 @@ local function GetEmoteExample(item)
         template = "{name} " .. item.text
     end
     if not template then return nil end
-    return template:gsub("{name}", UnitName("player") or "Your character")
+    return template:gsub("{name}", UnitName("player") or L["Your character"])
 end
 
 local function LayoutButtons()
@@ -228,9 +228,9 @@ local function ShowAssignmentMenu(owner)
                 FinishAssignmentChange()
             end)
             ignoreTarget:SetTooltip(function(tooltip)
-                GameTooltip_SetTitle(tooltip, "Ignore target")
+                GameTooltip_SetTitle(tooltip, L["Ignore target"])
                 GameTooltip_AddNormalLine(tooltip,
-                    "Uses the emote's untargeted wording without clearing your selected target.")
+                    L["Uses the emote's untargeted wording without clearing your selected target."])
             end)
             root:CreateDivider()
         end
@@ -431,7 +431,7 @@ function UI_Transmog:InitializeEmotesView()
             end
             if self.item.requiresStill then
                 GameTooltip:AddLine(
-                    "This emote requires your character to be standing still to trigger.",
+                    L["This emote requires your character to be standing still to trigger."],
                     1, 0.45, 0.15, true)
             end
             if #assignments > 0 then

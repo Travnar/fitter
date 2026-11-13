@@ -1,4 +1,5 @@
 local addonName, ns = ...
+local L = ns.L
 
 -- Abilities, toys and mounts that the mount macro and key binding use instead
 -- of the normal mount while a condition is met. Entries are saved per character
@@ -84,7 +85,7 @@ end
 local function ToyEntry(itemID)
     if not itemID or not PlayerHasToy or not PlayerHasToy(itemID) then return nil end
     local _, name, icon = C_ToyBox.GetToyInfo(itemID)
-    return {kind = "toy", id = itemID, name = name or ("Toy " .. itemID), icon = icon}
+    return {kind = "toy", id = itemID, name = name or string.format(L["Toy %d"], itemID), icon = icon}
 end
 
 local function FindMountByName(name)

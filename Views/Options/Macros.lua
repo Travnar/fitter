@@ -89,10 +89,10 @@ function UI_Options:InitializeMacros(frame, x, firstY, onLayoutChanged)
         local function ShowTip(owner)
             GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
             GameTooltip:SetText(L[def.label], 1, 1, 1)
-            GameTooltip:AddLine(def.tooltip, 1, 0.82, 0, true)
+            GameTooltip:AddLine(L[def.tooltip], 1, 0.82, 0, true)
             if def.tooltipNote then
                 GameTooltip:AddLine(" ", 1, 1, 1)
-                GameTooltip:AddLine(def.tooltipNote, 1, 0.82, 0, true)
+                GameTooltip:AddLine(L[def.tooltipNote], 1, 0.82, 0, true)
             end
             GameTooltip:Show()
         end

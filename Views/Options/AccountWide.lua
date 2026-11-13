@@ -16,12 +16,14 @@ local function CollectAccountWideMounts(mountType)
     if mountType == "Flying" then
         local playerRace = ns.state and ns.state.playerRace
         if playerRace == "Dracthyr" and IsPlayerSpell(SOAR_SPELL_ID) then
-            table.insert(mounts, {id = "soar", name = "Soar", icon = 4622485})
+            table.insert(mounts, {id = "soar",
+                name = ns.Macro.SpellName(SOAR_SPELL_ID, "Soar"), icon = 4622485})
         end
     elseif mountType == "Ground" then
         local playerRace = ns.state and ns.state.playerRace
         if playerRace == "Worgen" and IsPlayerSpell(87840) then
-            table.insert(mounts, {id = "runningwild", name = "Running Wild", icon = 514641})
+            table.insert(mounts, {id = "runningwild",
+                name = ns.Macro.SpellName(87840, "Running Wild"), icon = 514641})
         end
     end
 
@@ -71,7 +73,7 @@ local function BuildDataWithSelection(mountType, savedKey, randomFlagKey)
     end
     table.insert(all, 1, {
         id = "random",
-        name = "Random Mount",
+        name = L["Random Mount"],
         icon = RANDOM_ICON,
         isRandom = true,
         selected = FitterSaved[randomFlagKey] == true,
@@ -136,8 +138,8 @@ local function CreateMountScrollBox(parent, mountType, savedKey, randomFlagKey)
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             if elementData.isRandom then
                 GameTooltip:SetText(L["Random Mount"], 1, 1, 1)
-                GameTooltip:AddLine("Selects a random mount from your entire"
-                    .. " collection for this fallback category.", 1, 0.82, 0, true)
+                GameTooltip:AddLine(L["Selects a random mount from your entire collection for this fallback category."],
+                    1, 0.82, 0, true)
             else
                 GameTooltip:SetText(elementData.name, 1, 1, 1)
                 if type(elementData.id) == "number" then

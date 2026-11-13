@@ -3,6 +3,7 @@
 -- token that Fitter clients turn into a link. Clicking it fetches the
 -- snapshot from the sender over addon whispers.
 local addonName, ns = ...
+local L = ns.L
 
 local OutfitShare = {}
 ns.OutfitShare = OutfitShare
@@ -237,11 +238,11 @@ local function DecodeShare(encoded)
     local payload, err = Codec.Decode(encoded)
     if not payload then return nil, err end
     local sanitize = type(payload) == "table" and SANITIZERS[payload.kind]
-    if not sanitize then return nil, "This is not a Fitter link." end
+    if not sanitize then return nil, L["This is not a Fitter link."] end
     if payload.version ~= FORMAT_VERSION then
-        return nil, "This was shared by a different version of Fitter."
+        return nil, L["This was shared by a different version of Fitter."]
     end
-    if not sanitize(payload) then return nil, "This Fitter link is corrupt." end
+    if not sanitize(payload) then return nil, L["This Fitter link is corrupt."] end
     payload.name = CleanName(payload.name)
     return payload
 end
@@ -321,7 +322,7 @@ local function RestartTimeout(key, owner)
     if request.timer then request.timer:Cancel() end
     request.timer = C_Timer.NewTimer(REQUEST_TIMEOUT, function()
         Finish(key, nil, string.format(
-            "%s did not respond. They need to be online with Fitter enabled.",
+            L["%s did not respond. They need to be online with Fitter enabled."],
             owner))
     end)
 end
@@ -350,7 +351,7 @@ function OutfitShare.Fetch(owner, id, kind, callback)
     local inner = callback
     callback = function(payload, err)
         if payload and payload.kind ~= kind then
-            payload, err = nil, "This Fitter link is corrupt."
+            payload, err = nil, L["This Fitter link is corrupt."]
         end
         inner(payload, err)
     end
@@ -360,7 +361,7 @@ function OutfitShare.Fetch(owner, id, kind, callback)
         return
     end
     if owner == PlayerFullName() then
-        callback(nil, "This shared link is no longer saved.")
+        callback(nil, L["This shared link is no longer saved."])
         return
     end
     local key = owner .. ":" .. id
@@ -391,7 +392,7 @@ events:SetScript("OnEvent", function(_, _, prefix, message, channel, sender)
     id = message:match("^N:(%w+)$")
     if id then
         Finish(sender .. ":" .. id, nil, string.format(
-            "%s no longer has this shared link saved.", sender))
+            L["%s no longer has this shared link saved."], sender))
         return
     end
     local index, total, chunk
@@ -416,7 +417,7 @@ local function ChatFilter(_, event, message, author, ...)
     local linked = message:gsub(TOKEN_PATTERN, function(label, name, id)
         local kind = LABEL_KINDS[label]
         if not kind then return nil end
-        local text = kind == "preview" and "Custom Fit" or label .. ": " .. name
+        local text = kind == "preview" and L["Custom Fit"] or label .. ": " .. name
         return string.format("|c%s|Haddon:%s:%s:%s:%s|h[%s %s]|h|r",
             LINK_COLOR, addonName, kind, owner, id, LINK_ICON, text)
     end)

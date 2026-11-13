@@ -51,7 +51,7 @@ local function GetConditionNames(data, dataKey)
     local names = {}
     for _, id in ipairs(data and data[dataKey] or {}) do
         if dataKey == "Zones" then
-            names[#names + 1] = ZONE_NAMES[id] or ("Zone " .. tostring(id))
+            names[#names + 1] = ZONE_NAMES[id] or string.format(L["Zone %d"], id)
         else
             local item = CONDITION_LOOKUPS[dataKey][id]
             names[#names + 1] = item and item.name or tostring(id)

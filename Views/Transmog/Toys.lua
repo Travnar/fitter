@@ -200,11 +200,11 @@ end
 local function AddCustomToy(toyID)
     toyID = tonumber(toyID)
     if not toyID or toyID < 1 or toyID ~= math.floor(toyID) then
-        UIErrorsFrame:AddMessage("Enter a valid numeric toy item ID.", 1, .2, .2)
+        UIErrorsFrame:AddMessage(L["Enter a valid numeric toy item ID."], 1, .2, .2)
         return false
     end
     if ns.Toy.IsCatalogToy(toyID) then
-        UIErrorsFrame:AddMessage("That toy is already in the list.", 1, .2, .2)
+        UIErrorsFrame:AddMessage(L["That toy is already in the list."], 1, .2, .2)
         return false
     end
     local _, name, icon = C_ToyBox.GetToyInfo(toyID)
@@ -231,13 +231,13 @@ local function FinishLoadingCustomToy(toyID, attemptsRemaining, loadToken)
         return
     end
     UIErrorsFrame:AddMessage(
-        "That item ID is not a toy, or its data could not be loaded.",
+        L["That item ID is not a toy, or its data could not be loaded."],
         1, .2, .2)
 end
 
 local function ShowAddToyPopup()
     StaticPopupDialogs.FITTER_ADD_CUSTOM_TOY = StaticPopupDialogs.FITTER_ADD_CUSTOM_TOY or {
-        text = "Enter a toy item ID",
+        text = L["Enter a toy item ID"],
         button1 = ADD,
         button2 = CANCEL,
         hasEditBox = true,

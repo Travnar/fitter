@@ -209,7 +209,7 @@ function UI_Transmog:InitializeHearthstonePaged()
             end
             if not frame.item.isCollected then
                 GameTooltip:AddLine(
-                    "You have not collected this Hearthstone.",
+                    L["You have not collected this Hearthstone."],
                     .6, .6, .6, true)
             end
             GameTooltip:Show()

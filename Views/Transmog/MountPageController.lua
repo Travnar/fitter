@@ -70,7 +70,7 @@ local function CreateEntry(controller, index)
             GameTooltip:SetText(entry.mountData.name, 1, .82, 0, 1, true)
             if not entry.mountData.isCollected then
                 GameTooltip:AddLine(
-                    "You have not collected this mount.", .6, .6, .6, true)
+                    L["You have not collected this mount."], .6, .6, .6, true)
             end
             GameTooltip:Show()
         end
@@ -313,7 +313,7 @@ function Controller:Refresh()
     local mounts = UI_Transmog:PopulateMountList(self.category)
     self:State("PagedMounts", mounts)
     local showCard = UI_Transmog._PagedShared.DoesSpecialCardMatchSearch(
-        "Disable " .. self.category, self:State("SearchString"))
+        string.format(L["Disable %s"], L[self.category]), self:State("SearchString"))
     self:State("ShowDisabledCard", showCard)
     self:State("TotalPages",
         UI_Transmog._PagedShared.GetSpecialCardTotalPages(#mounts, showCard))

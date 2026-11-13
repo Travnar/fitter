@@ -1,6 +1,7 @@
 -- Export and import of this character's Fitter configuration, as a string or
 -- spread across FITTER_CONFIG_N account macros.
 local addonName, ns = ...
+local L = ns.L
 
 local CharacterExport = {}
 ns.CharacterExport = CharacterExport
@@ -68,10 +69,10 @@ function CharacterExport.Decode(text)
     local payload, err = Codec.Decode(text)
     if not payload then return nil, err end
     if type(payload) ~= "table" or type(payload.data) ~= "table" then
-        return nil, "This is not a Fitter character export."
+        return nil, L["This is not a Fitter character export."]
     end
     if payload.version ~= FORMAT_VERSION then
-        return nil, "This export was made by a different version of Fitter."
+        return nil, L["This export was made by a different version of Fitter."]
     end
     for key, value in pairs(payload.data) do
         if type(key) ~= "string" or LOCAL_KEYS[key]
@@ -139,7 +140,7 @@ end
 -- Returns true and the number of macros written, or false and a message.
 function CharacterExport.WriteMacros(text)
     if InCombatLockdown() then
-        return false, "Macros cannot be changed in combat."
+        return false, L["Macros cannot be changed in combat."]
     end
 
     local chunks = {}
@@ -149,7 +150,7 @@ function CharacterExport.WriteMacros(text)
     local count = #chunks
     if count > MAX_MACROS then
         return false, string.format(
-            "The export needs %d macros, but at most %d can be created. Use Generate Character Export String instead.",
+            L["The export needs %d macros, but at most %d can be created. Use Generate Character Export String instead."],
             count, MAX_MACROS)
     end
 
@@ -166,7 +167,7 @@ function CharacterExport.WriteMacros(text)
     local available = ns.Macro.MAX_ACCOUNT_MACROS - GetNumMacros() + reusable
     if count > available then
         return false, string.format(
-            "Not enough account macro space.\n\nThe export needs %d macros but only %d are available. Delete %d account macro(s) and try again, or use Generate Character Export String instead.",
+            L["Not enough account macro space.\n\nThe export needs %d macros but only %d are available. Delete %d account macro(s) and try again, or use Generate Character Export String instead."],
             count, available, count - available)
     end
 
@@ -206,7 +207,7 @@ function CharacterExport.ReadMacros()
         index = GetMacroIndexByName(MacroName(#parts + 1))
     end
     if #parts == 0 then
-        return nil, string.format("No %s1 macro was found.", MACRO_PREFIX)
+        return nil, string.format(L["No %s1 macro was found."], MACRO_PREFIX)
     end
     return table.concat(parts), #parts
 end

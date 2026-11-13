@@ -368,7 +368,7 @@ end
 -- checkbox per entry in `entries` (each entry has .key and .label). Toggles
 -- `state[selectedField][key]` and invokes `refresh` after every change.
 local function AddCheckboxFilterSubmenu(rootDescription, label, entries, state, selectedField, refresh)
-    local submenu = rootDescription:CreateButton(label)
+    local submenu = rootDescription:CreateButton(L[label])
     submenu:CreateButton(L["Check All"], function()
         for _, entry in ipairs(entries) do
             state[selectedField][entry.key] = true

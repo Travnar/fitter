@@ -15,7 +15,7 @@ local function GetOutfits()
     local api = C_TransmogOutfitInfo
     for _, info in ipairs(api and api.GetOutfitsInfo and api.GetOutfitsInfo() or {}) do
         local name = info.name
-        if not name or name == "" then name = "Outfit " .. info.outfitID end
+        if not name or name == "" then name = string.format(L["Outfit %d"], info.outfitID) end
         outfits[#outfits + 1] = {outfitID = info.outfitID, name = name}
     end
     return outfits
@@ -24,7 +24,7 @@ end
 function UI_Transmog:ShareViewedOutfit()
     local outfitID = self:GetViewedOutfitID()
     if not outfitID or outfitID == 0 then
-        UIErrorsFrame:AddMessage("Select an outfit before sharing its configuration.",
+        UIErrorsFrame:AddMessage(L["Select an outfit before sharing its configuration."],
             1, 0.2, 0.2)
         return
     end
@@ -108,7 +108,7 @@ local function CreateWindow()
             if info.outfitID == window.outfitID then outfitName = info.name break end
         end
         DEFAULT_CHAT_FRAME:AddMessage(string.format(
-            "Fitter: Applied |cffffd200%s|r to |cffffd200%s|r.",
+            L["Fitter: Applied |cffffd200%s|r to |cffffd200%s|r."],
             window.payload.name, tostring(outfitName)))
         window:Hide()
     end)
