@@ -144,6 +144,9 @@ end
 _G.FitterOutfitSettings = ToggleOutfitSettings
 _G.FitO = ToggleOutfitSettings
 
+SLASH_FITTER1 = "/fitter"
+SlashCmdList.FITTER = ToggleOutfitSettings
+
 function FitterCompartment_OnEnter(_, menuButtonFrame)
     GameTooltip:SetOwner(menuButtonFrame, "ANCHOR_LEFT")
     GameTooltip:SetText("Fitter", 1, 1, 1)
