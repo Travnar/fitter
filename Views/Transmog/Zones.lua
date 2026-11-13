@@ -205,7 +205,7 @@ local function RefreshAfterSelection()
     UI_Transmog:RefreshZonesList()
     UI_Transmog:UpdateMountIcons()
     PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
-    if Fitter and Fitter.RefreshZoneCache then Fitter:RefreshZoneCache() end
+    ns.Zones.RefreshCache()
     ns.Macro.UpdateFishing()
 end
 

@@ -1,9 +1,5 @@
--- Transmog_MountSlots.lua
--- The custom selector slots added to the TransmogFrame.CharacterPreview:
+-- The custom selector slots added to TransmogFrame.CharacterPreview:
 -- Flying / Ground / Aquatic, Pet / Hearthstone / Toy, Zones, and Emotes.
--- in UI_Transmog.lua but the slot lifecycle helpers live here.
---
--- Exposed on UI_Transmog._MountSlots so the core file can call them.
 
 local addonName, ns = ...
 local L = ns.L
@@ -511,8 +507,6 @@ UI_Transmog._MountSlots = {
     PrewarmPool          = PrewarmSlotPool,
 }
 
--- Moved from UI_Transmog.lua to keep that file under 500 lines.
-
 function UI_Transmog:InitializeMountIcons()
     if s.mountIconsInitialized or not TransmogFrame or not TransmogFrame.CharacterPreview then
         return
@@ -944,203 +938,6 @@ function UI_Transmog:UpdateMountIcons()
     UI_Transmog:ScheduleTimer(0, RefreshFitterSlots)
 end
 
--- Show the currently previewed transmog riding a selected mount.  Keeping the
--- mount actor in CharacterPreview's existing ModelScene is important: its
--- player actor already contains all pending outfit changes.
-function UI_Transmog:ClearMountPreviewLegacy()
-    s.mountPreviewRequest = (s.mountPreviewRequest or 0) + 1
-    local scene = TransmogFrame and TransmogFrame.CharacterPreview
-        and TransmogFrame.CharacterPreview.ModelScene
-    local mountActor = s.characterPreviewMountActor
-    local playerActor = scene and scene.GetPlayerActor and scene:GetPlayerActor()
-
-    if mountActor then
-        if playerActor and mountActor.DetachFromMount then
-            pcall(mountActor.DetachFromMount, mountActor, playerActor)
-        end
-        mountActor:ClearModel()
-    end
-    if playerActor and playerActor.SetRequestedScale then
-        playerActor:SetRequestedScale(1)
-    end
-    if playerActor and playerActor.SetSheathed and s.characterPreviewWasSheathed ~= nil then
-        playerActor:SetSheathed(s.characterPreviewWasSheathed)
-    end
-
-    local camera = scene and scene.GetActiveCamera and scene:GetActiveCamera()
-    if camera and s.characterPreviewCameraZoom and camera.SetZoomDistance then
-        if s.characterPreviewCameraMaxZoom and camera.SetMaxZoomDistance then
-            camera:SetMaxZoomDistance(s.characterPreviewCameraMaxZoom)
-        end
-        if s.characterPreviewCameraMinZoom and camera.SetMinZoomDistance then
-            camera:SetMinZoomDistance(s.characterPreviewCameraMinZoom)
-        end
-        camera:SetZoomDistance(s.characterPreviewCameraZoom)
-        if camera.SnapAllInterpolatedValues then
-            camera:SnapAllInterpolatedValues()
-        end
-    end
-
-    s.characterPreviewCameraZoom = nil
-    s.characterPreviewCameraMinZoom = nil
-    s.characterPreviewCameraMaxZoom = nil
-    s.characterPreviewWasSheathed = nil
-    s.previewMountID = nil
-end
-
-function UI_Transmog:PreviewSelectedMountLegacy(mountID)
-    if type(mountID) ~= "number" then
-        self:ClearMountPreview()
-        return
-    end
-
-    local scene = TransmogFrame and TransmogFrame.CharacterPreview
-        and TransmogFrame.CharacterPreview.ModelScene
-    if not scene or not scene.GetPlayerActor then return end
-
-    local displayID, _, _, isSelfMount, _, modelSceneID, animID, spellVisualKitID,
-        disablePlayerMountPreview = C_MountJournal.GetMountInfoExtraByID(mountID)
-    if not displayID or displayID == 0 then
-        local displays = C_MountJournal.GetMountAllCreatureDisplayInfoByID(mountID)
-        displayID = displays and displays[1] and displays[1].creatureDisplayID
-    end
-    if not displayID or isSelfMount or disablePlayerMountPreview then
-        self:ClearMountPreview()
-        return
-    end
-
-    self:ClearMountPreview()
-    local request = s.mountPreviewRequest
-
-    local playerActor = scene:GetPlayerActor()
-    if not playerActor then return end
-
-    local mountActor = s.characterPreviewMountActor
-    if not mountActor then
-        mountActor = scene:CreateActor()
-        s.characterPreviewMountActor = mountActor
-    end
-
-    mountActor:SetUseCenterForOrigin(false, false, false)
-    mountActor:SetPosition(0, 0, 0)
-    mountActor:SetYaw(0)
-    mountActor:SetPitch(0)
-    mountActor:SetRoll(0)
-    mountActor:SetScale(1)
-
-    -- Mount scene presets carry an actor transform tailored to that mount.
-    -- Copy only the transform/scale fields: applying the whole preset would
-    -- replace the transmog scene and its already-dressed player actor.
-    if modelSceneID and C_ModelInfo then
-        pcall(function()
-            local _, _, actorIDs = C_ModelInfo.GetModelSceneInfoByID(modelSceneID)
-            local mountActorInfo
-            for _, actorID in ipairs(actorIDs or {}) do
-                local actorInfo = C_ModelInfo.GetModelSceneActorInfoByID(actorID)
-                if actorInfo and (actorInfo.scriptTag == "unwrapped" or not mountActorInfo) then
-                    mountActorInfo = actorInfo
-                    if actorInfo.scriptTag == "unwrapped" then break end
-                end
-            end
-            if mountActorInfo then
-                mountActor:SetUseCenterForOrigin(
-                    mountActorInfo.useCenterForOriginX,
-                    mountActorInfo.useCenterForOriginY,
-                    mountActorInfo.useCenterForOriginZ)
-                mountActor:SetPosition(mountActorInfo.position:GetXYZ())
-                mountActor:SetYaw(mountActorInfo.yaw)
-                mountActor:SetPitch(mountActorInfo.pitch)
-                mountActor:SetRoll(mountActorInfo.roll)
-
-                local actorDisplayInfo = mountActorInfo.modelActorDisplayID
-                    and C_ModelInfo.GetModelSceneActorDisplayInfoByID(
-                        mountActorInfo.modelActorDisplayID)
-                mountActor:SetScale(actorDisplayInfo and actorDisplayInfo.scale or 1)
-            end
-        end)
-    end
-
-    if not mountActor:SetModelByCreatureDisplayID(displayID) then return end
-    if spellVisualKitID then
-        mountActor:SetSpellVisualKit(spellVisualKitID)
-    end
-    s.previewMountID = mountID
-
-    -- SetModel is asynchronous. Calling the mount attachment API before both
-    -- actors have geometry is unreliable and can be especially dangerous for
-    -- unusually large flying models, so wait for both models to finish.
-    local attempts = 0
-    local function AttachWhenLoaded()
-        if request ~= s.mountPreviewRequest or mountActor ~= s.characterPreviewMountActor then
-            return
-        end
-
-        attempts = attempts + 1
-        local mountLoaded = not mountActor.IsLoaded or mountActor:IsLoaded()
-        local playerLoaded = not playerActor.IsLoaded or playerActor:IsLoaded()
-        if not mountLoaded or not playerLoaded then
-            if attempts < 40 then
-                UI_Transmog:ScheduleTimer(0.05, AttachWhenLoaded, "preview")
-            else
-                UI_Transmog:ClearMountPreview()
-            end
-            return
-        end
-
-        local scaleOK, scale = pcall(mountActor.CalculateMountScale, mountActor, playerActor)
-        if not scaleOK or not scale or scale ~= scale or scale <= 0 or scale > 100 then
-            UI_Transmog:ClearMountPreview()
-            return
-        end
-
-        -- This mirrors Blizzard's Mount Journal. CalculateMountScale describes
-        -- the relative rider size; the rider receives its inverse before being
-        -- attached to the mount's seat point.
-        if playerActor.SetRequestedScale then
-            playerActor:SetRequestedScale(1 / scale)
-        end
-        if playerActor.GetSheathed and playerActor.SetSheathed then
-            s.characterPreviewWasSheathed = playerActor:GetSheathed()
-            -- Match the journal rider pose: weapons are hidden so their hold
-            -- animations cannot override or distort the mounted idle stance.
-            playerActor:SetSheathed(true, true)
-        end
-        local ok, result = pcall(mountActor.AttachToMount, mountActor, playerActor,
-            animID or 0, spellVisualKitID)
-        if not ok or result == false then
-            UI_Transmog:ClearMountPreview()
-            return
-        end
-
-        local camera = scene:GetActiveCamera()
-        if camera and camera.GetZoomDistance and camera.SetZoomDistance then
-            s.characterPreviewCameraZoom = camera:GetZoomDistance()
-            s.characterPreviewCameraMinZoom = camera.GetMinZoomDistance
-                and camera:GetMinZoomDistance() or nil
-            s.characterPreviewCameraMaxZoom = camera.GetMaxZoomDistance
-                and camera:GetMaxZoomDistance() or nil
-
-            -- Orbit-camera distance grows as the camera moves away. The normal
-            -- transmog camera's maximum is too tight for mounts, so expand it
-            -- before setting a wider mounted distance.
-            local mountedDistance = s.characterPreviewCameraZoom * 2.6
-            if camera.SetMaxZoomDistance then
-                camera:SetMaxZoomDistance(math.max(
-                    s.characterPreviewCameraMaxZoom or mountedDistance,
-                    mountedDistance))
-            end
-            camera:SetZoomDistance(mountedDistance)
-            if camera.SnapAllInterpolatedValues then
-                camera:SnapAllInterpolatedValues()
-            elseif camera.SnapToTargetInterpolationZoom then
-                camera:SnapToTargetInterpolationZoom()
-            end
-        end
-    end
-
-    AttachWhenLoaded()
-end
-
 -- Use the complete Blizzard mount scene rather than inserting a mount into the
 -- transmog scene. Mount presets contain the matching camera, actor transform,
 -- rider actor, seat attachment, and animation data as one coordinated unit.
@@ -1165,10 +962,6 @@ function UI_Transmog:ClearMountPreview()
         if playerActor and playerActor.SetRequestedScale then
             playerActor:SetRequestedScale(1)
         end
-        if playerActor and playerActor.SetSheathed
-            and s.characterPreviewWasSheathed ~= nil then
-            playerActor:SetSheathed(s.characterPreviewWasSheathed, false)
-        end
         local camera = sourceScene.GetActiveCamera
             and sourceScene:GetActiveCamera()
         if camera and s.characterPreviewCameraZoom
@@ -1190,11 +983,6 @@ function UI_Transmog:ClearMountPreview()
         end
     end
 
-    -- Clean up an actor left by the earlier in-scene implementation.
-    if s.characterPreviewMountActor then
-        s.characterPreviewMountActor:ClearModel()
-    end
-
     if s.mountedCharacterScene then
         s.mountedCharacterScene:OnMouseUp("LeftButton")
         s.mountedCharacterScene:OnMouseUp("RightButton")
@@ -1207,7 +995,6 @@ function UI_Transmog:ClearMountPreview()
     s.characterPreviewCameraZoom = nil
     s.characterPreviewCameraMinZoom = nil
     s.characterPreviewCameraMaxZoom = nil
-    s.characterPreviewWasSheathed = nil
     s.previewMountID = nil
 end
 

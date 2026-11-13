@@ -104,7 +104,7 @@ local function ToggleToy(button)
         button:ShowCollectionHover()
     end
     if UI_Transmog:GetActiveOutfitID() == outfitID and not InCombatLockdown() then
-        Fitter:UpdateMacroForCurrentState()
+        ns.Macro.UpdateForCurrentState()
     end
     if s.toyCheckedOnly then
         UI_Transmog:RefreshToyList()
@@ -199,7 +199,7 @@ local function ShowToyContextMenu(owner)
                 end
                 UI_Transmog:RefreshToyList()
                 UI_Transmog:UpdateMountIcons()
-                Fitter:UpdateMacroForCurrentState()
+                ns.Macro.UpdateForCurrentState()
             end)
         end
     end)

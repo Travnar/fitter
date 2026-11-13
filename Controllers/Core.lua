@@ -129,20 +129,6 @@ function Fitter:CreateEmptyOutfit(outfitID)
     end
 end
 
-function Fitter:UpdateTitle(outfitIDOverride) ns.Title.Apply(outfitIDOverride) end
-function Fitter:UpdatePet() ns.Pet.Apply() end
-function Fitter:UpdateOutfitUpdateMacro(outfitIDOverride)
-    ns.Macro.UpdateOutfitUpdateMacro(outfitIDOverride)
-end
-function Fitter:RefreshZoneCache()
-    ns.Zones.InvalidateTrackingCache()
-    ns.Zones.UpdateCache()
-end
-function Fitter:UpdateMacroForCurrentState() ns.Macro.UpdateForCurrentState() end
-function Fitter:UpdateMacroForMount(mountID) ns.Macro.UpdateMacroForMount(mountID) end
-function Fitter:UpdateHearthstoneMacro() ns.Macro.UpdateHearthstone() end
-function Fitter:EnsureHearthstoneMacro() ns.Macro.EnsureHearthstone() end
-
 function Fitter:SelectNextMount(excludeSoar)
     local mountID = ns.Mount.SelectNext(excludeSoar, ns.GetMountOutfitID())
     ns.state.nextMountToSummon = mountID

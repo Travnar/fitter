@@ -35,6 +35,11 @@ function Zones.InvalidateTrackingCache()
     hasAssignments = nil
 end
 
+function Zones.RefreshCache()
+    Zones.InvalidateTrackingCache()
+    Zones.UpdateCache()
+end
+
 function Zones.IsTrackingEnabled()
     return (FitterSaved and FitterSaved.UseZoneSpecificMounts) == true
         or HasZoneAssignments()

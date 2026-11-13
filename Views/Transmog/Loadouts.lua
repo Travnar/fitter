@@ -253,14 +253,14 @@ function UI_Transmog:ApplyOutfitConfiguration(source, outfitID)
     if UI_Transmog.RefreshEmoteRows and s.emotesViewInitialized then
         UI_Transmog:RefreshEmoteRows()
     end
-    if Fitter.RefreshZoneCache then Fitter:RefreshZoneCache() end
+    ns.Zones.RefreshCache()
     Fitter:RefreshFeatureEvents()
     if UI_Transmog:GetActiveOutfitID() == outfitID
         and not InCombatLockdown() then
-        Fitter:UpdatePet()
-        Fitter:UpdateMacroForCurrentState()
-        Fitter:UpdateHearthstoneMacro()
-        Fitter:UpdateOutfitUpdateMacro()
+        ns.Pet.Apply()
+        ns.Macro.UpdateForCurrentState()
+        ns.Macro.UpdateHearthstone()
+        ns.Macro.UpdateOutfitUpdateMacro()
     end
     PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
 end
@@ -441,14 +441,14 @@ function UI_Transmog:RefreshAfterConfigurationReset()
     UI_Transmog:UpdateTitleDropdown()
     UI_Transmog:UpdateMountIcons()
     if UI_Transmog.RefreshEmoteRows then UI_Transmog:RefreshEmoteRows() end
-    if Fitter.RefreshZoneCache then Fitter:RefreshZoneCache() end
+    ns.Zones.RefreshCache()
     Fitter:RefreshFeatureEvents()
     if not InCombatLockdown() then
-        Fitter:UpdateTitle()
-        Fitter:UpdatePet()
-        Fitter:UpdateMacroForCurrentState()
-        Fitter:UpdateHearthstoneMacro()
-        Fitter:UpdateOutfitUpdateMacro()
+        ns.Title.Apply()
+        ns.Pet.Apply()
+        ns.Macro.UpdateForCurrentState()
+        ns.Macro.UpdateHearthstone()
+        ns.Macro.UpdateOutfitUpdateMacro()
     end
     PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
 end

@@ -176,7 +176,7 @@ function UI_Transmog:InitializeHearthstonePaged()
             if wasSelected then tDeleteItem(selected, item.id) else table.insert(selected, item.id) end
             if UI_Transmog:GetActiveOutfitID() == outfitID
                 and not InCombatLockdown() then
-                Fitter:UpdateHearthstoneMacro()
+                ns.Macro.UpdateHearthstone()
             end
             if s.hearthstoneCheckedOnly then
                 UI_Transmog:RefreshHearthstoneList()

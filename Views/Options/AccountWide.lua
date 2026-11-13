@@ -1,4 +1,3 @@
--- UI/Options_AccountWide.lua
 -- Adds the "Account Wide" section to the Fitter canvas settings panel.
 -- Called from Options.lua; adds widgets directly to the shared canvas frame.
 

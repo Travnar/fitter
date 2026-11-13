@@ -42,43 +42,31 @@ local function EnsureDefaults()
         math.max(5, math.min(60, tonumber(FitterSaved.EmoteGlobalCooldown) or 25))
 end
 
-local function OnDruidMacroChanged()
-    if not (ns.Fitter and ns.Fitter.UpdateMacroForCurrentState) then return end
-    C_Timer.After(0.1, function()
-        if not InCombatLockdown() then ns.Fitter:UpdateMacroForCurrentState() end
-    end)
-end
-
-local function OnGroundMountModifierChanged()
-    if not (ns.Fitter and ns.Fitter.UpdateMacroForCurrentState) then return end
-    C_Timer.After(0.1, function()
-        if not InCombatLockdown() then ns.Fitter:UpdateMacroForCurrentState() end
-    end)
-end
-
-local function OnHearthstoneSettingChanged()
-    if not (ns.Fitter and ns.Fitter.UpdateHearthstoneMacro) then return end
-    C_Timer.After(0.1, function()
-        if not InCombatLockdown() then ns.Fitter:UpdateHearthstoneMacro() end
-    end)
-end
-
-local function OnPetSettingChanged()
-    if not (ns.Fitter and ns.Fitter.UpdatePet) then return end
-    C_Timer.After(0.1, function()
-        if not InCombatLockdown() then ns.Fitter:UpdatePet() end
-    end)
-end
-
-local function OnHunterPetSettingChanged()
-    if not (ns.Fitter and ns.Fitter.UpdateMacroForCurrentState) then return end
+-- Waits a moment so the saved setting is in place before the update reads it.
+local function AfterSettingChange(update, deferInCombat)
     C_Timer.After(0.1, function()
         if not InCombatLockdown() then
-            ns.Fitter:UpdateMacroForCurrentState()
-        elseif ns.MarkMacroRefreshPending then
+            update()
+        elseif deferInCombat then
             ns.MarkMacroRefreshPending()
         end
     end)
+end
+
+local function OnMountMacroSettingChanged()
+    AfterSettingChange(ns.Macro.UpdateForCurrentState)
+end
+
+local function OnHearthstoneSettingChanged()
+    AfterSettingChange(ns.Macro.UpdateHearthstone)
+end
+
+local function OnPetSettingChanged()
+    AfterSettingChange(ns.Pet.Apply)
+end
+
+local function OnHunterPetSettingChanged()
+    AfterSettingChange(ns.Macro.UpdateForCurrentState, true)
 end
 
 -- Canvas layout helpers --
@@ -203,28 +191,28 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         "Show Tooltip in Mount Macro",
         "Include #showtooltip in the mount macro. Disabling this frees up space"
         .. " for custom macro text and/or toys in the mount macro.",
-        OPTION_X, -30, OnGroundMountModifierChanged)
+        OPTION_X, -30, OnMountMacroSettingChanged)
     local cbDruidMacro = MakeCheckbox(rest, "UseDruidMacro",
         "Use Druid Macro",
         "Replace the standard Outfit Mount macro on druid characters that intelligently"
         .. " transforms into flight form, cat form, aquatic form, or summons a mount"
         .. " while not moving.",
-        OPTION_X, -60, OnDruidMacroChanged)
+        OPTION_X, -60, OnMountMacroSettingChanged)
     local cbShamanMacro = MakeCheckbox(rest, "UseShamanMacro",
         "Use Shaman Macro",
         "Replace the standard Outfit Mount macro on shaman characters that casts Ghost Wolf"
         .. " when not already in Ghost Wolf form, or summons a mount otherwise.",
-        OPTION_X, -90, OnDruidMacroChanged)
+        OPTION_X, -90, OnMountMacroSettingChanged)
     local cbMonkMacro = MakeCheckbox(rest, "UseMonkMacro",
         "Use Monk Macro",
         "Replace the standard Outfit Mount macro on monk characters that casts Zen Flight"
         .. " when not already in Zen Flight, or summons a mount otherwise.",
-        OPTION_X, -120, OnDruidMacroChanged)
+        OPTION_X, -120, OnMountMacroSettingChanged)
     local cbZoneSpecificMounts = MakeCheckbox(rest, "UseZoneSpecificMounts",
         "Use Zone Specific Mounts",
         "Summon a special mount intended for the current zone when it is available"
         .. " to this character. Currently uses the G-99 Breakneck in Undermine.",
-        OPTION_X, -150, OnGroundMountModifierChanged)
+        OPTION_X, -150, OnMountMacroSettingChanged)
     local cbCopyTargetMount = MakeCheckbox(rest, "CopyTargetMount",
         "Copy Target Player's Mount",
         "When targeting a mounted player whose mount you own, summon that mount"

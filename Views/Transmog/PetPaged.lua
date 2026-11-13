@@ -1,7 +1,3 @@
--- UI/Transmog_PetPaged.lua
--- Split out of UI_Transmog.lua. Operates on the shared state table
--- ns.UI_Transmog._s; methods are added to ns.UI_Transmog.
-
 local addonName, ns = ...
 local L = ns.L
 
@@ -94,7 +90,7 @@ function UI_Transmog:InitializePetPaged()
             UI_Transmog:UpdateMountIcons()
             local activeOutfitID = C_TransmogOutfitInfo.GetActiveOutfitID()
             if activeOutfitID and activeOutfitID == outfitID then
-                Fitter:UpdatePet()
+                ns.Pet.Apply()
             end
         end
     end)
@@ -128,7 +124,7 @@ function UI_Transmog:InitializePetPaged()
 
             local activeOutfitID = C_TransmogOutfitInfo.GetActiveOutfitID()
             if activeOutfitID and activeOutfitID == outfitID then
-                Fitter:UpdatePet()
+                ns.Pet.Apply()
             end
         end
     end)
@@ -363,7 +359,7 @@ function UI_Transmog:InitializePetPaged()
 
             local activeOutfitID = C_TransmogOutfitInfo.GetActiveOutfitID()
             if activeOutfitID and activeOutfitID == outfitID then
-                Fitter:UpdatePet()
+                ns.Pet.Apply()
             end
 
             PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
@@ -412,7 +408,7 @@ function UI_Transmog:InitializePetPaged()
             UI_Transmog:UpdatePetPageDisplay()
             UI_Transmog:UpdateMountIcons()
             if C_TransmogOutfitInfo.GetActiveOutfitID() == outfitID then
-                Fitter:UpdatePet()
+                ns.Pet.Apply()
             end
             PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
         end)

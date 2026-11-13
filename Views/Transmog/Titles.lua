@@ -1,12 +1,9 @@
--- Transmog_Titles.lua
 -- Player-title dropdown attached to the Wardrobe character preview.
--- Split out of UI_Transmog.lua. Shares state via UI_Transmog._s.
 
 local addonName, ns = ...
 local L = ns.L
 local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
-local Fitter = ns.Fitter
 
 local IGNORE_TITLE_LABEL = "|cff888888" .. L["Ignore Title"] .. "|r"
 
@@ -61,7 +58,7 @@ local function SetSelectedTitle(titleID)
 
     local activeOutfitID = C_TransmogOutfitInfo.GetActiveOutfitID()
     if activeOutfitID and activeOutfitID == outfitID then
-        Fitter:UpdateTitle()
+        ns.Title.Apply()
     end
 
     PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)

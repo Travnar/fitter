@@ -1,6 +1,4 @@
--- UI/Transmog_PagedShared.lua
--- Helpers shared by Transmog_FlyingPaged / GroundPaged / AquaticPaged / PetPaged.
--- Extracted to keep each paged file under 500 lines.
+-- Helpers shared by the Flying, Ground, Aquatic and Pet paged frames.
 
 local addonName, ns = ...
 local L = ns.L

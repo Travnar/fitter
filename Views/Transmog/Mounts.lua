@@ -1,4 +1,3 @@
--- Transmog_Mounts.lua
 -- The `PopulateMountList` method used by the Flying / Ground / Aquatic
 -- paged frames. Pure data filtering, no widget creation.
 

@@ -231,8 +231,6 @@ s.groundSelectedExpansions = {}
 s.aquaticSelectedExpansions = {}
 s.petSelectedExpansions = {}
 
--- Constants/data tables live in Data/. Aliased here so existing references
--- inside this file remain unchanged.
 local MOUNT_EXPANSIONS = ns.Constants.MOUNT_EXPANSIONS
 local PET_EXPANSIONS = ns.Constants.PET_EXPANSIONS
 local PET_FAMILIES = ns.Constants.PET_FAMILIES
@@ -646,7 +644,7 @@ function UI_Transmog:RefreshActiveMountMacro(preferredMountID)
 
     if ns.IsClassMountMacroEnabled() then
         ns.state.nextMountToSummon = preferredMountID or ns.Mount.SelectNext(false, ns.GetMountOutfitID())
-        Fitter:UpdateMacroForCurrentState()
+        ns.Macro.UpdateForCurrentState()
         return
     end
 
@@ -656,7 +654,7 @@ function UI_Transmog:RefreshActiveMountMacro(preferredMountID)
     else
         mountID = Fitter:SelectNextMount()
     end
-    Fitter:UpdateMacroForMount(mountID)
+    ns.Macro.UpdateMacroForMount(mountID)
 end
 
 function UI_Transmog:InitializeAdditionalTab()
@@ -667,10 +665,6 @@ function UI_Transmog:InitializeZonesView()
     self:InitializeZoneSection()
 end
 
--- Removed inline section setup; lives in per-feature files now.
-
--- Exposed as a method (rather than file-local) so per-feature split modules
--- (Transmog_FlyingPaged.lua, etc.) can call it via UI_Transmog:_ShowPagedFrame.
 function UI_Transmog:_ShowPagedFrame(target, updateMethod)
     self:HideTransientPopups()
 

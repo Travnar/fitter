@@ -68,7 +68,7 @@ local function ApplySelection(mode, info)
         UI_Transmog:ClearMountPreview()
     end
     if not InCombatLockdown() then
-        ns.Fitter:UpdateOutfitUpdateMacro(outfitID)
+        ns.Macro.UpdateOutfitUpdateMacro(outfitID)
         ns.Macro.UpdateMacroForMount(ns.state.nextMountToSummon, outfitID)
     elseif ns.MarkMacroRefreshPending then
         ns.MarkMacroRefreshPending()
