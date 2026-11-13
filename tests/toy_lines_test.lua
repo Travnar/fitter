@@ -5,7 +5,7 @@ local function Setup()
     local w = T.NewWorld()
     w.env.FitterSaved = {}
     w.env.FitterCharacterSaved = {}
-    w:Load({"Toy.lua"})
+    w:Load({"Controllers/Toy.lua"})
     return w, w.ns.Toy
 end
 

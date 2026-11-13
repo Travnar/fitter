@@ -67,11 +67,11 @@ end
 
 -- Files in the order Fitter.toc loads them.
 T.MACRO_FILES = {
-    "Macro.lua",
-    "Macro/Mount.lua",
-    "Macro/Hearthstone.lua",
-    "Macro/Update.lua",
-    "Macro/Fishing.lua",
+    "Controllers/Macro.lua",
+    "Controllers/Macro/Mount.lua",
+    "Controllers/Macro/Hearthstone.lua",
+    "Controllers/Macro/Update.lua",
+    "Controllers/Macro/Fishing.lua",
 }
 
 local function LoadInto(path, env, ...)
@@ -372,14 +372,14 @@ function T.NewWorld()
         return ns
     end
 
-    w:Load({"Flavor.lua"})
+    w:Load({"Controllers/Flavor.lua"})
 
     -- Loads the macro modules, plus the feature modules that build lines for
     -- the macros unless the test supplies its own.
     function w:LoadMacros(options)
         options = options or {}
-        if options.toys ~= false then self:Load({"Toy.lua"}) end
-        if options.conditionals ~= false then self:Load({"MountConditionals.lua"}) end
+        if options.toys ~= false then self:Load({"Controllers/Toy.lua"}) end
+        if options.conditionals ~= false then self:Load({"Controllers/MountConditionals.lua"}) end
         self:Load(T.MACRO_FILES)
         return ns
     end

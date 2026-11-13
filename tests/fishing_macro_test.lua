@@ -61,7 +61,7 @@ end)
 
 local function PoleSetup(enabled)
     local w, Macro = Setup()
-    w:Load({"FishingPole.lua"})
+    w:Load({"Controllers/FishingPole.lua"})
     w.ns.Features.EquipFishingPole = true
     w.env.FitterCharacterSaved.EquipFishingPole = enabled
     w.items[6256] = {classID = 2, subclassID = 20, level = 1}

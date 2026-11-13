@@ -7,85 +7,85 @@
 ## SavedVariables: FitterSaved
 ## SavedVariablesPerCharacter: FitterCharacterSaved
 ## LoadSavedVariablesFirst: 1
-## IconTexture: Interface\AddOns\Fitter\FitterIcon
+## IconTexture: Interface\AddOns\Fitter\Media\FitterIcon
 ## AddonCompartmentFunc: FitterOutfitSettings
 ## AddonCompartmentFuncOnEnter: FitterCompartment_OnEnter
 ## AddonCompartmentFuncOnLeave: FitterCompartment_OnLeave
 
 # Client detection (retail vs. World of Warcraft Forever) and secret-value
 # access check; loaded first.
-Flavor.lua
+Controllers\Flavor.lua
 
-Localization\Localization.lua
-Localization\enUS.lua
-Localization\esMX.lua
-Localization\zhCN.lua
-Localization\ruRU.lua
+Locales\Localization.lua
+Locales\enUS.lua
+Locales\esMX.lua
+Locales\zhCN.lua
+Locales\ruRU.lua
 
-Bindings_Frames.xml
+Views\Bindings_Frames.xml
 
 # Static data tables (pure data; loaded first so modules can alias them).
-Constants\Zones.lua
-Constants\Holidays.lua
-Constants\Toys.lua
-Constants\Hearthstones.lua
-Constants\Mounts.lua
-Constants\PetExpansions.lua
-Constants\Emotes.lua
+Data\Zones.lua
+Data\Holidays.lua
+Data\Toys.lua
+Data\Hearthstones.lua
+Data\Mounts.lua
+Data\PetExpansions.lua
+Data\Emotes.lua
 
 # Leaf feature modules.
-Title.lua
-Pet.lua
-HunterPet.lua
-Toy.lua
-Mount.lua
-MountConditionals.lua
-Emote.lua
-Housing.lua
-GuildCloak.lua
-FishingPole.lua
-Macro.lua
-Macro\Mount.lua
-Macro\Hearthstone.lua
-Macro\Update.lua
-Macro\Fishing.lua
-Holidays.lua
-Fishing.lua
-Zones.lua
-Codec.lua
-CharacterExport.lua
-OutfitShare.lua
+Controllers\Title.lua
+Controllers\Pet.lua
+Controllers\HunterPet.lua
+Controllers\Toy.lua
+Controllers\Mount.lua
+Controllers\MountConditionals.lua
+Controllers\Emote.lua
+Controllers\Housing.lua
+Controllers\GuildCloak.lua
+Controllers\FishingPole.lua
+Controllers\Macro.lua
+Controllers\Macro\Mount.lua
+Controllers\Macro\Hearthstone.lua
+Controllers\Macro\Update.lua
+Controllers\Macro\Fishing.lua
+Controllers\Holidays.lua
+Controllers\Fishing.lua
+Controllers\Zones.lua
+Controllers\Codec.lua
+Controllers\CharacterExport.lua
+Controllers\OutfitShare.lua
 
 # Bootstrap / event dispatch.
-Core.lua
+Controllers\Core.lua
 
 # Transmog UI (uses everything above).
-UI\Transmog.lua
-UI\Transmog_Loadouts.lua
-UI\Transmog_CharacterExport.lua
-UI\Transmog_FishingPole.lua
-UI\Transmog_OutfitShare.lua
-UI\Transmog_PreviewOutfitDetails.lua
-UI\Transmog_PreviewShare.lua
-UI\Transmog_MountConditionals.lua
-UI\Transmog_MountSlots.lua
-UI\Transmog_Titles.lua
-UI\Transmog_ViewWithoutTransmog.lua
-UI\Transmog_OffVendor.lua
-UI\Transmog_Mounts.lua
-UI\Transmog_Hearthstones.lua
-UI\Transmog_HearthstonePreview.lua
-UI\Transmog_Toys.lua
-UI\Transmog_ZoneSituations.lua
-UI\Transmog_Zones.lua
-UI\Transmog_Emotes.lua
-UI\Transmog_PagedShared.lua
-UI\Transmog_MountPageController.lua
-UI\Transmog_FlyingPaged.lua
-UI\Transmog_GroundPaged.lua
-UI\Transmog_AquaticPaged.lua
-UI\Transmog_PetPaged.lua
-UI\Transmog_HunterPets.lua
-UI\Options.lua
-UI\Options_AccountWide.lua
-UI\Options_Macros.lua
+Views\Transmog\Transmog.lua
+Views\Transmog\Loadouts.lua
+Views\Transmog\CharacterExport.lua
+Views\Transmog\FishingPole.lua
+Views\Transmog\OutfitShare.lua
+Views\Transmog\PreviewOutfitDetails.lua
+Views\Transmog\PreviewShare.lua
+Views\Transmog\MountConditionals.lua
+Views\Transmog\MountSlots.lua
+Views\Transmog\Titles.lua
+Views\Transmog\ViewWithoutTransmog.lua
+Views\Transmog\OffVendor.lua
+Views\Transmog\Mounts.lua
+Views\Transmog\Hearthstones.lua
+Views\Transmog\HearthstonePreview.lua
+Views\Transmog\Toys.lua
+Views\Transmog\ZoneSituations.lua
+Views\Transmog\Zones.lua
+Views\Transmog\Emotes.lua
+Views\Transmog\PagedShared.lua
+Views\Transmog\MountPageController.lua
+Views\Transmog\FlyingPaged.lua
+Views\Transmog\GroundPaged.lua
+Views\Transmog\AquaticPaged.lua
+Views\Transmog\PetPaged.lua
+Views\Transmog\HunterPets.lua
+Views\Options\Options.lua
+Views\Options\AccountWide.lua
+Views\Options\Macros.lua

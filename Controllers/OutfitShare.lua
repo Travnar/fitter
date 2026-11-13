@@ -14,7 +14,7 @@ local PREFIX = "Fitter"
 -- Matches Blizzard's transmog outfit links.
 local LINK_COLOR = TRANSMOGRIFY_FONT_COLOR and TRANSMOGRIFY_FONT_COLOR.GenerateHexColor
     and TRANSMOGRIFY_FONT_COLOR:GenerateHexColor() or "ffff80ff"
-local LINK_ICON = "|TInterface\\AddOns\\Fitter\\FitterIcon:0|t"
+local LINK_ICON = "|TInterface\\AddOns\\Fitter\\Media\\FitterIcon:0|t"
 local TOKEN_PATTERN = "%[(Fitter[%a ]-): ([^%]#|]-) #(%w+)%]"
 -- Token label for each kind of shared snapshot, and the reverse lookup.
 local KIND_LABELS = {outfit = "Fitter", preview = "Fitter Preview"}
