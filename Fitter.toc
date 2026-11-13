@@ -84,6 +84,7 @@ Views\Transmog\Toys.lua
 Views\Transmog\ZoneSituations.lua
 Views\Transmog\Zones.lua
 Views\Transmog\Emotes.lua
+Views\Transmog\EmoteCreatePopup.lua
 Views\Transmog\PagedShared.lua
 Views\Transmog\MountPageController.lua
 Views\Transmog\FlyingPaged.lua
