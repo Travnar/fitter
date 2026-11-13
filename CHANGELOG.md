@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.12.2] - 2026-11-13
+
+### Fixed
+- Zone names in the Conditions slot, its zone list and loadout tooltips were always in English on non-English clients. They now use the game's own zone names, as do Founder's Point and Razorwind Shores in the hearthstone Shift, Ctrl and Alt Condition dropdowns.
+- The hearthstone Condition dropdowns showed Personal Key to the Arcantina, Dalaran Hearthstone, Garrison Hearthstone and Delver's Mana-Bound Ethergate in English on non-English clients. They now show the game's item names.
+- Soar and Running Wild appeared in English in the Account Wide mount lists on non-English clients.
+- On non-English clients, searching the mount, pet and hunter pet pages for a Disable card by its translated name did not find it.
+
 ## [2.12.1] - 2026-11-12
 
 ### Added
