@@ -5,79 +5,6 @@ local UI_Transmog = ns.UI_Transmog
 local s = UI_Transmog._s
 local Fitter = ns.Fitter
 
-local function Copy(value, seen)
-    if type(value) ~= "table" then return value end
-    seen = seen or {}
-    if seen[value] then return seen[value] end
-    local result = {}
-    seen[value] = result
-    for key, child in pairs(value) do
-        result[Copy(key, seen)] = Copy(child, seen)
-    end
-    return result
-end
-
-local function CurrentOutfit(create)
-    local id = UI_Transmog:GetViewedOutfitID()
-    if not id or id == 0 then return nil end
-    if create then ns.Settings.CreateEmptyOutfit(id) end
-    return ns.Settings.GetOutfitData(id), id
-end
-
-local function LoadoutStores()
-    FitterSaved = FitterSaved or {}
-    FitterCharacterSaved = FitterCharacterSaved or {}
-    FitterSaved.Loadouts = FitterSaved.Loadouts or {}
-    FitterCharacterSaved.Loadouts = FitterCharacterSaved.Loadouts or {}
-    return FitterCharacterSaved.Loadouts, FitterSaved.Loadouts
-end
-
-local function IsMountAvailable(mountID)
-    if type(mountID) ~= "number" or not C_MountJournal then return false end
-    local name, _, _, _, _, _, _, _, _, shouldHideOnChar, isCollected =
-        C_MountJournal.GetMountInfoByID(mountID)
-    return name ~= nil and isCollected == true and shouldHideOnChar ~= true
-end
-
-local function IsPetAvailable(petGUID)
-    return type(petGUID) == "string" and C_PetJournal
-        and C_PetJournal.PetIsSummonable(petGUID) == true
-end
-
-local hearthstoneRules = {}
-for _, entry in ipairs(ns.Constants.KNOWN_HEARTHSTONES or {}) do
-    hearthstoneRules[entry.id] = entry
-end
-
-local function IsHearthstoneAvailable(itemID)
-    local rule = hearthstoneRules[itemID]
-    if rule and not ns.Macro.IsHearthstoneRaceEligible(rule) then return false end
-    if rule and rule.baseItem then
-        return C_Item.GetItemCount(itemID, false, false, false) > 0
-    end
-    return PlayerHasToy(itemID) == true
-end
-
-local function FilterList(source, predicate)
-    local result = {}
-    for _, value in ipairs(type(source) == "table" and source or {}) do
-        if predicate(value) then result[#result + 1] = value end
-    end
-    return result
-end
-
-local function ZoneUsedByAnotherOutfit(mapID, currentID)
-    for key, data in pairs(FitterCharacterSaved or {}) do
-        local outfitID = type(key) == "string"
-            and tonumber(key:match("^Outfit(%d+)$"))
-        if outfitID and outfitID ~= currentID and type(data) == "table"
-            and type(data.Zones) == "table" and tContains(data.Zones, mapID) then
-            return true
-        end
-    end
-    return false
-end
-
 local zoneNames = {}
 for _, zone in ipairs(ns.Constants.MAJOR_ZONES or {}) do
     zoneNames[zone.mapID] = zone.name
@@ -193,38 +120,10 @@ local function ShowLoadoutTooltip(owner, elementData)
     GameTooltip:Show()
 end
 
--- Replaces outfitID's configuration with source, dropping anything this
--- character cannot use. Used by loadouts and shared outfit links.
+-- Applies a loadout or shared outfit link to outfitID, then refreshes the
+-- panel and macros.
 function UI_Transmog:ApplyOutfitConfiguration(source, outfitID)
-    ns.Settings.CreateEmptyOutfit(outfitID)
-    local destination = ns.Settings.GetOutfitData(outfitID)
-    local oldZones = Copy(type(destination.Zones) == "table" and destination.Zones or {})
-    local oldSituationBaseline = Copy(destination.SituationBaseline)
-    local applied = Copy(source)
-    applied.Flying = FilterList(source.Flying, IsMountAvailable)
-    applied.Ground = FilterList(source.Ground, IsMountAvailable)
-    applied.Aquatic = FilterList(source.Aquatic, IsMountAvailable)
-    applied.Pets = FilterList(source.Pets, IsPetAvailable)
-    local availablePets = {}
-    for _, petGUID in ipairs(applied.Pets) do availablePets[petGUID] = true end
-    if type(applied.PetSummonTriggers) ~= "table" then applied.PetSummonTriggers = {} end
-    for petGUID in pairs(applied.PetSummonTriggers) do
-        if not availablePets[petGUID] then
-            applied.PetSummonTriggers[petGUID] = nil
-        end
-    end
-    applied.Hearthstones = FilterList(source.Hearthstones, IsHearthstoneAvailable)
-    applied.Toys = FilterList(source.Toys, function(id)
-        return type(id) == "number" and PlayerHasToy(id) == true
-    end)
-    applied.Zones = FilterList(source.Zones, function(mapID)
-        return not ZoneUsedByAnotherOutfit(mapID, outfitID)
-    end)
-    applied.SituationBaseline = nil
-
-    wipe(destination)
-    for key, value in pairs(applied) do destination[key] = value end
-    destination.SituationBaseline = oldSituationBaseline
+    local oldZones, newZones = ns.OutfitConfiguration.Apply(source, outfitID)
 
     -- Zone situations are edited through the transmog panel's viewed outfit,
     -- so they are only synced when that is the outfit being changed.
@@ -232,13 +131,13 @@ function UI_Transmog:ApplyOutfitConfiguration(source, outfitID)
         and self:GetViewedOutfitID() == outfitID
     if syncSituations then
         for _, mapID in ipairs(oldZones) do
-            if not tContains(applied.Zones, mapID)
+            if not tContains(newZones, mapID)
                 and UI_Transmog.TryDisableZoneSituation then
                 UI_Transmog:TryDisableZoneSituation(mapID, outfitID)
             end
         end
         if UI_Transmog.UpdateZoneSituation then
-            for _, mapID in ipairs(applied.Zones) do
+            for _, mapID in ipairs(newZones) do
                 if not tContains(oldZones, mapID) then
                     UI_Transmog:UpdateZoneSituation(mapID, true)
                 end
@@ -264,7 +163,7 @@ function UI_Transmog:ApplyOutfitConfiguration(source, outfitID)
 end
 
 local function ApplyLoadout(loadout)
-    local _, outfitID = CurrentOutfit(false)
+    local _, outfitID = UI_Transmog:GetViewedOutfitData(false)
     local source = loadout and loadout.data
     if not outfitID or type(source) ~= "table" then
         UIErrorsFrame:AddMessage("Select an outfit before applying a loadout.",
@@ -342,7 +241,7 @@ local function CreateLoadoutPopup()
     save:SetText(L["Save"])
     save:SetScript("OnClick", function()
         local name = nameEdit:GetText():match("^%s*(.-)%s*$")
-        local data = CurrentOutfit(false)
+        local data = UI_Transmog:GetViewedOutfitData(false)
         if name == "" then
             UIErrorsFrame:AddMessage("Enter a loadout name.", 1, 0.2, 0.2)
             return
@@ -352,13 +251,13 @@ local function CreateLoadoutPopup()
                 1, 0.2, 0.2)
             return
         end
-        local character, account = LoadoutStores()
+        local character, account = ns.OutfitConfiguration.GetLoadoutStores()
         local store = scope.value == "account" and account or character
         store[#store + 1] = {
             id = string.format("%s:%d:%d", scope.value, GetServerTime(),
                 math.random(1000000)),
             name = name,
-            data = Copy(data),
+            data = ns.OutfitConfiguration.Copy(data),
         }
         popup:Hide()
         UI_Transmog:RefreshLoadouts()
@@ -371,7 +270,7 @@ local function CreateLoadoutPopup()
 end
 
 local function ShowCreatePopup()
-    if not CurrentOutfit(false) then
+    if not UI_Transmog:GetViewedOutfitData(false) then
         UIErrorsFrame:AddMessage("Select an outfit before saving a loadout.",
             1, 0.2, 0.2)
         return
@@ -385,7 +284,7 @@ local function ShowCreatePopup()
 end
 
 local function RemoveLoadout(elementData)
-    local character, account = LoadoutStores()
+    local character, account = ns.OutfitConfiguration.GetLoadoutStores()
     local store = elementData.scope == "account" and account or character
     for index, loadout in ipairs(store) do
         if loadout.id == elementData.loadout.id then
@@ -452,29 +351,13 @@ function UI_Transmog:RefreshAfterConfigurationReset()
 end
 
 local function ResetCharacterConfiguration()
-    FitterCharacterSaved = FitterCharacterSaved or {}
-    local outfitKeys = {}
-    for key in pairs(FitterCharacterSaved) do
-        if type(key) == "string" and key:match("^Outfit%d+$") then
-            outfitKeys[#outfitKeys + 1] = key
-        end
-    end
-    for _, key in ipairs(outfitKeys) do FitterCharacterSaved[key] = nil end
-
-    if C_TransmogOutfitInfo then
-        for _, info in ipairs(C_TransmogOutfitInfo.GetOutfitsInfo() or {}) do
-            ns.Settings.CreateEmptyOutfit(info.outfitID)
-        end
-    end
-
+    ns.Settings.ResetCharacterOutfits()
     UI_Transmog:RefreshAfterConfigurationReset()
 end
 
 local function ResetOutfitConfiguration(_, outfitID)
     if not outfitID then return end
-    FitterCharacterSaved = FitterCharacterSaved or {}
-    FitterCharacterSaved["Outfit" .. outfitID] = nil
-    ns.Settings.CreateEmptyOutfit(outfitID)
+    ns.Settings.ResetOutfit(outfitID)
     UI_Transmog:RefreshAfterConfigurationReset()
 end
 
@@ -503,7 +386,7 @@ StaticPopupDialogs["FITTER_RESET_OUTFIT_CONFIGURATION"] = {
 }
 
 local function ConfirmResetOutfitConfiguration()
-    local _, outfitID = CurrentOutfit(false)
+    local _, outfitID = UI_Transmog:GetViewedOutfitData(false)
     if not outfitID then
         UIErrorsFrame:AddMessage(
             "Select an outfit before resetting its configuration.",
@@ -522,7 +405,7 @@ local function ConfirmResetOutfitConfiguration()
 end
 
 local function BuildLoadoutElements()
-    local character, account = LoadoutStores()
+    local character, account = ns.OutfitConfiguration.GetLoadoutStores()
     local elements = {}
     local function AddSorted(store, scope)
         local sorted = {}

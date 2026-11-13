@@ -57,6 +57,7 @@ Controllers\Fishing.lua
 Controllers\Zones.lua
 Controllers\Codec.lua
 Controllers\CharacterExport.lua
+Controllers\OutfitConfiguration.lua
 Controllers\OutfitShare.lua
 
 # Bootstrap / event dispatch.

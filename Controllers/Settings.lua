@@ -52,6 +52,31 @@ function Settings.GetSelectedHearthstones(data, migrate)
     return data.Hearthstones
 end
 
+function Settings.ResetOutfit(outfitID)
+    FitterCharacterSaved = FitterCharacterSaved or {}
+    FitterCharacterSaved["Outfit" .. outfitID] = nil
+    Settings.CreateEmptyOutfit(outfitID)
+end
+
+-- Clears every outfit's configuration on this character. Loadouts and custom
+-- emotes are kept.
+function Settings.ResetCharacterOutfits()
+    FitterCharacterSaved = FitterCharacterSaved or {}
+    local outfitKeys = {}
+    for key in pairs(FitterCharacterSaved) do
+        if type(key) == "string" and key:match("^Outfit%d+$") then
+            outfitKeys[#outfitKeys + 1] = key
+        end
+    end
+    for _, key in ipairs(outfitKeys) do FitterCharacterSaved[key] = nil end
+
+    if C_TransmogOutfitInfo then
+        for _, info in ipairs(C_TransmogOutfitInfo.GetOutfitsInfo() or {}) do
+            Settings.CreateEmptyOutfit(info.outfitID)
+        end
+    end
+end
+
 local function ForEachOutfit(fn)
     for key, data in pairs(FitterCharacterSaved) do
         if type(key) == "string" and key:match("^Outfit%d+$")
