@@ -9,6 +9,19 @@ Zones.MAJOR_ZONES = ns.Constants.MAJOR_ZONES
 Zones.BIOME_GROUPS = ns.Constants.BIOME_GROUPS
 Zones.EXPANSION_ZONES = ns.Constants.EXPANSION_ZONES
 Zones.CONTINENT_ZONES = ns.Constants.CONTINENT_ZONES
+
+-- Zone names in Data/Zones.lua are written in English. Other clients show the
+-- game's own name for each map instead.
+function Zones.GetMapName(mapID, englishName)
+    if GetLocale():match("^en") then return englishName end
+    local info = C_Map.GetMapInfo(mapID)
+    if info and info.name and info.name ~= "" then return info.name end
+    return englishName
+end
+
+for _, zone in ipairs(Zones.MAJOR_ZONES) do
+    zone.name = Zones.GetMapName(zone.mapID, zone.name)
+end
 local hasAssignments
 
 local function HasAssignments(outfitData)

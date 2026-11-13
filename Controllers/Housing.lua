@@ -1,5 +1,4 @@
 local addonName, ns = ...
-local L = ns.L
 
 local Housing = {}
 ns.Housing = Housing
@@ -7,12 +6,12 @@ ns.Housing = Housing
 local NEIGHBORHOODS = {
     [2352] = {
         key = "FOUNDERS_POINT",
-        label = L["Founder's Point"],
+        label = "Founder's Point",
         buttonName = "FitterHomeFP",
     },
     [2351] = {
         key = "RAZORWIND_SHORES",
-        label = L["Razorwind Shores"],
+        label = "Razorwind Shores",
         buttonName = "FitterHomeRS",
     },
 }
@@ -79,6 +78,7 @@ function Housing.GetConditions()
     for _, mapID in ipairs({2352, 2351}) do
         local option = NEIGHBORHOODS[mapID]
         if Housing.HasNeighborhood(option.key) then
+            option.label = ns.Zones.GetMapName(mapID, option.label)
             result[#result + 1] = option
         end
     end

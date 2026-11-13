@@ -195,9 +195,14 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         OPTION_X, -292, OnHearthstoneSettingChanged)
 
     local hearthstoneConditionDropdowns = {}
+    local function HearthstoneOptionLabel(option)
+        return option.id and C_Item.GetItemNameByID(option.id) or option.label
+    end
     local function GetHearthstoneConditionLabel(value)
         for _, option in ipairs(ns.Constants.HEARTHSTONE_CONDITIONS) do
-            if value == (option.id or "None") then return option.label end
+            if value == (option.id or "None") then
+                return HearthstoneOptionLabel(option)
+            end
         end
         for _, provider in ipairs({ns.GuildCloak, ns.Housing}) do
             for _, option in ipairs(provider.GetConditions()) do
@@ -224,7 +229,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         dropdown:SetupMenu(function(_, rootDescription)
             for _, option in ipairs(ns.Constants.HEARTHSTONE_CONDITIONS) do
                 if option.alwaysAvailable or PlayerHasToy(option.id) then
-                    rootDescription:CreateRadio(option.label,
+                    rootDescription:CreateRadio(HearthstoneOptionLabel(option),
                         function(value)
                             return FitterSaved and FitterSaved[key] == value
                         end,

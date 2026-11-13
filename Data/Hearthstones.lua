@@ -122,10 +122,10 @@ ns.Constants.KNOWN_HEARTHSTONES = {
 -- IDs are stored in SavedVariables so this continues to work on non-English clients.
 ns.Constants.HEARTHSTONE_CONDITIONS = {
     {label = L["None"], alwaysAvailable = true},
-    {label = L["Personal Key to the Arcantina"], id = 253629},
-    {label = L["Dalaran Hearthstone"], id = 140192},
-    {label = L["Garrison Hearthstone"], id = 110560},
-    {label = L["Delver's Mana-Bound Ethergate"], id = 243056},
+    {label = "Personal Key to the Arcantina", id = 253629},
+    {label = "Dalaran Hearthstone", id = 140192},
+    {label = "Garrison Hearthstone", id = 110560},
+    {label = "Delver's Mana-Bound Ethergate", id = 243056},
 }
 
 -- Guild cloaks that teleport to the faction capital, in the order Fitter
