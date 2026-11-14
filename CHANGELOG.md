@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.12.3] - 2026-11-13
+
+### Added
+- Added slash command "/fitter" for opening the Fitter specific transmog window elements, similar to the macro or keybind.
+
 ## [2.12.2] - 2026-11-13
 
 ### Fixed
