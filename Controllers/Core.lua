@@ -44,7 +44,7 @@ function ns.IsClassMountMacroEnabled()
     local class = ns.state.playerClass
     return (FitterSaved.UseDruidMacro and class == "DRUID")
         or (FitterSaved.UseShamanMacro and class == "SHAMAN")
-        or (FitterSaved.UseMonkMacro and class == "MONK")
+        or (ns.Features.MonkMacro and FitterSaved.UseMonkMacro and class == "MONK")
 end
 
 -- A locked outfit takes precedence over the zone outfit for mount selection.
@@ -306,8 +306,17 @@ local function OnAddonLoaded(name)
     if name == addonName then ns.Settings.ApplyDefaults() end
 end
 
+local function OnShapeshiftFormsChanged()
+    if not ns.state.loaded or not ns.Macro.IsDruidMacroEnabled() then return end
+    local layout = ns.Macro.GetDruidFormLayout()
+    if layout == ns.state.druidFormLayout then return end
+    ns.state.druidFormLayout = layout
+    ns.Macro.UpdateForCurrentState()
+end
+
 local HANDLERS = {
     ADDON_LOADED = OnAddonLoaded,
+    UPDATE_SHAPESHIFT_FORMS = OnShapeshiftFormsChanged,
     PLAYER_ENTERING_WORLD = OnPlayerEnteringWorld,
     ZONE_CHANGED = ns.Zones.OnZoneChanged,
     ZONE_CHANGED_INDOORS = ns.Zones.OnZoneChanged,
@@ -371,6 +380,9 @@ local EVENTS = {
     "BAG_UPDATE_DELAYED",
     "BAG_UPDATE_COOLDOWN",
 }
+if not ns.Features.DruidMountForm then
+    EVENTS[#EVENTS + 1] = "UPDATE_SHAPESHIFT_FORMS"
+end
 for _, event in ipairs(EVENTS) do
     Fitter:RegisterEvent(event)
 end

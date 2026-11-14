@@ -12,7 +12,7 @@ local cachedAllPets
 function HunterPet.IsAvailable()
     if isHunter == nil then
         local _, class = UnitClass("player")
-        isHunter = class == "HUNTER"
+        isHunter = ns.Features.HunterPets and class == "HUNTER"
     end
     return isHunter
 end

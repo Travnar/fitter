@@ -13,6 +13,11 @@ ns.Features = {
     AquaticMounts = not ns.IsForever,
     ViewWithoutTransmog = ns.IsForever,
     EquipFishingPole = ns.IsForever,
+    MonkMacro = not ns.IsForever,
+    DruidMountForm = not ns.IsForever,
+    HunterPets = not ns.IsForever,
+    ZoneSpecificMounts = not ns.IsForever,
+    LaterHolidays = not ns.IsForever,
 }
 
 -- Combat-related API results can be secret in WoW 12.0.  Secret values may

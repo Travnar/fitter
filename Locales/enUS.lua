@@ -203,6 +203,7 @@ local strings = {
     "When enabled, changes to this addon's macros will be cleared whenever the macro is updated for different outfits, zones, etc.",
     "Include #showtooltip in the mount macro. Disabling this frees up space for custom macro text and/or toys in the mount macro.",
     "Replace the standard Outfit Mount macro on druid characters that intelligently transforms into flight form, cat form, aquatic form, or summons a mount while not moving.",
+    "Replace the standard Outfit Mount macro on druid characters that changes into Cat Form indoors, Aquatic Form while swimming or Travel Form outdoors, or summons a mount while not moving.",
     "Replace the standard Outfit Mount macro on shaman characters that casts Ghost Wolf when not already in Ghost Wolf form, or summons a mount otherwise.",
     "Replace the standard Outfit Mount macro on monk characters that casts Zen Flight when not already in Zen Flight, or summons a mount otherwise.",
     "Summon a special mount intended for the current zone when it is available to this character. Currently uses the G-99 Breakneck in Undermine.",

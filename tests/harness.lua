@@ -132,6 +132,7 @@ function T.NewWorld()
         bags = {},           -- [bag] = {itemID, ...}
         races = {},          -- [raceID] = clientFileString
         bindings = {},       -- [command] = key
+        shapeshiftForms = {}, -- stance bar order, as spellIDs
         time = 1000,
         inCombat = false,
         randomResults = {},  -- queued math.random results; default is the lowest
@@ -226,6 +227,10 @@ function T.NewWorld()
     env.IsPlayerSpell = function(spellID) return w.knownSpells[spellID] == true end
     env.PlayerHasToy = function(itemID) return w.ownedToys[itemID] == true end
     env.GetBuildInfo = function() return "12.0.5", "0", "", 120105 end
+    env.GetNumShapeshiftForms = function() return #w.shapeshiftForms end
+    env.GetShapeshiftFormInfo = function(index)
+        return nil, false, true, w.shapeshiftForms[index]
+    end
     env.CreateFrame = function() return Inert() end
     env.hooksecurefunc = function() end
     env.print = function(...)

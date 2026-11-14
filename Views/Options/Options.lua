@@ -148,47 +148,71 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
     -- ===== Mount Features =====
 
     MakeSectionHeader(rest, "Mounts", HEADER_X, 0)
+    local mountRowY = -30
+    local function NextMountRowY()
+        local y = mountRowY
+        mountRowY = mountRowY - 30
+        return y
+    end
     local cbTooltipMount = MakeCheckbox(rest, "ShowTooltipMount",
         "Show Tooltip in Mount Macro",
         "Include #showtooltip in the mount macro. Disabling this frees up space"
         .. " for custom macro text and/or toys in the mount macro.",
-        OPTION_X, -30, OnMountMacroSettingChanged)
+        OPTION_X, NextMountRowY(), OnMountMacroSettingChanged)
     local cbDruidMacro = MakeCheckbox(rest, "UseDruidMacro",
         "Use Druid Macro",
-        "Replace the standard Outfit Mount macro on druid characters that intelligently"
-        .. " transforms into flight form, cat form, aquatic form, or summons a mount"
-        .. " while not moving.",
-        OPTION_X, -60, OnMountMacroSettingChanged)
+        ns.Features.DruidMountForm
+            and ("Replace the standard Outfit Mount macro on druid characters that intelligently"
+                .. " transforms into flight form, cat form, aquatic form, or summons a mount"
+                .. " while not moving.")
+            or ("Replace the standard Outfit Mount macro on druid characters that changes"
+                .. " into Cat Form indoors, Aquatic Form while swimming or Travel Form outdoors,"
+                .. " or summons a mount while not moving."),
+        OPTION_X, NextMountRowY(), OnMountMacroSettingChanged)
     local cbShamanMacro = MakeCheckbox(rest, "UseShamanMacro",
         "Use Shaman Macro",
         "Replace the standard Outfit Mount macro on shaman characters that casts Ghost Wolf"
         .. " when not already in Ghost Wolf form, or summons a mount otherwise.",
-        OPTION_X, -90, OnMountMacroSettingChanged)
-    local cbMonkMacro = MakeCheckbox(rest, "UseMonkMacro",
-        "Use Monk Macro",
-        "Replace the standard Outfit Mount macro on monk characters that casts Zen Flight"
-        .. " when not already in Zen Flight, or summons a mount otherwise.",
-        OPTION_X, -120, OnMountMacroSettingChanged)
-    local cbZoneSpecificMounts = MakeCheckbox(rest, "UseZoneSpecificMounts",
-        "Use Zone Specific Mounts",
-        "Summon a special mount intended for the current zone when it is available"
-        .. " to this character. Currently uses the G-99 Breakneck in Undermine.",
-        OPTION_X, -150, OnMountMacroSettingChanged)
+        OPTION_X, NextMountRowY(), OnMountMacroSettingChanged)
+    local cbMonkMacro
+    if ns.Features.MonkMacro then
+        cbMonkMacro = MakeCheckbox(rest, "UseMonkMacro",
+            "Use Monk Macro",
+            "Replace the standard Outfit Mount macro on monk characters that casts Zen Flight"
+            .. " when not already in Zen Flight, or summons a mount otherwise.",
+            OPTION_X, NextMountRowY(), OnMountMacroSettingChanged)
+    end
+    local cbZoneSpecificMounts
+    if ns.Features.ZoneSpecificMounts then
+        cbZoneSpecificMounts = MakeCheckbox(rest, "UseZoneSpecificMounts",
+            "Use Zone Specific Mounts",
+            "Summon a special mount intended for the current zone when it is available"
+            .. " to this character. Currently uses the G-99 Breakneck in Undermine.",
+            OPTION_X, NextMountRowY(), OnMountMacroSettingChanged)
+    end
     local cbCopyTargetMount = MakeCheckbox(rest, "CopyTargetMount",
         "Copy Target Player's Mount",
         "When targeting a mounted player whose mount you own, summon that mount"
         .. " instead. Otherwise, the regular mount selection is used.",
-        OPTION_X, -180)
+        OPTION_X, NextMountRowY())
+
+    -- The sections below are laid out for all six mount rows; move them up by
+    -- the space of any rows this client doesn't show.
+    local hiddenRowsHeight = mountRowY + 210
+    local below = CreateFrame("Frame", nil, rest)
+    below:SetPoint("TOPLEFT", rest, "TOPLEFT", 0, hiddenRowsHeight)
+    below:SetPoint("RIGHT", rest, "RIGHT", 0, 0)
+    below:SetHeight(1)
 
     -- ===== Hearthstone Features =====
 
-    MakeSectionHeader(rest, "Hearthstones", HEADER_X, -232)
-    local cbTooltipHS = MakeCheckbox(rest, "ShowTooltipHearthstone",
+    MakeSectionHeader(below, "Hearthstones", HEADER_X, -232)
+    local cbTooltipHS = MakeCheckbox(below, "ShowTooltipHearthstone",
         "Show Tooltip in Hearthstone Macro",
         "Include #showtooltip in the hearthstone macro. Disabling this frees up"
         .. " additional space for custom macro text.",
         OPTION_X, -262, OnHearthstoneSettingChanged)
-    local cbAstralRecallFallback = MakeCheckbox(rest, "AstralRecallFallback",
+    local cbAstralRecallFallback = MakeCheckbox(below, "AstralRecallFallback",
         "Astral Recall Fallback",
         "On Shaman characters, use Astral Recall when the selected Hearthstone"
         .. " cannot be used because it is on cooldown.",
@@ -213,9 +237,9 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
     end
     local function MakeHearthstoneConditionDropdown(modifier, y)
         local key = modifier .. "HearthstoneCondition"
-        local row = CreateFrame("Frame", nil, rest)
-        row:SetPoint("TOPLEFT", rest, "TOPLEFT", OPTION_X, y)
-        row:SetPoint("RIGHT", rest, "RIGHT", -10, 0)
+        local row = CreateFrame("Frame", nil, below)
+        row:SetPoint("TOPLEFT", below, "TOPLEFT", OPTION_X, y)
+        row:SetPoint("RIGHT", below, "RIGHT", -10, 0)
         row:SetHeight(26)
 
         local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -291,10 +315,10 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         preferredIndex = 3,
     }
 
-    local resetDefaultHearthstonesRow = CreateFrame("Frame", nil, rest)
+    local resetDefaultHearthstonesRow = CreateFrame("Frame", nil, below)
     resetDefaultHearthstonesRow:SetPoint(
-        "TOPLEFT", rest, "TOPLEFT", OPTION_X, -412)
-    resetDefaultHearthstonesRow:SetPoint("RIGHT", rest, "RIGHT", -10, 0)
+        "TOPLEFT", below, "TOPLEFT", OPTION_X, -412)
+    resetDefaultHearthstonesRow:SetPoint("RIGHT", below, "RIGHT", -10, 0)
     resetDefaultHearthstonesRow:SetHeight(26)
 
     local resetDefaultHearthstonesLabel =
@@ -316,13 +340,13 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Pet Features =====
 
-    MakeSectionHeader(rest, "Pets", HEADER_X, -462)
-    local cbDismissPetOnStealth = MakeCheckbox(rest, "DismissPetOnStealth",
+    MakeSectionHeader(below, "Pets", HEADER_X, -462)
+    local cbDismissPetOnStealth = MakeCheckbox(below, "DismissPetOnStealth",
         "Dismiss Pet On Stealth",
         "When enabled, dismiss the currently summoned battle pet when your character"
         .. " becomes stealthed.",
         OPTION_X, -492)
-    local cbDismissPetInInstancesWhileGrouped = MakeCheckbox(rest, "DismissPetInInstancesWhileGrouped",
+    local cbDismissPetInInstancesWhileGrouped = MakeCheckbox(below, "DismissPetInInstancesWhileGrouped",
         "Dismiss Pet In Instances While Grouped",
         "When enabled, dismiss the currently summoned battle pet in any instance while"
         .. " you are in a party or raid, and prevent Fitter from summoning one there.",
@@ -330,21 +354,30 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Hunter Pet Features =====
 
-    MakeSectionHeader(rest, "Hunter Pets", HEADER_X, -572)
-    local cbReviveHunterPet = MakeCheckbox(rest, "ReviveHunterPet",
-        "Revive Pet",
-        "When enabled, Fitter attempts to revive a dead hunter pet before continuing."
-        .. " When disabled, Fitter only attempts to summon the selected hunter pet."
-        .. " If the pet's corpse has despawned, it must be resurrected manually"
-        .. " regardless of whether this setting is enabled.",
-        OPTION_X, -602, OnHunterPetSettingChanged)
+    local cbReviveHunterPet
+    local hiddenHunterHeight = 80
+    if ns.Features.HunterPets then
+        hiddenHunterHeight = 0
+        MakeSectionHeader(below, "Hunter Pets", HEADER_X, -572)
+        cbReviveHunterPet = MakeCheckbox(below, "ReviveHunterPet",
+            "Revive Pet",
+            "When enabled, Fitter attempts to revive a dead hunter pet before continuing."
+            .. " When disabled, Fitter only attempts to summon the selected hunter pet."
+            .. " If the pet's corpse has despawned, it must be resurrected manually"
+            .. " regardless of whether this setting is enabled.",
+            OPTION_X, -602, OnHunterPetSettingChanged)
+    end
+    local lower = CreateFrame("Frame", nil, below)
+    lower:SetPoint("TOPLEFT", below, "TOPLEFT", 0, hiddenHunterHeight)
+    lower:SetPoint("RIGHT", below, "RIGHT", 0, 0)
+    lower:SetHeight(1)
 
     -- ===== Emote Features =====
 
-    MakeSectionHeader(rest, "Emotes", HEADER_X, -652)
-    local emoteCooldownRow = CreateFrame("Frame", nil, rest)
-    emoteCooldownRow:SetPoint("TOPLEFT", rest, "TOPLEFT", OPTION_X, -682)
-    emoteCooldownRow:SetPoint("RIGHT", rest, "RIGHT", -10, 0)
+    MakeSectionHeader(lower, "Emotes", HEADER_X, -652)
+    local emoteCooldownRow = CreateFrame("Frame", nil, lower)
+    emoteCooldownRow:SetPoint("TOPLEFT", lower, "TOPLEFT", OPTION_X, -682)
+    emoteCooldownRow:SetPoint("RIGHT", lower, "RIGHT", -10, 0)
     emoteCooldownRow:SetHeight(36)
 
     local emoteCooldownLabel =
@@ -383,13 +416,13 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Toy Features =====
 
-    MakeSectionHeader(rest, "Cosmetic Toys", HEADER_X, -742)
-    local cbCancelToys = MakeCheckbox(rest, "CancelNonOutfitToys",
+    MakeSectionHeader(lower, "Cosmetic Toys", HEADER_X, -742)
+    local cbCancelToys = MakeCheckbox(lower, "CancelNonOutfitToys",
         "Cancel Non-Outfit Cosmetic Toys",
         "When switching outfits, automatically cancel any active toys from the"
         .. " previous outfit that are not also selected by the new outfit.",
         OPTION_X, -772)
-    local cbApplyToy = MakeCheckbox(rest, "ApplyToyOnSelect",
+    local cbApplyToy = MakeCheckbox(lower, "ApplyToyOnSelect",
         "Apply Toy On Select",
         "When selecting or deselecting a toy while the outfit is currently active,"
         .. " immediately activate or cancel the toy.",
@@ -397,8 +430,8 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Title Features =====
 
-    MakeSectionHeader(rest, "Titles", HEADER_X, -852)
-    local cbSearchableTitles = MakeCheckbox(rest, "SearchableTitles",
+    MakeSectionHeader(lower, "Titles", HEADER_X, -852)
+    local cbSearchableTitles = MakeCheckbox(lower, "SearchableTitles",
         "Searchable Title Selection",
         "Replace the title dropdown in the outfit window with a search box. Click it"
         .. " to list every known title, then type to filter the list.",
@@ -410,13 +443,13 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     -- ===== Zone Features =====
 
-    MakeSectionHeader(rest, "Zones", HEADER_X, -932)
-    local cbAutoEnable = MakeCheckbox(rest, "AutoEnableZoneSituations",
+    MakeSectionHeader(lower, "Zones", HEADER_X, -932)
+    local cbAutoEnable = MakeCheckbox(lower, "AutoEnableZoneSituations",
         "Auto Enable Zone Situations",
         "When enabled, associating zones with an outfit will automatically enable their"
         .. " respective Location situations: Rest for cities and World for others.",
         OPTION_X, -962)
-    local cbAutoDisable = MakeCheckbox(rest, "AutoDisableZoneSituations",
+    local cbAutoDisable = MakeCheckbox(lower, "AutoDisableZoneSituations",
         "Auto Disable Zone Situations",
         {
             {"Requires Auto Enable Zone Situations enabled.", 0.4, 0.8, 1, true},
@@ -452,7 +485,8 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     local function UpdateContentHeight(newAwHeight)
         awHeight = newAwHeight or awHeight
-        local h = restOffset + AW_Y_START + awHeight
+        local h = restOffset + AW_Y_START - hiddenRowsHeight - hiddenHunterHeight
+            + awHeight
         content:SetHeight(h)
         scrollChild:SetSize(580, h)
         scrollBox:FullUpdate(ScrollBoxConstants.UpdateImmediately)
@@ -460,7 +494,7 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
 
     local awRefreshFn
     pcall(function()
-        awRefreshFn = UI_Options:InitializeAccountWide(rest, HEADER_X, AW_Y_START, UpdateContentHeight)
+        awRefreshFn = UI_Options:InitializeAccountWide(lower, HEADER_X, AW_Y_START, UpdateContentHeight)
     end)
 
     local refreshMacroRows = UI_Options:InitializeMacros(content, OPTION_X, 70,
@@ -479,8 +513,10 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         cbTooltipMount:SetChecked(FitterSaved.ShowTooltipMount)
         cbDruidMacro:SetChecked(FitterSaved.UseDruidMacro)
         cbShamanMacro:SetChecked(FitterSaved.UseShamanMacro)
-        cbMonkMacro:SetChecked(FitterSaved.UseMonkMacro)
-        cbZoneSpecificMounts:SetChecked(FitterSaved.UseZoneSpecificMounts)
+        if cbMonkMacro then cbMonkMacro:SetChecked(FitterSaved.UseMonkMacro) end
+        if cbZoneSpecificMounts then
+            cbZoneSpecificMounts:SetChecked(FitterSaved.UseZoneSpecificMounts)
+        end
         cbCopyTargetMount:SetChecked(FitterSaved.CopyTargetMount)
         cbTooltipHS:SetChecked(FitterSaved.ShowTooltipHearthstone)
         cbAstralRecallFallback:SetChecked(FitterSaved.AstralRecallFallback)
@@ -489,7 +525,9 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
         end
         cbDismissPetOnStealth:SetChecked(FitterSaved.DismissPetOnStealth)
         cbDismissPetInInstancesWhileGrouped:SetChecked(FitterSaved.DismissPetInInstancesWhileGrouped)
-        cbReviveHunterPet:SetChecked(FitterSaved.ReviveHunterPet)
+        if cbReviveHunterPet then
+            cbReviveHunterPet:SetChecked(FitterSaved.ReviveHunterPet)
+        end
         emoteCooldownSlider:SetValue(FitterSaved.EmoteGlobalCooldown)
         SetEmoteCooldown(FitterSaved.EmoteGlobalCooldown, false)
         cbCancelToys:SetChecked(FitterSaved.CancelNonOutfitToys)

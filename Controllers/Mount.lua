@@ -214,7 +214,8 @@ local function SelectNextMount(excludeSoar, outfitIDOverride)
     ns.state.nextMountWasSubmerged = IsAquaticContext()
     ns.state.nextMountWasFlyable = IsFlyableArea()
 
-    if FitterSaved and FitterSaved.UseZoneSpecificMounts
+    if ns.Features.ZoneSpecificMounts
+        and FitterSaved and FitterSaved.UseZoneSpecificMounts
         and ns.state.currentZoneMapID == UNDERMINE_MAP_ID
         and IsPlayerSpell(G99_BREAKNECK_SPELL_ID) then
         return "g99breakneck"

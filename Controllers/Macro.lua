@@ -75,6 +75,7 @@ end
 local CAT_FORM_SPELL_ID = 768
 local TRAVEL_FORM_SPELL_ID = 783
 local MOUNT_FORM_SPELL_ID = 210053
+local AQUATIC_FORM_SPELL_ID = 1066
 local GHOST_WOLF_SPELL_ID = 2645
 local ZEN_FLIGHT_SPELL_ID = 125883
 
@@ -86,7 +87,48 @@ local function SpellName(spellID, fallback)
 end
 Macro.SpellName = SpellName
 
+-- On Forever, form numbers follow the stance bar, which grows as forms are
+-- learned, so each form's number is looked up when the macro is built.
+local function GetFormIndex(spellID)
+    for i = 1, GetNumShapeshiftForms() do
+        if select(4, GetShapeshiftFormInfo(i)) == spellID then return i end
+    end
+end
+
+local FOREVER_DRUID_FORMS = {
+    {condition = "indoors", spellID = CAT_FORM_SPELL_ID, fallback = "Cat Form"},
+    {condition = "swimming", spellID = AQUATIC_FORM_SPELL_ID, fallback = "Aquatic Form"},
+    {condition = "outdoors", spellID = TRAVEL_FORM_SPELL_ID, fallback = "Travel Form"},
+}
+
+-- Identifies the known forms and their numbers, so the macro is only rebuilt
+-- when they change.
+function Macro.GetDruidFormLayout()
+    local parts = {}
+    for _, form in ipairs(FOREVER_DRUID_FORMS) do
+        parts[#parts + 1] = tostring(GetFormIndex(form.spellID) or 0)
+    end
+    return table.concat(parts, ",")
+end
+
+local function GetForeverDruidMacroBody()
+    local clauses = {}
+    for _, form in ipairs(FOREVER_DRUID_FORMS) do
+        local index = GetFormIndex(form.spellID)
+        if index then
+            clauses[#clauses + 1] = "[" .. form.condition .. ",noform:" .. index .. "]"
+                .. SpellName(form.spellID, form.fallback)
+        end
+    end
+    local body = "/stopmacro [flying,combat]\n/run FitM()"
+    if #clauses > 0 then
+        body = body .. "\n/cast " .. table.concat(clauses, ";")
+    end
+    return body
+end
+
 function Macro.GetDruidMacroBody()
+    if not ns.Features.DruidMountForm then return GetForeverDruidMacroBody() end
     return "/stopmacro [flying,combat]\n"
         .. "/run FitM()\n"
         .. "/cast [indoors,noform:2]" .. SpellName(CAT_FORM_SPELL_ID, "Cat Form") .. ";"
@@ -272,7 +314,8 @@ function Macro.IsShamanMacroEnabled()
 end
 
 function Macro.IsMonkMacroEnabled()
-    return FitterSaved
+    return ns.Features.MonkMacro
+        and FitterSaved
         and FitterSaved.UseMonkMacro
         and ns.state.playerClass == "MONK"
 end

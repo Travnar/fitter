@@ -31,6 +31,28 @@ T.test("druid body uses the client's localized spell names", function()
     T.notContains(body, "Cat Form")
 end)
 
+T.test("Forever druid body numbers forms by stance bar order", function()
+    local w, Macro = Setup()
+    w.ns.Features.DruidMountForm = false
+    w.shapeshiftForms = {5487, 1066, 768, 783}
+    T.eq(Macro.GetDruidMacroBody(),
+        "/stopmacro [flying,combat]\n"
+        .. "/run FitM()\n"
+        .. "/cast [indoors,noform:3]Cat Form;[swimming,noform:2]Aquatic Form;"
+        .. "[outdoors,noform:4]Travel Form")
+end)
+
+T.test("Forever druid body leaves out forms not learned yet", function()
+    local w, Macro = Setup()
+    w.ns.Features.DruidMountForm = false
+    w.shapeshiftForms = {5487, 1066}
+    T.eq(Macro.GetDruidMacroBody(),
+        "/stopmacro [flying,combat]\n/run FitM()\n/cast [swimming,noform:2]Aquatic Form")
+    T.eq(Macro.GetDruidFormLayout(), "0,2,0")
+    w.shapeshiftForms = {}
+    T.eq(Macro.GetDruidMacroBody(), "/stopmacro [flying,combat]\n/run FitM()")
+end)
+
 T.test("shaman and monk bodies", function()
     local w, Macro = Setup()
     T.eq(Macro.GetShamanMacroBody(),

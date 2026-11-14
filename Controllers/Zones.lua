@@ -54,7 +54,8 @@ function Zones.RefreshCache()
 end
 
 function Zones.IsTrackingEnabled()
-    return (FitterSaved and FitterSaved.UseZoneSpecificMounts) == true
+    return (ns.Features.ZoneSpecificMounts and FitterSaved
+            and FitterSaved.UseZoneSpecificMounts) == true
         or HasZoneAssignments()
 end
 
