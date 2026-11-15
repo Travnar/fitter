@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.12.4] - 2026-11-14
+
+### Fixed
+- On World of Warcraft Forever, switching outfits while the Fitter tab was selected in the outfit window caused an error. The Fitter slot now stays selected without an error.
+- World of Warcraft Forever showed options and features that don't exist there. The Use Monk Macro, Use Zone Specific Mounts and hunter pet features are now hidden, and so are the holidays Forever doesn't have: Brewfest, Day of the Dead, Pilgrim's Bounty and the WoW Anniversary.
+- On World of Warcraft Forever, the druid mount macro used the wrong form numbers. It now finds Cat Form, Aquatic Form and Travel Form on your stance bar and rebuilds itself when you learn a new form.
+
 ## [2.12.3] - 2026-11-13
 
 ### Added
