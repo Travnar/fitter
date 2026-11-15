@@ -333,13 +333,16 @@ function UI_Transmog:InitializeMountIcons()
         end)
 
         hooksecurefunc(charPreview, "SetupSlots", function()
-            -- Fitter slots share the ranged slot's location, so a Fitter
-            -- selection can survive SetupSlots where a ranged slot exists
-            -- (e.g. WoW Forever). Blizzard's RefreshSelectedSlot would then
-            -- route it through TransmogFrame:SelectSlot, which errors on
-            -- Fitter locations.
+            -- Fitter slots share the ranged slot's location. Where a ranged
+            -- slot exists (e.g. WoW Forever), SetupSlots carries a Fitter
+            -- selection over to the real ranged slot. RefreshSelectedSlot then
+            -- looks that up again by slot and type, which can now return a
+            -- Fitter slot, and routes it through TransmogFrame:SelectSlot,
+            -- which errors on Fitter locations. selectedFitterCategory still
+            -- says a Fitter slot was selected, so clear the carried-over
+            -- selection too; ReselectFitterSlot restores it next frame.
             local selected = charPreview:GetSelectedSlotData()
-            if selected and selected.isFitterMountSlot then
+            if selected and (selected.isFitterMountSlot or s.selectedFitterCategory) then
                 charPreview:SetSelectedSlotData(nil)
             end
 

@@ -172,6 +172,10 @@ local function GetMountSlotIconState(category)
     return icon or categoryIcon, true
 end
 
+-- Must stay an Appearance location. SetupSlots looks the selected slot up by
+-- slot and type, and when nothing matches it indexes
+-- C_TransmogOutfitInfo.GetLinkedSlotInfo(slot) without a nil check, which
+-- is nil for the ranged slot on WoW Forever.
 local function BuildMountSlotTransmogLocation(category)
     local locationData = {
         slot = Enum.TransmogOutfitSlot.WeaponRanged,
