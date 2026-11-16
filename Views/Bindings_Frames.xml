@@ -28,6 +28,15 @@
             </OnLoad>
         </Scripts>
     </Button>
+    <Button name="FitterSitButton" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
+        <Scripts>
+            <OnLoad>
+                self:SetAttribute("type", "macro")
+                self:SetAttribute("macrotext", "/sit")
+                self:RegisterForClicks("AnyUp", "AnyDown")
+            </OnLoad>
+        </Scripts>
+    </Button>
     <Button name="FitterOutfitUpdateButton" inherits="SecureActionButtonTemplate" parent="UIParent" hidden="true">
         <Scripts>
             <OnLoad>

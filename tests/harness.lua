@@ -71,7 +71,9 @@ T.MACRO_FILES = {
     "Controllers/Macro/Mount.lua",
     "Controllers/Macro/Hearthstone.lua",
     "Controllers/Macro/Update.lua",
+    "Controllers/Macro/Activity.lua",
     "Controllers/Macro/Fishing.lua",
+    "Controllers/Macro/Sit.lua",
 }
 
 local function LoadInto(path, env, ...)
@@ -359,6 +361,7 @@ function T.NewWorld()
         end,
     }, {__index = math})
 
+    env._G = env
     setmetatable(env, {__index = _G})
 
     local ns = {

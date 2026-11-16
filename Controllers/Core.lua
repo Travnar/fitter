@@ -7,6 +7,7 @@ ns.Fitter = Fitter
 ns.MountButton = FitterMountButton
 ns.HearthstoneButton = FitterHearthstoneButton
 ns.FishingButton = FitterFishingButton
+ns.SitButton = FitterSitButton
 ns.OutfitUpdateButton = FitterOutfitUpdateButton
 if ns.MountButton then
     ns.MountButton:HookScript("PostClick", function()
@@ -130,7 +131,7 @@ local function OnDisplayedOutfitChanged()
         Fitter:RefreshFeatureEvents()
         ns.Pet.Apply(nil, "outfitChange")
         ns.Macro.UpdateHearthstone()
-        ns.Macro.UpdateFishing()
+        ns.Macro.UpdateActivities()
         ns.Macro.UpdateOutfitUpdateMacro()
         RerollMountMacro()
     end)
@@ -262,6 +263,7 @@ local function OnDisplayedOutfitEvent()
     C_Timer.After(0.2, function()
         if displayedGeneration ~= ns.state.displayedOutfitGeneration then return end
         ns.Emote.Trigger("OUTFIT_EQUIPPED")
+        ns.Macro.RunPendingSit()
     end)
 end
 
@@ -276,7 +278,7 @@ local function OnCombatEnded()
         ns.Macro.UpdateForCurrentState()
     end
     ns.Macro.UpdateHearthstone()
-    ns.Macro.UpdateFishing()
+    ns.Macro.UpdateActivities()
     if ns.UI_Transmog and ns.UI_Transmog.RefreshCombatDeferredToyUI then
         ns.UI_Transmog:RefreshCombatDeferredToyUI()
     end

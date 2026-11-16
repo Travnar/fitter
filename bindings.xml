@@ -5,6 +5,8 @@
   </Binding>
   <Binding name="CLICK FitterFishingButton:LeftButton" category="Fitter">
   </Binding>
+  <Binding name="CLICK FitterSitButton:LeftButton" category="Fitter">
+  </Binding>
   <Binding name="CLICK FitterOutfitUpdateButton:LeftButton" category="Fitter">
   </Binding>
   <Binding name="FITTER_OUTFIT_WINDOW" category="Fitter">

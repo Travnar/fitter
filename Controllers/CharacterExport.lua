@@ -28,6 +28,7 @@ local LOCAL_KEYS = {
     LastActiveOutfitID = true,
     LastHearthstoneMacroBody = true,
     LastFishingMacroBody = true,
+    LastSitMacroBody = true,
     LastOutfitUpdateMacroBody = true,
 }
 

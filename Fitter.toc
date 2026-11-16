@@ -51,7 +51,9 @@ Controllers\Macro.lua
 Controllers\Macro\Mount.lua
 Controllers\Macro\Hearthstone.lua
 Controllers\Macro\Update.lua
+Controllers\Macro\Activity.lua
 Controllers\Macro\Fishing.lua
+Controllers\Macro\Sit.lua
 Controllers\Holidays.lua
 Controllers\Fishing.lua
 Controllers\Zones.lua

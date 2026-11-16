@@ -17,6 +17,7 @@ local TEST_FILES = {
     "mount_macro_test",
     "hearthstone_macro_test",
     "fishing_macro_test",
+    "sit_macro_test",
     "outfit_update_macro_test",
     "toy_lines_test",
     "settings_test",

@@ -31,4 +31,5 @@ end
 
 ns.Constants.ACTIVITIES = {
     { key = "fishing", name = L["Fishing"], icon = "ui_profession_fishing" },
+    { key = "sit", name = L["Sit"], icon = "spell_fire_fire" },
 }

@@ -17,6 +17,8 @@ Macro.OUTFIT_SETTINGS_MACRO_NAME = "Outfit Window"
 Macro.OUTFIT_SETTINGS_MACRO_ICON = 1602705
 Macro.FISHING_MACRO_NAME = "Outfit Fishing"
 Macro.FISHING_MACRO_ICON = 134400
+Macro.SIT_MACRO_NAME = "Outfit Sit"
+Macro.SIT_MACRO_ICON = 135805
 
 -- Macro names used through 2.5.2.
 local LEGACY_MACRO_NAMES = {
@@ -367,7 +369,7 @@ function Macro.RebuildForCurrentCharacter()
     Macro.MigrateLegacyNames()
     Macro.rebuildForCharacter = true
     Macro.UpdateHearthstone()
-    Macro.UpdateFishing()
+    Macro.UpdateActivities()
     Macro.UpdateForCurrentState()
     Macro.rebuildForCharacter = false
 end

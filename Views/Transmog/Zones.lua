@@ -26,6 +26,7 @@ for _, mode in ipairs(MODES) do MODES_BY_KEY[mode.key] = mode end
 
 local ACTIVITY_MACROS = {
     fishing = { name = ns.Macro.FISHING_MACRO_NAME, ensure = ns.Macro.EnsureFishing },
+    sit = { name = ns.Macro.SIT_MACRO_NAME, ensure = ns.Macro.EnsureSit },
 }
 
 local function GetActivityMacro(mode, item)
@@ -202,7 +203,7 @@ local function RefreshAfterSelection()
     UI_Transmog:UpdateMountIcons()
     PlaySound(SOUNDKIT.UI_TRANSMOG_ITEM_CLICK)
     ns.Zones.RefreshCache()
-    ns.Macro.UpdateFishing()
+    ns.Macro.UpdateActivities()
 end
 
 local function ToggleItem(button)
