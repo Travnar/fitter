@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.13.0] - 2026-11-16
+
+### Added
+- Sit activity. Assign it to an outfit in the Conditions slot, and the new Outfit Sit macro (also available as a "Sit" key binding) switches to that outfit and then sits. If no outfit has the Sit activity, it only sits.
+
 ## [2.12.4] - 2026-11-14
 
 ### Fixed
