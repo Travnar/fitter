@@ -51,6 +51,26 @@ function UI_Transmog:SetToyFrameShown(shown)
     return true
 end
 
+local PAGE_FRAME_KEYS = {
+    "flyingFrame", "groundFrame", "aquaticFrame", "petFrame", "hunterPetFrame",
+    "hearthstoneFrame", "toyFrame", "zonesFrame", "emotesFrame",
+}
+
+-- Hides the Fitter pages shown in place of the items list, except keep. The
+-- Fitter tab's own frame belongs to the tab system and is not one of them.
+function UI_Transmog:HidePages(keep)
+    for _, key in ipairs(PAGE_FRAME_KEYS) do
+        local frame = s[key]
+        if frame and frame ~= keep then
+            if key == "toyFrame" then
+                self:SetToyFrameShown(false)
+            else
+                frame:Hide()
+            end
+        end
+    end
+end
+
 function UI_Transmog:HideEmoteCreatePopup()
     if s.emoteCreatePopup then
         s.emoteCreatePopup:Hide()
@@ -439,15 +459,7 @@ function UI_Transmog:Initialize()
             self:InitializeAdditionalTab()
             s.additionalTabInitialized = true
         end
-        if s.flyingFrame then s.flyingFrame:Hide() end
-        if s.groundFrame then s.groundFrame:Hide() end
-        if s.aquaticFrame then s.aquaticFrame:Hide() end
-        if s.petFrame then s.petFrame:Hide() end
-        if s.hunterPetFrame then s.hunterPetFrame:Hide() end
-        if s.hearthstoneFrame then s.hearthstoneFrame:Hide() end
-        UI_Transmog:SetToyFrameShown(false)
-        if s.zonesFrame then s.zonesFrame:Hide() end
-        if s.emotesFrame then s.emotesFrame:Hide() end
+        UI_Transmog:HidePages()
         if TransmogFrame and TransmogFrame.WardrobeCollection then
             local wc = TransmogFrame.WardrobeCollection
             if wc.TabContent and wc.TabContent.ItemsFrame then
@@ -467,15 +479,7 @@ function UI_Transmog:Initialize()
     local function HideAllPaged(keep)
         UI_Transmog:HideTransientPopups()
         UI_Transmog:CancelUITimers()
-        if s.flyingFrame  and s.flyingFrame  ~= keep then s.flyingFrame:Hide()  end
-        if s.groundFrame  and s.groundFrame  ~= keep then s.groundFrame:Hide()  end
-        if s.aquaticFrame and s.aquaticFrame ~= keep then s.aquaticFrame:Hide() end
-        if s.petFrame     and s.petFrame     ~= keep then s.petFrame:Hide()     end
-        if s.hunterPetFrame and s.hunterPetFrame ~= keep then s.hunterPetFrame:Hide() end
-        if s.hearthstoneFrame and s.hearthstoneFrame ~= keep then s.hearthstoneFrame:Hide() end
-        if s.toyFrame ~= keep then UI_Transmog:SetToyFrameShown(false) end
-        if s.zonesFrame and s.zonesFrame ~= keep then s.zonesFrame:Hide() end
-        if s.emotesFrame and s.emotesFrame ~= keep then s.emotesFrame:Hide() end
+        UI_Transmog:HidePages(keep)
     end
 
     -- Hook this tab owner, not TabSystemOwnerMixin itself.  The mixin is shared
@@ -544,15 +548,7 @@ function UI_Transmog:Initialize()
             end
         end
 
-        if s.flyingFrame then s.flyingFrame:Hide() end
-        if s.groundFrame then s.groundFrame:Hide() end
-        if s.aquaticFrame then s.aquaticFrame:Hide() end
-        if s.petFrame then s.petFrame:Hide() end
-        if s.hunterPetFrame then s.hunterPetFrame:Hide() end
-        if s.hearthstoneFrame then s.hearthstoneFrame:Hide() end
-        UI_Transmog:SetToyFrameShown(false)
-        if s.zonesFrame then s.zonesFrame:Hide() end
-        if s.emotesFrame then s.emotesFrame:Hide() end
+        UI_Transmog:HidePages()
         if s.additionalFrame then s.additionalFrame:Hide() end
     end)
     
@@ -665,15 +661,7 @@ function UI_Transmog:_ShowPagedFrame(target, updateMethod)
         end
     end
     if s.additionalFrame and s.additionalFrame ~= target then s.additionalFrame:Hide() end
-    if s.flyingFrame     and s.flyingFrame     ~= target then s.flyingFrame:Hide()     end
-    if s.groundFrame     and s.groundFrame     ~= target then s.groundFrame:Hide()     end
-    if s.aquaticFrame    and s.aquaticFrame    ~= target then s.aquaticFrame:Hide()    end
-    if s.petFrame        and s.petFrame        ~= target then s.petFrame:Hide()        end
-    if s.hunterPetFrame and s.hunterPetFrame ~= target then s.hunterPetFrame:Hide() end
-    if s.hearthstoneFrame and s.hearthstoneFrame ~= target then s.hearthstoneFrame:Hide() end
-    if s.toyFrame ~= target then self:SetToyFrameShown(false) end
-    if s.zonesFrame and s.zonesFrame ~= target then s.zonesFrame:Hide() end
-    if s.emotesFrame and s.emotesFrame ~= target then s.emotesFrame:Hide() end
+    self:HidePages(target)
     if target then
         if target ~= s.toyFrame or self:SetToyFrameShown(true) then
             target:Show()

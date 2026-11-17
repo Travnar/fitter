@@ -62,21 +62,12 @@ end
 
 local function Update(spec)
     if InCombatLockdown() then return end
-    local rawBody = BuildBody(spec)
+    local body = BuildBody(spec)
     local index = GetMacroIndexByName(spec.macroName)
     if index ~= 0 and Macro.CanEditMacros() then
-        local body = Macro.ApplyPreservation(spec.macroName, rawBody, spec.storageKey)
-        if GetMacroBody(index) ~= body then
-            EditMacro(index, spec.macroName, spec.icon, body)
-        end
+        Macro.Write(index, spec.macroName, body, spec.storageKey, spec.icon)
     end
-    local button = ns[spec.buttonKey]
-    if button then
-        local keybindBody = rawBody:gsub("^#showtooltip[^\n]*\n", "")
-        if button:GetAttribute("macrotext") ~= keybindBody then
-            button:SetAttribute("macrotext", keybindBody)
-        end
-    end
+    Macro.SetButtonBody(ns[spec.buttonKey], Macro.StripTooltip(body))
 end
 
 local function Ensure(spec)
@@ -86,11 +77,7 @@ local function Ensure(spec)
         return
     end
     if GetNumMacros() >= Macro.MAX_ACCOUNT_MACROS then return end
-    local body = BuildBody(spec)
-    CreateMacro(spec.macroName, spec.icon, body, nil)
-    if FitterCharacterSaved then
-        FitterCharacterSaved[spec.storageKey] = body
-    end
+    Macro.Create(spec.macroName, spec.icon, BuildBody(spec), spec.storageKey)
 end
 
 -- Returns update and ensure functions for the activity.

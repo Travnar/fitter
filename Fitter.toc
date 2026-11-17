@@ -42,7 +42,9 @@ Controllers\Pet.lua
 Controllers\HunterPet.lua
 Controllers\Toy.lua
 Controllers\Mount.lua
+Controllers\Mount\Press.lua
 Controllers\MountConditionals.lua
+Controllers\MountConditionals\Suggestions.lua
 Controllers\Emote.lua
 Controllers\Housing.lua
 Controllers\GuildCloak.lua

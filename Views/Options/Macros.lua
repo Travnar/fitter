@@ -80,8 +80,7 @@ function UI_Options:InitializeMacros(frame, x, firstY, onLayoutChanged)
             end
             def.create()
             if not def.exists() and not def.reportsOwnErrors then
-                print("|cff00ff00Fitter:|r "
-                    .. L["Cannot create macro: maximum number of account macros reached."])
+                ns.Print(L["Cannot create macro: maximum number of account macros reached."])
             end
             Refresh()
         end)

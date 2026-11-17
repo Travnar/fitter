@@ -158,13 +158,7 @@ function Macro.UpdateMacroForMount(mountID, outfitIDOverride)
 
     local index = GetMacroIndexByName(Macro.MOUNT_MACRO_NAME)
     if index and index > 0 and Macro.CanEditMacros() then
-        local reserved = Macro.GetUserAdditionsLength(Macro.MOUNT_MACRO_NAME, "LastMountMacroBody")
-        local body = Macro.ApplyPreservation(Macro.MOUNT_MACRO_NAME,
-            Macro.ComposeBody(spec, reserved), "LastMountMacroBody")
-        local _, currentIcon = GetMacroInfo(index)
-        if GetMacroBody(index) ~= body or currentIcon ~= icon then
-            EditMacro(index, Macro.MOUNT_MACRO_NAME, icon, body)
-        end
+        Macro.WriteSpec(index, Macro.MOUNT_MACRO_NAME, spec, "LastMountMacroBody", icon, true)
     end
 
     -- The keybind is independent of the optional character macro, but its
@@ -175,9 +169,7 @@ function Macro.UpdateMacroForMount(mountID, outfitIDOverride)
         -- While falling, MountConditionals owns the macrotext and restores this on landing.
         ns.state.mountButtonBody = btnBody
         local fallingActive = ns.MountConditionals and ns.MountConditionals.IsFallingActive()
-        if not fallingActive and ns.MountButton:GetAttribute("macrotext") ~= btnBody then
-            ns.MountButton:SetAttribute("macrotext", btnBody)
-        end
+        if not fallingActive then Macro.SetButtonBody(ns.MountButton, btnBody) end
     end
 
     if ns.Toy and not ns.state.toyCooldownTimer then
@@ -206,12 +198,8 @@ function Macro.EnsureMount()
     if InCombatLockdown() or GetNumMacros() >= Macro.MAX_ACCOUNT_MACROS then
         return nil
     end
-    local body = "/run FitM()"
-    CreateMacro(Macro.MOUNT_MACRO_NAME, Macro.MOUNT_MACRO_ICON, body, nil)
-    -- Stored so the first update does not take this line for a player edit.
-    if FitterCharacterSaved then
-        FitterCharacterSaved.LastMountMacroBody = body
-    end
+    Macro.Create(Macro.MOUNT_MACRO_NAME, Macro.MOUNT_MACRO_ICON, "/run FitM()",
+        "LastMountMacroBody")
     Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
     index = GetMacroIndexByName(Macro.MOUNT_MACRO_NAME)
     return index and index > 0 and index or nil

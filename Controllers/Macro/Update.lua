@@ -18,18 +18,6 @@ function Macro.IsOutfitUpdateUsed()
     return accountIndex ~= nil or characterIndex ~= nil or hasBinding
 end
 
--- icon is nil to keep the macro's own icon.
-local function WriteMacro(index, spec, storageKey, icon)
-    local name = Macro.OUTFIT_UPDATE_MACRO_NAME
-    local reserved = Macro.GetUserAdditionsLength(name, storageKey, index)
-    local body = Macro.ApplyPreservation(name, Macro.ComposeBody(spec, reserved),
-        storageKey, index)
-    local _, currentIcon = GetMacroInfo(index)
-    if GetMacroBody(index) ~= body or (icon and currentIcon ~= icon) then
-        EditMacro(index, name, icon, body)
-    end
-end
-
 function Macro.UpdateOutfitUpdateMacro(outfitIDOverride)
     local accountIndex, characterIndex, hasBinding = GetConsumers()
     if not (accountIndex or characterIndex or hasBinding) then return end
@@ -61,9 +49,11 @@ function Macro.UpdateOutfitUpdateMacro(outfitIDOverride)
         action = ACTION,
     }
 
+    local name = Macro.OUTFIT_UPDATE_MACRO_NAME
     if (accountIndex or characterIndex) and Macro.CanEditMacros() then
         if accountIndex then
-            WriteMacro(accountIndex, spec, ACCOUNT_STORAGE_KEY, Macro.OUTFIT_UPDATE_MACRO_ICON)
+            Macro.WriteSpec(accountIndex, name, spec, ACCOUNT_STORAGE_KEY,
+                Macro.OUTFIT_UPDATE_MACRO_ICON, true)
         end
         if characterIndex then
             FitterCharacterSaved = FitterCharacterSaved or {}
@@ -74,15 +64,13 @@ function Macro.UpdateOutfitUpdateMacro(outfitIDOverride)
                 FitterCharacterSaved[CHARACTER_STORAGE_KEY] = accountIndex and ACTION
                     or FitterCharacterSaved[ACCOUNT_STORAGE_KEY]
             end
-            WriteMacro(characterIndex, spec, CHARACTER_STORAGE_KEY, nil)
+            -- No icon, so the character macro keeps the one the player chose.
+            Macro.WriteSpec(characterIndex, name, spec, CHARACTER_STORAGE_KEY)
         end
     end
 
-    if hasBinding and ns.OutfitUpdateButton then
-        local btnBody = Macro.ComposeBody(spec)
-        if ns.OutfitUpdateButton:GetAttribute("macrotext") ~= btnBody then
-            ns.OutfitUpdateButton:SetAttribute("macrotext", btnBody)
-        end
+    if hasBinding then
+        Macro.SetButtonBody(ns.OutfitUpdateButton, Macro.ComposeBody(spec))
     end
 
     if ns.Toy and not ns.state.outfitUpdateCooldownTimer then
@@ -109,18 +97,14 @@ function Macro.EnsureOutfitUpdateMacro()
         return
     end
     if GetNumMacros() >= Macro.MAX_ACCOUNT_MACROS then
-        print("|cff00ff00Fitter:|r " .. L["Cannot create macro: maximum number of account macros reached."])
+        ns.Print(L["Cannot create macro: maximum number of account macros reached."])
         return
     end
-    CreateMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, Macro.OUTFIT_UPDATE_MACRO_ICON, ACTION, nil)
-    if FitterCharacterSaved then
-        FitterCharacterSaved[ACCOUNT_STORAGE_KEY] = ACTION
-    end
-    if ns.OutfitUpdateButton then
-        ns.OutfitUpdateButton:SetAttribute("macrotext", ACTION)
-    end
+    Macro.Create(Macro.OUTFIT_UPDATE_MACRO_NAME, Macro.OUTFIT_UPDATE_MACRO_ICON, ACTION,
+        ACCOUNT_STORAGE_KEY)
+    Macro.SetButtonBody(ns.OutfitUpdateButton, ACTION)
     Macro.UpdateOutfitUpdateMacro()
-    print("|cff00ff00Fitter:|r " .. string.format(L["Created macro '%s'."], Macro.OUTFIT_UPDATE_MACRO_NAME))
+    ns.Print(string.format(L["Created macro '%s'."], Macro.OUTFIT_UPDATE_MACRO_NAME))
 end
 
 function Macro.EnsureCharacterOutfitUpdateMacro()
@@ -128,17 +112,15 @@ function Macro.EnsureCharacterOutfitUpdateMacro()
     Macro.MigrateLegacyNames()
     local _, numChar = GetNumMacros()
     if Macro.Exists(Macro.OUTFIT_UPDATE_MACRO_NAME, "character") then
-        print("|cff00ff00Fitter:|r " .. string.format(L["Character macro '%s' already exists."], Macro.OUTFIT_UPDATE_MACRO_NAME))
+        ns.Print(string.format(L["Character macro '%s' already exists."], Macro.OUTFIT_UPDATE_MACRO_NAME))
         return
     end
     if numChar >= Macro.MAX_CHARACTER_MACROS then
-        print("|cff00ff00Fitter:|r " .. L["Cannot create macro: maximum number of character macros reached."])
+        ns.Print(L["Cannot create macro: maximum number of character macros reached."])
         return
     end
-    CreateMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, "INV_Misc_QuestionMark", ACTION, true)
-    if FitterCharacterSaved then
-        FitterCharacterSaved[CHARACTER_STORAGE_KEY] = ACTION
-    end
+    Macro.Create(Macro.OUTFIT_UPDATE_MACRO_NAME, "INV_Misc_QuestionMark", ACTION,
+        CHARACTER_STORAGE_KEY, true)
     Macro.UpdateOutfitUpdateMacro()
-    print("|cff00ff00Fitter:|r " .. string.format(L["Created character macro '%s'."], Macro.OUTFIT_UPDATE_MACRO_NAME))
+    ns.Print(string.format(L["Created character macro '%s'."], Macro.OUTFIT_UPDATE_MACRO_NAME))
 end

@@ -27,7 +27,7 @@ local function Setup()
     local ns = w.ns
     ns.Toy = {ScheduleMacroRefresh = function() end}
     ns.Title = {Apply = function() end}
-    w:Load({"Controllers/Mount.lua"})
+    w:Load({"Controllers/Mount.lua", "Controllers/Mount/Press.lua"})
     return w
 end
 
@@ -79,6 +79,68 @@ T.test("an error in FitG falls back to a random favorite mount", function()
     w.env.FitG()
     T.eq(w.summoned[1], 0)
     T.eq(#w.errors, 1)
+end)
+
+local ACCOUNT_MOUNT_ID = 300
+
+local function GroundSetup(outfitData, accountMounts)
+    local w = Setup()
+    w.mounts[ACCOUNT_MOUNT_ID] = {name = "Account Horse", spellID = 23230, icon = 556}
+    w.activeOutfitID = 7
+    w:SetOutfit(7, outfitData)
+    if accountMounts then
+        w.env.FitterSaved.AccountWideGroundEnabled = true
+        w.env.FitterSaved.AccountWideGroundMounts = accountMounts
+    end
+    return w
+end
+
+T.test("FitG prefers a regular mount over Running Wild", function()
+    local w = GroundSetup({Ground = {"runningwild", MOUNT_ID}})
+    w.env.FitG()
+    T.eq(w.summoned[1], MOUNT_ID)
+end)
+
+T.test("FitG leaves a Running Wild only list to the macro", function()
+    local w = GroundSetup({Ground = {"runningwild"}}, {ACCOUNT_MOUNT_ID})
+    w.env.FitG()
+    T.eq(#w.summoned, 0)
+    T.eq(#w.errors, 0)
+end)
+
+T.test("FitG uses the account-wide ground mounts for an ignored category", function()
+    local w = GroundSetup({Ground = {}}, {"runningwild", ACCOUNT_MOUNT_ID})
+    w.env.FitG()
+    T.eq(w.summoned[1], ACCOUNT_MOUNT_ID)
+end)
+
+T.test("FitG does nothing for an ignored category with no account-wide mounts", function()
+    local w = GroundSetup({Ground = {}})
+    w.env.FitG()
+    T.eq(#w.summoned, 0)
+end)
+
+T.test("FitG does nothing when ground mounts are disabled", function()
+    local w = GroundSetup({Ground = {}, GroundNoMount = true}, {ACCOUNT_MOUNT_ID})
+    w.env.FitG()
+    T.eq(#w.summoned, 0)
+end)
+
+T.test("FitG picks from every ground mount when set to random", function()
+    local w = GroundSetup({Ground = {}, GroundRandom = true})
+    w.env.FitG()
+    T.eq(w.summoned[1], MOUNT_ID)
+end)
+
+T.test("FitM uses the mount picked when the macro was built", function()
+    local w = Setup()
+    w.mounts[ACCOUNT_MOUNT_ID] = {name = "Account Horse", spellID = 23230, icon = 556}
+    w.ns.state.nextMountToSummon = ACCOUNT_MOUNT_ID
+    w.ns.state.nextMountWasSubmerged = false
+    w.ns.state.nextMountWasFlyable = false
+    w.env.FitM()
+    T.eq(w.summoned[1], ACCOUNT_MOUNT_ID)
+    T.eq(w.ns.state.nextMountToSummon, nil)
 end)
 
 T.test("a ground modifier sends FitM to the ground mount", function()

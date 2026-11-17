@@ -68,6 +68,42 @@ function Macro.ComposeBody(spec, reserved)
     return table.concat(lines, "\n")
 end
 
+-- Key bindings have no tooltip, so they take the body without that line.
+function Macro.StripTooltip(body)
+    return (body:gsub("^#showtooltip[^\n]*\n", ""))
+end
+
+-- Writes body, followed by the player's own lines, to the macro at index
+-- unless it already holds that text. icon is nil to keep the macro's icon;
+-- syncIcon also rewrites a macro whose icon alone differs.
+function Macro.Write(index, name, body, storageKey, icon, syncIcon)
+    body = Macro.ApplyPreservation(name, body, storageKey, index)
+    local _, currentIcon = GetMacroInfo(index)
+    if GetMacroBody(index) ~= body or (syncIcon and icon and currentIcon ~= icon) then
+        EditMacro(index, name, icon, body)
+    end
+end
+
+-- As Macro.Write, for a body built from sections (see Macro.ComposeBody).
+function Macro.WriteSpec(index, name, spec, storageKey, icon, syncIcon)
+    local reserved = Macro.GetUserAdditionsLength(name, storageKey, index)
+    Macro.Write(index, name, Macro.ComposeBody(spec, reserved), storageKey, icon, syncIcon)
+end
+
+-- The body is stored so the first update does not take it for a player edit.
+function Macro.Create(name, icon, body, storageKey, perCharacter)
+    CreateMacro(name, icon, body, perCharacter)
+    if FitterCharacterSaved then
+        FitterCharacterSaved[storageKey] = body
+    end
+end
+
+function Macro.SetButtonBody(button, body)
+    if button and button:GetAttribute("macrotext") ~= body then
+        button:SetAttribute("macrotext", body)
+    end
+end
+
 -- Blizzard's Macro window keeps its own copy of the selected macro's text and
 -- saves it when the window closes, which would overwrite an edit made while
 -- it is open. Macro edits wait until it closes; key bindings are not affected.

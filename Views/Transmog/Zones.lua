@@ -43,8 +43,7 @@ local function EnsureActivityMacro(macro)
     macro.ensure()
     local index = GetMacroIndexByName(macro.name)
     if index == 0 then
-        print("|cff00ff00Fitter:|r "
-            .. L["Cannot create macro: maximum number of account macros reached."])
+        ns.Print(L["Cannot create macro: maximum number of account macros reached."])
         return nil
     end
     return index

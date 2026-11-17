@@ -28,6 +28,10 @@ ns.state = {
     featureEvents = {},
 }
 
+function ns.Print(message)
+    print("|cff00ff00Fitter:|r " .. message)
+end
+
 -- Macros cannot be edited in combat; PLAYER_REGEN_ENABLED rebuilds them when
 -- this is set.
 function ns.MarkMacroRefreshPending()

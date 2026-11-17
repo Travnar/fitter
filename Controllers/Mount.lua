@@ -45,6 +45,7 @@ local function IsAquaticContext()
     local submerged = Mount.UpdateWaterState()
     return submerged and GetTime() >= (ns.state.waterExitGraceUntil or 0)
 end
+Mount.IsAquaticContext = IsAquaticContext
 
 local function IsCastingSoar()
     local castingSpellID = select(9, UnitCastingInfo("player"))
@@ -110,24 +111,11 @@ local function IsMountCurrentlyUsable(mountID)
         C_MountJournal.GetMountUsabilityByID, mountID, false)
     return ok and canUse == true
 end
+Mount.IsUsable = IsMountCurrentlyUsable
 
--- Returns the target player's active mount when this character owns it and can
--- use it here; nil otherwise (no player target, not mounted, not collected).
-local function GetTargetPlayerMount()
-    if not (FitterSaved and FitterSaved.CopyTargetMount) then return nil end
-    if not UnitIsPlayer("target") or UnitIsUnit("target", "player") then return nil end
-    for index = 1, 255 do
-        local aura = C_UnitAuras.GetAuraDataByIndex("target", index, "HELPFUL")
-        if not aura then return nil end
-        local spellID = aura.spellId
-        if spellID and ns.CanAccessValue(spellID) then
-            local mountID = C_MountJournal.GetMountFromSpell(spellID)
-            if mountID then
-                if IsMountCurrentlyUsable(mountID) then return mountID end
-                return nil
-            end
-        end
-    end
+function Mount.IsGroundOnly(mountID)
+    local _, _, _, _, mountTypeID = C_MountJournal.GetMountInfoExtraByID(mountID)
+    return mountTypeID == MOUNT_TYPE_GROUND_ONLY
 end
 
 local function PickRandomUsableMount(mounts)
@@ -240,6 +228,26 @@ local function SelectNextMount(excludeSoar, outfitIDOverride)
 end
 Mount.SelectNext = SelectNextMount
 
+-- The mount for a Ground Mount modifier press. Running Wild and Soar are cast
+-- by the macro, so a list holding only those returns nil.
+function Mount.SelectGround(outfitIDOverride)
+    if not C_TransmogOutfitInfo then return nil end
+
+    local outfitID = outfitIDOverride or C_TransmogOutfitInfo.GetActiveOutfitID()
+    if not outfitID or outfitID == 0 then
+        return PickFromTypePool("Ground")
+    end
+
+    local outfitData = ns.Settings.GetOutfitData(outfitID)
+    if not outfitData then return nil end
+
+    local mounts = outfitData.Ground or {}
+    if #mounts > 0 and #FilterSpecialAbilityMounts(mounts, true) == 0 then
+        return nil
+    end
+    return TryMountCategory(outfitData, "Ground", true)
+end
+
 function Mount.OnSpellcastSucceeded(spellID)
     if spellID ~= SOAR_SPELL_ID then return end
     C_Timer.After(0.25, function()
@@ -298,213 +306,3 @@ function Mount.MonitorSoarCooldown()
         state.soarCooldownTimer = nil
     end)
 end
-
--- Set once a press has dismounted or summoned, so a later error in the same
--- press does not summon a second mount.
-local pressHandled = false
-
-local function Summon(mountID)
-    pressHandled = true
-    C_MountJournal.SummonByID(mountID)
-end
-
-local function DismountPlayer()
-    pressHandled = true
-    Dismount()
-end
-
--- Every mount press goes through one /run line, so an error there would leave
--- the player unable to mount. The error is still reported, and the press
--- falls back to a random favorite mount.
-local function ReportError(err)
-    geterrorhandler()(err)
-end
-
-local function Guarded(press)
-    return function(...)
-        pressHandled = false
-        if xpcall(press, ReportError, ...) or pressHandled then return end
-        if IsMounted() then
-            Dismount()
-        else
-            C_MountJournal.SummonByID(0)
-        end
-    end
-end
-
-local function IsOutfitLocked(outfitID)
-    return outfitID ~= nil and C_TransmogOutfitInfo ~= nil
-        and C_TransmogOutfitInfo.IsLockedOutfit ~= nil
-        and C_TransmogOutfitInfo.IsLockedOutfit(outfitID) == true
-end
-
-local SummonGroundMount
-
-local function SummonMount(outfitIDOverride)
-    local state = ns.state
-    ns.Toy.ScheduleMacroRefresh()
-
-    -- Other mount bind conditionals are cast by the macro before FitM() runs;
-    -- only Ground Mount modifiers are handled here.
-    if ns.MountConditionals and ns.MountConditionals.IsGroundModifierHeld() then
-        SummonGroundMount(outfitIDOverride)
-        return
-    end
-
-    local activeOutfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
-        and C_TransmogOutfitInfo.GetActiveOutfitID()
-    local isLocked = IsOutfitLocked(activeOutfitID)
-    if not outfitIDOverride and state.currentZoneOutfitID
-        and activeOutfitID ~= state.currentZoneOutfitID
-        and not isLocked then
-        outfitIDOverride = state.currentZoneOutfitID
-    end
-
-    if IsMounted() then
-        DismountPlayer()
-        return
-    end
-
-    local targetMountID = GetTargetPlayerMount()
-    if targetMountID then
-        Summon(targetMountID)
-        ns.Title.Apply(outfitIDOverride)
-        return
-    end
-
-    local mountID = (not outfitIDOverride) and state.nextMountToSummon or nil
-
-    -- Entering/leaving water or crossing a flyability boundary changes the
-    -- category hierarchy, so a preselected mount from the old context is stale.
-    if mountID and (state.nextMountWasSubmerged ~= IsAquaticContext()
-            or state.nextMountWasFlyable ~= IsFlyableArea()) then
-        mountID = nil
-    end
-
-    -- Discard pre-rolled mount if outfit is locked (it was rolled for the zone outfit)
-    if mountID and isLocked and state.currentZoneOutfitID
-        and state.currentZoneOutfitID ~= activeOutfitID then
-        mountID = nil
-    end
-
-    if mountID == "soar" or mountID == "runningwild" or mountID == "g99breakneck" then
-        mountID = nil
-    end
-
-    -- Discard stale pre-roll if flyability changed since selection
-    if mountID and type(mountID) == "number" and IsFlyableArea() then
-        local _, _, _, _, mountTypeID = C_MountJournal.GetMountInfoExtraByID(mountID)
-        if mountTypeID == MOUNT_TYPE_GROUND_ONLY then
-            mountID = nil
-        end
-    end
-
-    if mountID and not IsMountCurrentlyUsable(mountID) then
-        mountID = nil
-    end
-
-    if not mountID then
-        mountID = SelectNextMount(true, outfitIDOverride)
-    end
-
-    if not mountID then
-        return
-    end
-
-    Summon(mountID)
-    ns.Title.Apply(outfitIDOverride)
-    state.nextMountToSummon = nil
-end
-
-_G.FitterMount = Guarded(SummonMount)
-_G.FitM = _G.FitterMount
-
-local function SelectGroundMount(outfitIDOverride)
-    if not C_TransmogOutfitInfo then return nil end
-
-    local activeOutfitID = outfitIDOverride or C_TransmogOutfitInfo.GetActiveOutfitID()
-    if not activeOutfitID or activeOutfitID == 0 then
-        return PickFromTypePool("Ground")
-    end
-
-    local outfitData = ns.Settings.GetOutfitData(activeOutfitID)
-    if not outfitData then return nil end
-
-    if outfitData.GroundNoMount then return nil end
-    local mounts = outfitData.Ground or {}
-
-    if #mounts == 0 then
-        if outfitData.GroundRandom then
-            return PickFromTypePool("Ground")
-        end
-        -- Ignore Ground only uses a configured account-wide ground fallback.
-        if FitterSaved and FitterSaved.AccountWideGroundEnabled then
-            if FitterSaved.AccountWideGroundRandom then
-                return PickFromTypePool("Ground")
-            end
-            if FitterSaved.AccountWideGroundMounts
-                    and #FitterSaved.AccountWideGroundMounts > 0 then
-                local accountMounts = FitterSaved.AccountWideGroundMounts
-                local regular = {}
-                for _, id in ipairs(accountMounts) do
-                    if id ~= "runningwild" and id ~= "soar" then
-                        regular[#regular + 1] = id
-                    end
-                end
-                if #regular > 0 then
-                    return PickRandomUsableMount(regular)
-                elseif #accountMounts > 0 then
-                    return PickRandomUsableMount(accountMounts)
-                end
-            end
-        end
-        return nil
-    end
-
-    -- Filter out special ability mounts that can't be summoned via Lua
-    -- (Running Wild, Soar) when there are regular mounts available
-    local regular = {}
-    for _, id in ipairs(mounts) do
-        if id ~= "runningwild" and id ~= "soar" then
-            regular[#regular + 1] = id
-        end
-    end
-    if #regular > 0 then
-        return PickRandomUsableMount(regular)
-    end
-
-    -- Only special mounts remain; pick one (caller handles the /cast)
-    return PickRandomUsableMount(mounts)
-end
-
-function SummonGroundMount(outfitIDOverride)
-    local state = ns.state
-
-    local activeOutfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
-        and C_TransmogOutfitInfo.GetActiveOutfitID()
-    local isLocked = IsOutfitLocked(activeOutfitID)
-    if not outfitIDOverride and state.currentZoneOutfitID
-        and activeOutfitID ~= state.currentZoneOutfitID
-        and not isLocked then
-        outfitIDOverride = state.currentZoneOutfitID
-    end
-
-    if IsMounted() then
-        DismountPlayer()
-        return
-    end
-
-    local mountID = SelectGroundMount(outfitIDOverride)
-    if not mountID then return end
-
-    -- Special ability mounts (Running Wild, Soar) can't be summoned via Lua;
-    -- the macro's /cast line handles them after this function returns.
-    if mountID == "runningwild" or mountID == "soar" then return end
-
-    Summon(mountID)
-    ns.Title.Apply(outfitIDOverride)
-    state.nextMountToSummon = nil
-end
-
-_G.FitterGroundMount = Guarded(SummonGroundMount)
-_G.FitG = _G.FitterGroundMount

@@ -183,21 +183,12 @@ function Macro.UpdateHearthstone()
     Macro.MigrateLegacyNames()
 
     local index = GetMacroIndexByName(Macro.HEARTHSTONE_MACRO_NAME)
-    local rawBody, icon = ResolveHearthstoneMacro()
-    local body = rawBody
+    local body, icon = ResolveHearthstoneMacro()
     if index ~= 0 and Macro.CanEditMacros() then
-        body = Macro.ApplyPreservation(Macro.HEARTHSTONE_MACRO_NAME, rawBody, "LastHearthstoneMacroBody")
-        local _, currentIcon = GetMacroInfo(index)
-        if GetMacroBody(index) ~= body or currentIcon ~= icon then
-            EditMacro(index, Macro.HEARTHSTONE_MACRO_NAME, icon, body)
-        end
+        Macro.Write(index, Macro.HEARTHSTONE_MACRO_NAME, body, "LastHearthstoneMacroBody",
+            icon, true)
     end
-    if ns.HearthstoneButton then
-        local keybindBody = rawBody:gsub("^#showtooltip[^\n]*\n", "")
-        if ns.HearthstoneButton:GetAttribute("macrotext") ~= keybindBody then
-            ns.HearthstoneButton:SetAttribute("macrotext", keybindBody)
-        end
-    end
+    Macro.SetButtonBody(ns.HearthstoneButton, Macro.StripTooltip(body))
 end
 
 -- Item cooldowns only alter the hearthstone macro when a Shaman uses the
@@ -228,12 +219,7 @@ function Macro.EnsureHearthstone()
 
     if GetNumMacros() >= Macro.MAX_ACCOUNT_MACROS then return end
     local body = GetDefaultBody(Macro.ShouldShowHearthstoneTooltip())
-    CreateMacro(Macro.HEARTHSTONE_MACRO_NAME, Macro.HEARTHSTONE_MACRO_ICON, body, nil)
-    if FitterCharacterSaved then
-        FitterCharacterSaved.LastHearthstoneMacroBody = body
-    end
-    if ns.HearthstoneButton then
-        ns.HearthstoneButton:SetAttribute("macrotext", body)
-    end
+    Macro.Create(Macro.HEARTHSTONE_MACRO_NAME, Macro.HEARTHSTONE_MACRO_ICON, body,
+        "LastHearthstoneMacroBody")
     Macro.UpdateHearthstone()
 end

@@ -121,15 +121,7 @@ function UI_Transmog:InitializeMountIcons()
 
     local function HideAllOurPagedFrames()
         if s.additionalFrame then s.additionalFrame:Hide() end
-        if s.flyingFrame  then s.flyingFrame:Hide()  end
-        if s.groundFrame  then s.groundFrame:Hide()  end
-        if s.aquaticFrame then s.aquaticFrame:Hide() end
-        if s.petFrame     then s.petFrame:Hide()     end
-        if s.hunterPetFrame then s.hunterPetFrame:Hide() end
-        if s.hearthstoneFrame then s.hearthstoneFrame:Hide() end
-        UI_Transmog:SetToyFrameShown(false)
-        if s.zonesFrame then s.zonesFrame:Hide() end
-        if s.emotesFrame then s.emotesFrame:Hide() end
+        UI_Transmog:HidePages()
     end
 
     local function IsOurSlotFrame(slotFrame)
