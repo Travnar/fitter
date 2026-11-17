@@ -172,15 +172,22 @@ local function GetMountSlotIconState(category)
     return icon or categoryIcon, true
 end
 
--- Must stay an Appearance location. SetupSlots looks the selected slot up by
--- slot and type, and when nothing matches it indexes
--- C_TransmogOutfitInfo.GetLinkedSlotInfo(slot) without a nil check, which
--- is nil for the ranged slot on WoW Forever.
-local function BuildMountSlotTransmogLocation(category)
+-- Each Fitter slot has two locations, both borrowing the ranged slot number.
+-- Blizzard finds slot frames by slot and type (GetSlotFrame), and WoW Forever
+-- has a real ranged slot, so the two must differ:
+--  * The frame's location is an Illusion, so a lookup for the real ranged
+--    slot never returns a Fitter frame.
+--  * The selected slot data's location (forSelection) is an Appearance, so a
+--    lookup for the selection never returns a Fitter frame either. It must
+--    stay an Appearance: when SetupSlots finds no frame for the selection it
+--    indexes C_TransmogOutfitInfo.GetLinkedSlotInfo(slot) without a nil
+--    check, which is nil for the ranged slot on WoW Forever.
+local function BuildMountSlotTransmogLocation(category, forSelection)
     local locationData = {
         slot = Enum.TransmogOutfitSlot.WeaponRanged,
         slotID = nil,
-        transmogType = Enum.TransmogType.Appearance,
+        transmogType = forSelection and Enum.TransmogType.Appearance
+            or Enum.TransmogType.Illusion,
         isSecondary = false,
     }
     local location = CreateFromMixins(TransmogLocationMixin)
@@ -188,6 +195,7 @@ local function BuildMountSlotTransmogLocation(category)
     location.fitterCategory = category
     location.GetSlotName = function() return "FITTER_MOUNTSLOT_" .. category end
     location.IsAppearance = function() return false end
+    location.IsIllusion = function() return false end
     location.IsEqual = function(self, other)
         return type(other) == "table"
             and other.fitterCategory ~= nil

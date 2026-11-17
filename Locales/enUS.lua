@@ -242,6 +242,22 @@ local strings = {
     "Continents",
     "Expansions",
     "Pet Families",
+    "Tutorial",
+    "Opens the outfit window and walks through the fundamentals of Fitter.",
+    "%s (%d/%d)",
+    "Key Bindings and Macros",
+    "Fitter adds mounts, pets, hearthstones, toys, titles and more to your outfits. Select an outfit here, and everything you choose in this window is saved to it.\n\nClose the window at any time to end the tutorial.",
+    "These slots hold the outfit's flying, ground and aquatic mounts. Select a slot, then choose one or more mounts. With several chosen, Fitter picks one at random.",
+    "This slot holds the outfit's mounts. Select it, then choose one or more mounts. With several chosen, Fitter picks one at random.",
+    "Choose one or more companion pets. Fitter summons one automatically when your outfit changes.",
+    "Choose the hunter pets that go with this outfit. Fitter calls one when you use its macros or key bindings.",
+    "Choose one or more hearthstones. Fitter's hearthstone action uses one at random, or any hearthstone you own when none are chosen.",
+    "Choose toys to use with this outfit. They are used when you press Fitter's mount action.",
+    "Associate this outfit with zones, holidays and activities. Fitter switches to a matching outfit when you press its mount action.",
+    "Choose emotes for your character to perform while wearing this outfit, such as when mounting, resting or targeting someone.",
+    "Choose a title to wear with this outfit. It is applied when you press Fitter's mount action.",
+    "The Fitter tab saves an outfit's choices as a loadout to reuse on other outfits, shares them in chat, and sets up mount conditionals.",
+    "Mounts, toys, titles and outfit changes need a button press. Bind Fitter's actions under Options > Keybindings > Fitter, or create its macros under Options > AddOns > Fitter and place them on your action bars.\n\nUse Fitter's mount action as your normal mount button.",
 }
 
 for _, text in ipairs(strings) do

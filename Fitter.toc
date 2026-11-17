@@ -80,6 +80,7 @@ Views\Transmog\MountPreview.lua
 Views\Transmog\Titles.lua
 Views\Transmog\ViewWithoutTransmog.lua
 Views\Transmog\OffVendor.lua
+Views\Transmog\Tutorial.lua
 Views\Transmog\Mounts.lua
 Views\Transmog\Hearthstones.lua
 Views\Transmog\HearthstonePreview.lua

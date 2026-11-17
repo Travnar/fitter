@@ -98,6 +98,26 @@ function UI_Options:Initialize(optionsFrame, alreadyRegistered)
     titleText:SetText("Fitter")
     titleText:SetTextColor(1, 1, 1, 1)
 
+    if HelpTip then
+        local tutorialButton = CreateFrame(
+            "Button", nil, optionsFrame, "UIPanelButtonTemplate")
+        tutorialButton:SetSize(110, 22)
+        tutorialButton:SetPoint("TOPLEFT", optionsFrame, "TOPLEFT", 460, -14)
+        tutorialButton:SetText(L["Tutorial"])
+        tutorialButton:SetScript("OnClick", function()
+            ns.UI_Transmog:StartTutorial()
+        end)
+        tutorialButton:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(L["Tutorial"], 1, 1, 1)
+            GameTooltip:AddLine(
+                L["Opens the outfit window and walks through the fundamentals of Fitter."],
+                1, 0.82, 0, true)
+            GameTooltip:Show()
+        end)
+        tutorialButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    end
+
     local titleSep = optionsFrame:CreateTexture(nil, "ARTWORK")
     titleSep:SetHeight(1)
     titleSep:SetPoint("TOPLEFT",  optionsFrame, "TOPLEFT",  0, -44)

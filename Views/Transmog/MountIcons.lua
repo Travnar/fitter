@@ -19,7 +19,10 @@ function UI_Transmog:InitializeMountIcons()
         return function(_, slotFrame, forceRefresh)
             s.selectedFitterCategory = slotFrame.fitterCategory
 
-            charPreview:UpdateSlot(slotFrame.slotData, forceRefresh)
+            local selection = Mixin({}, slotFrame.slotData)
+            selection.transmogLocation =
+                s.mountSlotDefs[slotFrame.fitterCategory].selectionLocation
+            charPreview:UpdateSlot(selection, forceRefresh)
 
             TransmogFrame.WardrobeCollection:SetToItemsTab()
 
@@ -112,6 +115,9 @@ function UI_Transmog:InitializeMountIcons()
             transmogLocation = BuildMountSlotTransmogLocation("HunterPet"),
         }
     end
+    for _, def in pairs(s.mountSlotDefs) do
+        def.selectionLocation = BuildMountSlotTransmogLocation(def.category, true)
+    end
 
     local function HideAllOurPagedFrames()
         if s.additionalFrame then s.additionalFrame:Hide() end
@@ -163,7 +169,8 @@ function UI_Transmog:InitializeMountIcons()
     local function CollidesWithOurs(loc)
         if not loc or not defaultIsEqual then return false end
         for _, def in pairs(s.mountSlotDefs) do
-            if defaultIsEqual(loc, def.transmogLocation) then
+            if defaultIsEqual(loc, def.transmogLocation)
+                or defaultIsEqual(loc, def.selectionLocation) then
                 return true
             end
         end
@@ -333,14 +340,13 @@ function UI_Transmog:InitializeMountIcons()
         end)
 
         hooksecurefunc(charPreview, "SetupSlots", function()
-            -- Fitter slots share the ranged slot's location. Where a ranged
-            -- slot exists (e.g. WoW Forever), SetupSlots carries a Fitter
-            -- selection over to the real ranged slot. RefreshSelectedSlot then
-            -- looks that up again by slot and type, which can now return a
-            -- Fitter slot, and routes it through TransmogFrame:SelectSlot,
-            -- which errors on Fitter locations. selectedFitterCategory still
-            -- says a Fitter slot was selected, so clear the carried-over
-            -- selection too; ReselectFitterSlot restores it next frame.
+            -- A Fitter selection looks like the ranged slot to Blizzard (see
+            -- BuildMountSlotTransmogLocation). Where a ranged slot exists
+            -- (e.g. WoW Forever), SetupSlots carries the selection over to
+            -- it, and RefreshSelectedSlot would then open its item grid.
+            -- selectedFitterCategory still says a Fitter slot was selected,
+            -- so clear the carried-over selection too; ReselectFitterSlot
+            -- restores it next frame.
             local selected = charPreview:GetSelectedSlotData()
             if selected and (selected.isFitterMountSlot or s.selectedFitterCategory) then
                 charPreview:SetSelectedSlotData(nil)
@@ -352,6 +358,16 @@ function UI_Transmog:InitializeMountIcons()
             PatchStandardSlotPreviews()
             ReselectFitterSlot()
         end)
+
+        -- On a gear change Blizzard calls RefreshSlotOptions and then
+        -- RefreshSelectedSlot, which on WoW Forever moves a Fitter selection
+        -- to the real ranged slot and clears selectedFitterCategory. Queue
+        -- the reselect in between, while the category is still known.
+        if charPreview.RefreshSlotOptions then
+            hooksecurefunc(charPreview, "RefreshSlotOptions", function()
+                ReselectFitterSlot()
+            end)
+        end
 
         if TransmogSlotMixin then
             hooksecurefunc(TransmogSlotMixin, "Release", function(slot)
