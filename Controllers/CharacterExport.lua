@@ -30,6 +30,8 @@ local LOCAL_KEYS = {
     LastFishingMacroBody = true,
     LastSitMacroBody = true,
     LastOutfitUpdateMacroBody = true,
+    LastCharacterOutfitUpdateMacroBody = true,
+    LastMountMacroBody = true,
 }
 
 local function IsOutfitKey(key)

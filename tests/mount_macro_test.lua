@@ -166,15 +166,14 @@ local function SetupUpdate()
     return w, ns.Macro
 end
 
-T.test("full mount macro: cancel, toy and pet lines go first", function()
+T.test("full mount macro: tooltip, then cancel, toy and pet lines", function()
     local w, Macro = SetupUpdate()
     Macro.UpdateMacroForMount(MOUNT_ID)
-    -- #showtooltip is not the first line here (MACRO_HARDENING.md, low priority).
     T.eq(w:MacroBody(Macro.MOUNT_MACRO_NAME),
-        "/cancelaura Bubbles\n"
+        "#showtooltip Swift Horse\n"
+        .. "/cancelaura Bubbles\n"
         .. "/use item:1002\n"
         .. "/cast Call Pet 1\n"
-        .. "#showtooltip Swift Horse\n"
         .. "/run FitM()")
     T.eq(w:MacroIcon(Macro.MOUNT_MACRO_NAME), 555)
     T.eq(w.ns.MountButton:GetAttribute("macrotext"),
@@ -198,8 +197,8 @@ T.test("player lines survive a mount update", function()
     w.mounts[200] = {name = "Gryphon", spellID = 1, icon = 666}
     Macro.UpdateMacroForMount(200)
     T.eq(w:MacroBody(Macro.MOUNT_MACRO_NAME),
-        "/cancelaura Bubbles\n/use item:1002\n/cast Call Pet 1\n"
-        .. "#showtooltip Gryphon\n/run FitM()\n/say Giddy up")
+        "#showtooltip Gryphon\n/cancelaura Bubbles\n/use item:1002\n/cast Call Pet 1\n"
+        .. "/run FitM()\n/say Giddy up")
 end)
 
 T.test("the key binding is left alone while falling", function()
@@ -239,4 +238,55 @@ T.test("toy lines are trimmed to fit 255 characters", function()
     T.contains(body, "/use item:50001\n")
     T.notContains(body, "item:50030")
     T.atMost(#w.ns.MountButton:GetAttribute("macrotext"), 255, "binding length")
+end)
+
+T.test("the summon line survives long conditionals and a class macro", function()
+    local w, Macro = SetupUpdate()
+    w.ns.state.playerClass = "DRUID"
+    w.env.FitterSaved.UseDruidMacro = true
+    w.spells[768] = {name = string.rep("Cat", 15)}
+    w.spells[783] = {name = string.rep("Travel", 12)}
+    w.knownSpells[1953] = true
+    w.env.FitterCharacterSaved.MountConditionals = {
+        {condition = "shift", kind = "spell", id = 1953, name = string.rep("Blink", 20)},
+    }
+    w.outfits = {{outfitID = 5}, {outfitID = 7}}
+    w.ns.state.currentZoneOutfitID = 7
+    Macro.UpdateMacroForMount(MOUNT_ID)
+    for _, body in ipairs({w:MacroBody(Macro.MOUNT_MACRO_NAME),
+        w.ns.MountButton:GetAttribute("macrotext")}) do
+        T.atMost(#body, 255, "length")
+        T.contains(body, "/run FitM()\n/cast [indoors,noform:2]")
+        T.truthy(body:find("Travel$"), "class line is whole: " .. T.Show(body))
+        T.contains(body, "/outfit 2\n")
+        T.notContains(body, "Blink")
+    end
+end)
+
+T.test("the macro and the key binding share one Running Wild roll", function()
+    local w, Macro = SetupUpdate()
+    w.env.FitterSaved.CancelNonOutfitToys = false
+    w.ns.HunterPet = nil
+    w.env.FitterCharacterSaved.MountConditionals = {{condition = "shift", kind = "ground"}}
+    w:SetOutfit(7, {Ground = {101, "runningwild"}})
+    w.randomResults = {2, 1}
+    Macro.UpdateMacroForMount(MOUNT_ID)
+    local action = "/run if not(IsShiftKeyDown())then FitM()end\n/cast [mod:shift]Running Wild"
+    T.eq(w:MacroBody(Macro.MOUNT_MACRO_NAME), "#showtooltip Swift Horse\n" .. action)
+    T.eq(w.ns.MountButton:GetAttribute("macrotext"), action)
+end)
+
+T.test("EnsureMount creates the macro with the real body and stores it", function()
+    local w, Macro = SetupUpdate()
+    w.env.DeleteMacro(Macro.MOUNT_MACRO_NAME)
+    -- Left over from a macro the player deleted.
+    w.env.FitterCharacterSaved.LastMountMacroBody = "#showtooltip Old\n/run FitM()"
+    w.ns.state.nextMountToSummon = MOUNT_ID
+    T.truthy(Macro.EnsureMount(), "macro index")
+    local body = w:MacroBody(Macro.MOUNT_MACRO_NAME)
+    T.eq(body, "#showtooltip Swift Horse\n/cancelaura Bubbles\n/use item:1002\n"
+        .. "/cast Call Pet 1\n/run FitM()")
+    T.eq(w.env.FitterCharacterSaved.LastMountMacroBody, body)
+    Macro.UpdateMacroForMount(MOUNT_ID)
+    T.eq(w:MacroBody(Macro.MOUNT_MACRO_NAME), body)
 end)

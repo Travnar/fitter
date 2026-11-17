@@ -299,21 +299,61 @@ function Mount.MonitorSoarCooldown()
     end)
 end
 
-function FitterMount(outfitIDOverride)
+-- Set once a press has dismounted or summoned, so a later error in the same
+-- press does not summon a second mount.
+local pressHandled = false
+
+local function Summon(mountID)
+    pressHandled = true
+    C_MountJournal.SummonByID(mountID)
+end
+
+local function DismountPlayer()
+    pressHandled = true
+    Dismount()
+end
+
+-- Every mount press goes through one /run line, so an error there would leave
+-- the player unable to mount. The error is still reported, and the press
+-- falls back to a random favorite mount.
+local function ReportError(err)
+    geterrorhandler()(err)
+end
+
+local function Guarded(press)
+    return function(...)
+        pressHandled = false
+        if xpcall(press, ReportError, ...) or pressHandled then return end
+        if IsMounted() then
+            Dismount()
+        else
+            C_MountJournal.SummonByID(0)
+        end
+    end
+end
+
+local function IsOutfitLocked(outfitID)
+    return outfitID ~= nil and C_TransmogOutfitInfo ~= nil
+        and C_TransmogOutfitInfo.IsLockedOutfit ~= nil
+        and C_TransmogOutfitInfo.IsLockedOutfit(outfitID) == true
+end
+
+local SummonGroundMount
+
+local function SummonMount(outfitIDOverride)
     local state = ns.state
     ns.Toy.ScheduleMacroRefresh()
 
     -- Other mount bind conditionals are cast by the macro before FitM() runs;
     -- only Ground Mount modifiers are handled here.
     if ns.MountConditionals and ns.MountConditionals.IsGroundModifierHeld() then
-        FitterGroundMount(outfitIDOverride)
+        SummonGroundMount(outfitIDOverride)
         return
     end
 
     local activeOutfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
         and C_TransmogOutfitInfo.GetActiveOutfitID()
-    local isLocked = C_TransmogOutfitInfo and C_TransmogOutfitInfo.IsLockedOutfit
-        and C_TransmogOutfitInfo.IsLockedOutfit(activeOutfitID)
+    local isLocked = IsOutfitLocked(activeOutfitID)
     if not outfitIDOverride and state.currentZoneOutfitID
         and activeOutfitID ~= state.currentZoneOutfitID
         and not isLocked then
@@ -321,13 +361,13 @@ function FitterMount(outfitIDOverride)
     end
 
     if IsMounted() then
-        Dismount()
+        DismountPlayer()
         return
     end
 
     local targetMountID = GetTargetPlayerMount()
     if targetMountID then
-        C_MountJournal.SummonByID(targetMountID)
+        Summon(targetMountID)
         ns.Title.Apply(outfitIDOverride)
         return
     end
@@ -371,12 +411,13 @@ function FitterMount(outfitIDOverride)
         return
     end
 
-    C_MountJournal.SummonByID(mountID)
+    Summon(mountID)
     ns.Title.Apply(outfitIDOverride)
     state.nextMountToSummon = nil
 end
-_G.FitterMount = FitterMount
-_G.FitM = FitterMount
+
+_G.FitterMount = Guarded(SummonMount)
+_G.FitM = _G.FitterMount
 
 local function SelectGroundMount(outfitIDOverride)
     if not C_TransmogOutfitInfo then return nil end
@@ -436,13 +477,12 @@ local function SelectGroundMount(outfitIDOverride)
     return PickRandomUsableMount(mounts)
 end
 
-function FitterGroundMount(outfitIDOverride)
+function SummonGroundMount(outfitIDOverride)
     local state = ns.state
 
     local activeOutfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
         and C_TransmogOutfitInfo.GetActiveOutfitID()
-    local isLocked = C_TransmogOutfitInfo and C_TransmogOutfitInfo.IsLockedOutfit
-        and C_TransmogOutfitInfo.IsLockedOutfit(activeOutfitID)
+    local isLocked = IsOutfitLocked(activeOutfitID)
     if not outfitIDOverride and state.currentZoneOutfitID
         and activeOutfitID ~= state.currentZoneOutfitID
         and not isLocked then
@@ -450,7 +490,7 @@ function FitterGroundMount(outfitIDOverride)
     end
 
     if IsMounted() then
-        Dismount()
+        DismountPlayer()
         return
     end
 
@@ -461,9 +501,10 @@ function FitterGroundMount(outfitIDOverride)
     -- the macro's /cast line handles them after this function returns.
     if mountID == "runningwild" or mountID == "soar" then return end
 
-    C_MountJournal.SummonByID(mountID)
+    Summon(mountID)
     ns.Title.Apply(outfitIDOverride)
     state.nextMountToSummon = nil
 end
-_G.FitterGroundMount = FitterGroundMount
-_G.FitG = FitterGroundMount
+
+_G.FitterGroundMount = Guarded(SummonGroundMount)
+_G.FitG = _G.FitterGroundMount

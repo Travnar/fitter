@@ -68,6 +68,7 @@ end
 -- Files in the order Fitter.toc loads them.
 T.MACRO_FILES = {
     "Controllers/Macro.lua",
+    "Controllers/Macro/Body.lua",
     "Controllers/Macro/Mount.lua",
     "Controllers/Macro/Hearthstone.lua",
     "Controllers/Macro/Update.lua",
@@ -207,7 +208,7 @@ function T.NewWorld()
     end
     env.EditMacro = function(index, name, icon, body)
         local macro = MacroAt(index)
-        macro.name, macro.icon, macro.body = name, icon, body
+        macro.name, macro.icon, macro.body = name, icon or macro.icon, body
         w.edits[#w.edits + 1] = {name = name, icon = icon, body = body}
     end
     env.CreateMacro = function(name, icon, body, perCharacter)

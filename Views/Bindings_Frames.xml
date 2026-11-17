@@ -14,7 +14,7 @@
         <Scripts>
             <OnLoad>
                 self:SetAttribute("type", "macro")
-                self:SetAttribute("macrotext", "/use Hearthstone")
+                self:SetAttribute("macrotext", "/use item:6948")
                 self:RegisterForClicks("AnyUp", "AnyDown")
             </OnLoad>
         </Scripts>
@@ -23,7 +23,8 @@
         <Scripts>
             <OnLoad>
                 self:SetAttribute("type", "macro")
-                self:SetAttribute("macrotext", "/cast Fishing")
+                local info = C_Spell.GetSpellInfo(131474) or C_Spell.GetSpellInfo(7620)
+                self:SetAttribute("macrotext", "/cast " .. (info and info.name or "Fishing"))
                 self:RegisterForClicks("AnyUp", "AnyDown")
             </OnLoad>
         </Scripts>

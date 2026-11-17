@@ -34,10 +34,10 @@ T.test("without a selection the default Hearthstone is used by item ID", functio
     T.eq(Keybind(w), "/use item:6948")
 end)
 
-T.test("without any hearthstone the body falls back to its name", function()
+T.test("without any hearthstone the body uses the bag Hearthstone's item ID", function()
     local w, Macro = Setup()
     Macro.UpdateHearthstone()
-    T.eq(Body(w), "/use Hearthstone")
+    T.eq(Body(w), "/use item:6948")
 end)
 
 T.test("random pick skips other races' and base-item hearthstones", function()
@@ -155,6 +155,21 @@ T.test("shaman uses Astral Recall while the hearthstone is on cooldown", functio
     w.time = 5000 -- cooldown over
     Macro.UpdateHearthstone()
     T.eq(Body(w), "#showtooltip\n/use item:2001")
+end)
+
+T.test("Astral Recall uses the client's localized spell name", function()
+    local w, Macro = Setup()
+    w.ns.state.playerClass = "SHAMAN"
+    w.env.FitterSaved.AstralRecallFallback = true
+    w.spells[556] = {name = "Regreso astral"}
+    w.cooldowns[6948] = {900, 1800}
+    Macro.UpdateHearthstone()
+    T.eq(Body(w), "/use Regreso astral")
+    w.activeOutfitID = 7
+    w:SetOutfit(7, {Hearthstones = {2001}})
+    w.cooldowns[2001] = {900, 1800}
+    Macro.UpdateHearthstone()
+    T.eq(Body(w), "#showtooltip\n/use Regreso astral")
 end)
 
 T.test("Astral Recall is only for shamans", function()

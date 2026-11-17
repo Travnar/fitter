@@ -197,7 +197,7 @@ ns.Constants.BIOME_GROUPS = {
 }
 
 ns.Constants.EXPANSION_ZONES = {
-    { key = "midnight", label = L["Midnight"], mapIDs = {2393, 2395, 2437, 2413, 2405, 2512} },
+    { key = "midnight", label = L["Midnight"], mapIDs = {2393, 2395, 2437, 2413, 2405, 2512, 2424} },
     { key = "tww", label = L["The War Within"], mapIDs = {2339, 2248, 2214, 2215, 2255, 2256, 2369, 2346, 2371, 2472} },
     { key = "dragonflight", label = L["Dragonflight"], mapIDs = {2112, 2022, 2023, 2024, 2025, 2133, 2200} },
     { key = "shadowlands", label = L["Shadowlands"], mapIDs = {1670, 1533, 1536, 1565, 1525, 1543, 1961, 1970} },
@@ -206,7 +206,7 @@ ns.Constants.EXPANSION_ZONES = {
     { key = "wod", label = L["Warlords of Draenor"], mapIDs = {588, 590, 525, 539, 543, 535, 542, 550, 534} },
     { key = "mop", label = L["Mists of Pandaria"], mapIDs = {371, 376, 418, 379, 388, 422, 390, 504, 554} },
     { key = "cata", label = L["Cataclysm"], mapIDs = {198, 203, 207, 249, 241, 245, 199, 217} },
-    { key = "wrath", label = L["Wrath of the Lich King"], mapIDs = {125, 113, 114, 117, 118, 120, 123, 379} },
+    { key = "wrath", label = L["Wrath of the Lich King"], mapIDs = {125, 113, 114, 117, 115, 116, 121, 119, 118, 120, 123} },
     { key = "bc", label = L["Burning Crusade"], mapIDs = {100, 102, 108, 107, 105, 109, 104, 110, 122, 94, 95} },
     { key = "classic", label = L["Classic"], mapIDs = {84, 87, 89, 103, 85, 88, 90, 37, 27, 57, 97, 1, 8, 7, 50, 210, 18, 40, 48, 62, 10, 21, 63, 77, 47, 56, 14, 25, 26, 22, 23, 15, 32, 36, 17, 42, 106, 80, 69, 49, 65, 64, 66, 70, 71, 78, 83, 81} },
 }

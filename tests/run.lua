@@ -15,6 +15,7 @@ local TEST_FILES = {
     "macro_core_test",
     "mount_conditionals_test",
     "mount_macro_test",
+    "mount_summon_test",
     "hearthstone_macro_test",
     "fishing_macro_test",
     "sit_macro_test",

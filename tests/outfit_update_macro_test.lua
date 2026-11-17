@@ -70,3 +70,50 @@ T.test("EnsureOutfitUpdateMacro creates an account macro", function()
     T.eq(w.account[1].body, "/run FitU()")
     T.eq(w.printed[#w.printed], "|cff00ff00Fitter:|r Created macro 'Outfit Update'.")
 end)
+
+T.test("the account and character macros are both updated", function()
+    local w, Macro = Setup()
+    w:AddMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, "/run FitU()", 4624566)
+    w:AddMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, "/run FitU()\n/cast Charge", 132337, true)
+    w.ns.state.currentZoneOutfitID = 7
+    Macro.UpdateOutfitUpdateMacro()
+    T.eq(w.account[1].body, "/use item:1002\n/outfit 2\n/run FitU()")
+    T.eq(w.character[1].body, "/use item:1002\n/outfit 2\n/run FitU()\n/cast Charge")
+    T.eq(w.character[1].icon, 132337, "character macro keeps its icon")
+
+    w.ns.state.currentZoneOutfitID = 5
+    Macro.UpdateOutfitUpdateMacro()
+    T.eq(w.account[1].body, "/outfit 1\n/run FitU()")
+    T.eq(w.character[1].body, "/outfit 1\n/run FitU()\n/cast Charge")
+end)
+
+T.test("a character macro on its own keeps the player's lines from 2.13.0 and earlier", function()
+    local w, Macro = Setup()
+    w.env.FitterCharacterSaved.LastOutfitUpdateMacroBody = "/outfit 1\n/run FitU()"
+    w:AddMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, "/outfit 1\n/run FitU()\n/cast Charge", 132337, true)
+    w.ns.state.currentZoneOutfitID = 7
+    Macro.UpdateOutfitUpdateMacro()
+    T.eq(w.character[1].body, "/use item:1002\n/outfit 2\n/run FitU()\n/cast Charge")
+    T.eq(w.character[1].icon, 132337)
+end)
+
+T.test("creating the character macro leaves the account macro's stored body alone", function()
+    local w, Macro = Setup()
+    w:AddMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, "/run FitU()")
+    w.ns.state.currentZoneOutfitID = 7
+    Macro.UpdateOutfitUpdateMacro()
+    Macro.EnsureCharacterOutfitUpdateMacro()
+    T.eq(w.env.FitterCharacterSaved.LastOutfitUpdateMacroBody, "/use item:1002\n/outfit 2\n/run FitU()")
+    T.eq(w.character[1].body, "/use item:1002\n/outfit 2\n/run FitU()")
+    Macro.EnsureCharacterOutfitUpdateMacro()
+    T.eq(#w.character, 1)
+end)
+
+T.test("a tooltip line the player added to the update macro is kept", function()
+    local w, Macro = Setup()
+    w.env.FitterCharacterSaved.LastOutfitUpdateMacroBody = "/run FitU()"
+    w:AddMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, "#showtooltip Charge\n/run FitU()\n/cast Charge")
+    w.ns.state.currentZoneOutfitID = 7
+    Macro.UpdateOutfitUpdateMacro()
+    T.eq(w.account[1].body, "/use item:1002\n/outfit 2\n/run FitU()\n#showtooltip Charge\n/cast Charge")
+end)

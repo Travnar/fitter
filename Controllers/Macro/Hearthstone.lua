@@ -21,25 +21,26 @@ end
 
 local function IsHearthstoneOnCooldown(itemID)
     local startTime, duration = C_Item.GetItemCooldown(itemID)
+    if not ns.CanAccessValue(startTime) or not ns.CanAccessValue(duration) then
+        return false
+    end
     return startTime and duration and startTime > 0 and duration > 0
         and (startTime + duration) > GetTime()
 end
 
+-- /use only accepts the client's localized names, so the item is used by ID
+-- and the spell name is looked up.
 local function GetHearthstoneAction(itemID)
     if IsAstralRecallFallbackEnabled()
         and IsHearthstoneOnCooldown(itemID) then
-        return "Astral Recall"
+        return Macro.SpellName(ASTRAL_RECALL_SPELL_ID, "Astral Recall")
     end
     return "item:" .. itemID
 end
 
 local function GetDefaultBody(showTooltip)
-    local action = "Hearthstone"
-    if IsAstralRecallFallbackEnabled()
-        and IsHearthstoneOnCooldown(Macro.DEFAULT_HEARTHSTONE_ITEM_ID) then
-        action = "Astral Recall"
-    end
-    return (showTooltip and "#showtooltip\n" or "") .. "/use " .. action
+    return (showTooltip and "#showtooltip\n" or "") .. "/use "
+        .. GetHearthstoneAction(Macro.DEFAULT_HEARTHSTONE_ITEM_ID)
 end
 
 function Macro.IsHearthstoneRaceEligible(entry)
@@ -184,7 +185,7 @@ function Macro.UpdateHearthstone()
     local index = GetMacroIndexByName(Macro.HEARTHSTONE_MACRO_NAME)
     local rawBody, icon = ResolveHearthstoneMacro()
     local body = rawBody
-    if index ~= 0 then
+    if index ~= 0 and Macro.CanEditMacros() then
         body = Macro.ApplyPreservation(Macro.HEARTHSTONE_MACRO_NAME, rawBody, "LastHearthstoneMacroBody")
         local _, currentIcon = GetMacroInfo(index)
         if GetMacroBody(index) ~= body or currentIcon ~= icon then
@@ -226,7 +227,7 @@ function Macro.EnsureHearthstone()
     end
 
     if GetNumMacros() >= Macro.MAX_ACCOUNT_MACROS then return end
-    local body = (Macro.ShouldShowHearthstoneTooltip() and "#showtooltip\n" or "") .. "/use Hearthstone"
+    local body = GetDefaultBody(Macro.ShouldShowHearthstoneTooltip())
     CreateMacro(Macro.HEARTHSTONE_MACRO_NAME, Macro.HEARTHSTONE_MACRO_ICON, body, nil)
     if FitterCharacterSaved then
         FitterCharacterSaved.LastHearthstoneMacroBody = body

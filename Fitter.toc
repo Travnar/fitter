@@ -48,6 +48,7 @@ Controllers\Housing.lua
 Controllers\GuildCloak.lua
 Controllers\FishingPole.lua
 Controllers\Macro.lua
+Controllers\Macro\Body.lua
 Controllers\Macro\Mount.lua
 Controllers\Macro\Hearthstone.lua
 Controllers\Macro\Update.lua

@@ -64,7 +64,7 @@ local function Update(spec)
     if InCombatLockdown() then return end
     local rawBody = BuildBody(spec)
     local index = GetMacroIndexByName(spec.macroName)
-    if index ~= 0 then
+    if index ~= 0 and Macro.CanEditMacros() then
         local body = Macro.ApplyPreservation(spec.macroName, rawBody, spec.storageKey)
         if GetMacroBody(index) ~= body then
             EditMacro(index, spec.macroName, spec.icon, body)

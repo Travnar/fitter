@@ -15,19 +15,16 @@ T.test("druid body uses English spell names when the lookup fails", function()
         "/stopmacro [flying,combat]\n"
         .. "/run FitM()\n"
         .. "/cast [indoors,noform:2]Cat Form;"
-        .. "[nocombat,outdoors,advflyable,noform:3][swimming,noform:3]Travel Form;"
-        .. "[outdoors,noform:3]Mount Form")
+        .. "[swimming,noform:3][outdoors,noform:3]Travel Form")
 end)
 
 T.test("druid body uses the client's localized spell names", function()
     local w, Macro = Setup()
     w.spells[768] = {name = "Forma felina"}
     w.spells[783] = {name = "Forma de viaje"}
-    w.spells[210053] = {name = "Forma de montura"}
     local body = Macro.GetDruidMacroBody()
     T.contains(body, "[indoors,noform:2]Forma felina;")
-    T.contains(body, "[swimming,noform:3]Forma de viaje;")
-    T.contains(body, "[outdoors,noform:3]Forma de montura")
+    T.contains(body, "[swimming,noform:3][outdoors,noform:3]Forma de viaje")
     T.notContains(body, "Cat Form")
 end)
 
@@ -221,4 +218,107 @@ T.test("legacy macro names are renamed in place", function()
     T.eq(w:MacroBody(Macro.MOUNT_MACRO_NAME), "/run FitM()")
     T.eq(w:MacroBody(Macro.OUTFIT_UPDATE_MACRO_NAME), "/run FitU()")
     T.eq(w:MacroBody("FitterMount"), nil)
+end)
+
+-- The Macro window can save an older generated body back, so lines Fitter
+-- writes itself are never kept as player edits.
+
+T.test("preservation drops stale generated lines", function()
+    local w, Macro = Setup()
+    w.env.FitterCharacterSaved.LastMountMacroBody = "#showtooltip Gryphon\n/outfit 3\n/run FitM()"
+    w:AddMacro(Macro.MOUNT_MACRO_NAME,
+        "#showtooltip Horse\n/cancelaura Bubbles\n/outfit 2\n/run FitterMount()\n/say hi")
+    T.eq(Macro.ApplyPreservation(Macro.MOUNT_MACRO_NAME, "/run FitM()", "LastMountMacroBody"),
+        "/run FitM()\n/say hi")
+end)
+
+T.test("preservation keeps the player's /cancelaura in other macros", function()
+    local w, Macro = Setup()
+    w.env.FitterCharacterSaved.LastHearthstoneMacroBody = "/use item:6948"
+    w:AddMacro(Macro.HEARTHSTONE_MACRO_NAME, "#showtooltip\n/cancelaura Ghost Wolf\n/use item:6948")
+    T.eq(Macro.ApplyPreservation(Macro.HEARTHSTONE_MACRO_NAME, "/use item:1", "LastHearthstoneMacroBody"),
+        "/use item:1\n/cancelaura Ghost Wolf")
+end)
+
+T.test("preservation reads the macro at the given index", function()
+    local w, Macro = Setup()
+    w.env.FitterCharacterSaved.Stored = "/run FitU()"
+    w:AddMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, "/run FitU()")
+    w:AddMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, "/run FitU()\n/cast Charge", nil, true)
+    local accountIndex, characterIndex = Macro.FindIndexes(Macro.OUTFIT_UPDATE_MACRO_NAME)
+    T.eq(accountIndex, 1)
+    T.eq(characterIndex, 121)
+    T.eq(Macro.GetUserAdditionsLength(Macro.OUTFIT_UPDATE_MACRO_NAME, "Stored", characterIndex), 14)
+    T.eq(Macro.ApplyPreservation(Macro.OUTFIT_UPDATE_MACRO_NAME, "/outfit 2\n/run FitU()",
+        "Stored", characterIndex), "/outfit 2\n/run FitU()\n/cast Charge")
+end)
+
+-- ComposeBody drops the least important lines first when a body is too long.
+
+T.test("compose orders the sections", function()
+    local _, Macro = Setup()
+    T.eq(Macro.ComposeBody({
+        action = "/run FitM()",
+        outfit = "/outfit 2\n",
+        conditionals = "/cast [mod:shift]Blink\n/stopmacro [mod:shift]\n",
+        hunterPet = "/cast Call Pet 1",
+        toys = "/use item:1\n/use item:2",
+        cancel = "/cancelaura Bubbles",
+        tooltip = "#showtooltip Horse",
+    }), "#showtooltip Horse\n/cancelaura Bubbles\n/use item:1\n/use item:2\n/cast Call Pet 1\n"
+        .. "/cast [mod:shift]Blink\n/stopmacro [mod:shift]\n/outfit 2\n/run FitM()")
+end)
+
+T.test("compose drops the tooltip, then toys, before anything else", function()
+    local _, Macro = Setup()
+    local conditionals = "/cast " .. string.rep("c", 170)
+    local spec = {
+        action = "/run FitM()",
+        outfit = "/outfit 2",
+        conditionals = conditionals,
+        hunterPet = "/cast Call Pet 1",
+        toys = "/use item:10001\n/use item:10002\n/use item:10003",
+        tooltip = "#showtooltip A Mount With A Long Name",
+    }
+    T.eq(Macro.ComposeBody(spec),
+        "/use item:10001\n/use item:10002\n/cast Call Pet 1\n" .. conditionals .. "\n/outfit 2\n/run FitM()")
+    -- Room kept for the player's lines comes out of the optional lines only.
+    T.eq(Macro.ComposeBody(spec, 45), conditionals .. "\n/outfit 2\n/run FitM()")
+end)
+
+T.test("compose keeps the action when the lines before it are too long", function()
+    local _, Macro = Setup()
+    local body = Macro.ComposeBody({
+        action = "/stopmacro [flying,combat]\n/run FitM()\n/cast " .. string.rep("d", 140),
+        outfit = "/outfit 2",
+        conditionals = "/cast " .. string.rep("c", 170),
+        tooltip = "#showtooltip Horse",
+    })
+    T.atMost(#body, 255, "body length")
+    T.contains(body, "/run FitM()")
+    T.notContains(body, "ccc")
+    T.contains(body, "/outfit 2\n/stopmacro")
+end)
+
+-- Edits wait while Blizzard's Macro window is open.
+
+T.test("the Macro window defers edits until it closes", function()
+    local w, Macro = Setup()
+    w.ns.state.playerClass = "WARRIOR"
+    w.ns.Mount.SelectNext = function() return nil end
+    w.itemCounts[6948] = 1
+    w:AddMacro(Macro.HEARTHSTONE_MACRO_NAME, "/use Hearthstone")
+    w.ns.HearthstoneButton = T.NewButton()
+    local shown = true
+    w.env.MacroFrame = {IsShown = function() return shown end}
+
+    Macro.UpdateHearthstone()
+    T.eq(#w.edits, 0, "edits while open")
+    T.eq(w.env.FitterCharacterSaved.LastHearthstoneMacroBody, nil, "stored body while open")
+    T.eq(w.ns.HearthstoneButton:GetAttribute("macrotext"), "/use item:6948", "key binding")
+
+    shown = false
+    Macro.OnEditorHidden()
+    for _, timer in ipairs(w.timers) do timer.fn() end
+    T.eq(w:MacroBody(Macro.HEARTHSTONE_MACRO_NAME), "/use item:6948")
 end)

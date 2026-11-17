@@ -3,34 +3,40 @@ local L = ns.L
 
 local Macro = ns.Macro
 local OUTFIT_UPDATE_BINDING = "CLICK FitterOutfitUpdateButton:LeftButton"
+local ACTION = "/run FitU()"
+local ACCOUNT_STORAGE_KEY = "LastOutfitUpdateMacroBody"
+local CHARACTER_STORAGE_KEY = "LastCharacterOutfitUpdateMacroBody"
 
 local function GetConsumers()
-    local index = GetMacroIndexByName(Macro.OUTFIT_UPDATE_MACRO_NAME)
+    local accountIndex, characterIndex = Macro.FindIndexes(Macro.OUTFIT_UPDATE_MACRO_NAME)
     local bindingKey = GetBindingKey and GetBindingKey(OUTFIT_UPDATE_BINDING)
-    return index, bindingKey ~= nil
+    return accountIndex, characterIndex, bindingKey ~= nil
 end
 
 function Macro.IsOutfitUpdateUsed()
-    local index, hasBinding = GetConsumers()
-    return (index and index ~= 0) or hasBinding
+    local accountIndex, characterIndex, hasBinding = GetConsumers()
+    return accountIndex ~= nil or characterIndex ~= nil or hasBinding
 end
 
-local function BuildOutfitUpdateMacroBody()
-    local prefix = Macro.GetOutfitMacroPrefix()
-    return prefix .. "/run FitU()"
+-- icon is nil to keep the macro's own icon.
+local function WriteMacro(index, spec, storageKey, icon)
+    local name = Macro.OUTFIT_UPDATE_MACRO_NAME
+    local reserved = Macro.GetUserAdditionsLength(name, storageKey, index)
+    local body = Macro.ApplyPreservation(name, Macro.ComposeBody(spec, reserved),
+        storageKey, index)
+    local _, currentIcon = GetMacroInfo(index)
+    if GetMacroBody(index) ~= body or (icon and currentIcon ~= icon) then
+        EditMacro(index, name, icon, body)
+    end
 end
 
 function Macro.UpdateOutfitUpdateMacro(outfitIDOverride)
-    local index, hasBinding = GetConsumers()
-    if (not index or index == 0) and not hasBinding then return end
+    local accountIndex, characterIndex, hasBinding = GetConsumers()
+    if not (accountIndex or characterIndex or hasBinding) then return end
     if InCombatLockdown() then
         ns.MarkMacroRefreshPending()
         return
     end
-    local rawBody = BuildOutfitUpdateMacroBody()
-    local userLen = index and index ~= 0 and Macro.GetUserAdditionsLength(
-        Macro.OUTFIT_UPDATE_MACRO_NAME, "LastOutfitUpdateMacroBody") or 0
-    local remaining = 255 - #rawBody - userLen
 
     local toyOutfitID = ns.state.currentZoneOutfitID
     local activeOutfitID = C_TransmogOutfitInfo and C_TransmogOutfitInfo.GetActiveOutfitID
@@ -47,48 +53,33 @@ function Macro.UpdateOutfitUpdateMacro(outfitIDOverride)
         ns.state.outfitUpdateResolvedID = resolvedToyOutfitID
     end
 
-    local hunterPetLine = ns.HunterPet
-        and ns.HunterPet.GetOutfitMacroLines(resolvedToyOutfitID)
-    if hunterPetLine and remaining > #hunterPetLine + 1 then
-        rawBody = hunterPetLine .. "\n" .. rawBody
-        remaining = remaining - #hunterPetLine - 1
-    end
+    local spec = {
+        cancel = ns.Toy and ns.Toy.GetCancelLines(resolvedToyOutfitID),
+        toys = ns.Toy and ns.Toy.GetMacroLines(resolvedToyOutfitID),
+        hunterPet = ns.HunterPet and ns.HunterPet.GetOutfitMacroLines(resolvedToyOutfitID),
+        outfit = Macro.GetOutfitMacroPrefix(),
+        action = ACTION,
+    }
 
-    local cancelLines = ns.Toy and remaining > 1 and ns.Toy.GetCancelLines(
-        resolvedToyOutfitID, remaining - 1)
-    if cancelLines then remaining = remaining - #cancelLines - 1 end
-    local toyLines = ns.Toy and remaining > 1 and ns.Toy.GetMacroLines(
-        resolvedToyOutfitID, remaining - 1)
-    if toyLines then rawBody = toyLines .. "\n" .. rawBody end
-    if cancelLines then rawBody = cancelLines .. "\n" .. rawBody end
-
-    if index and index ~= 0 then
-        local body = Macro.ApplyPreservation(Macro.OUTFIT_UPDATE_MACRO_NAME,
-            rawBody, "LastOutfitUpdateMacroBody")
-        local _, currentIcon = GetMacroInfo(index)
-        if GetMacroBody(index) ~= body
-            or currentIcon ~= Macro.OUTFIT_UPDATE_MACRO_ICON then
-            EditMacro(index, Macro.OUTFIT_UPDATE_MACRO_NAME,
-                Macro.OUTFIT_UPDATE_MACRO_ICON, body)
+    if (accountIndex or characterIndex) and Macro.CanEditMacros() then
+        if accountIndex then
+            WriteMacro(accountIndex, spec, ACCOUNT_STORAGE_KEY, Macro.OUTFIT_UPDATE_MACRO_ICON)
+        end
+        if characterIndex then
+            FitterCharacterSaved = FitterCharacterSaved or {}
+            -- Through 2.13.0 both macros shared one stored body and only one
+            -- of them was updated; the character macro was left as created
+            -- when an account macro existed.
+            if FitterCharacterSaved[CHARACTER_STORAGE_KEY] == nil then
+                FitterCharacterSaved[CHARACTER_STORAGE_KEY] = accountIndex and ACTION
+                    or FitterCharacterSaved[ACCOUNT_STORAGE_KEY]
+            end
+            WriteMacro(characterIndex, spec, CHARACTER_STORAGE_KEY, nil)
         end
     end
 
     if hasBinding and ns.OutfitUpdateButton then
-        local btnBody = BuildOutfitUpdateMacroBody()
-        local remaining = 255 - #btnBody
-        local hunterPetLine = ns.HunterPet
-            and ns.HunterPet.GetOutfitMacroLines(resolvedToyOutfitID)
-        if hunterPetLine and remaining > #hunterPetLine + 1 then
-            btnBody = hunterPetLine .. "\n" .. btnBody
-            remaining = remaining - #hunterPetLine - 1
-        end
-        local cancelLines = ns.Toy and remaining > 1
-            and ns.Toy.GetCancelLines(resolvedToyOutfitID, remaining - 1)
-        if cancelLines then remaining = remaining - #cancelLines - 1 end
-        local toyLines = ns.Toy and remaining > 1
-            and ns.Toy.GetMacroLines(resolvedToyOutfitID, remaining - 1)
-        if toyLines then btnBody = toyLines .. "\n" .. btnBody end
-        if cancelLines then btnBody = cancelLines .. "\n" .. btnBody end
+        local btnBody = Macro.ComposeBody(spec)
         if ns.OutfitUpdateButton:GetAttribute("macrotext") ~= btnBody then
             ns.OutfitUpdateButton:SetAttribute("macrotext", btnBody)
         end
@@ -121,13 +112,12 @@ function Macro.EnsureOutfitUpdateMacro()
         print("|cff00ff00Fitter:|r " .. L["Cannot create macro: maximum number of account macros reached."])
         return
     end
-    local body = "/run FitU()"
-    CreateMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, Macro.OUTFIT_UPDATE_MACRO_ICON, body, nil)
+    CreateMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, Macro.OUTFIT_UPDATE_MACRO_ICON, ACTION, nil)
     if FitterCharacterSaved then
-        FitterCharacterSaved.LastOutfitUpdateMacroBody = body
+        FitterCharacterSaved[ACCOUNT_STORAGE_KEY] = ACTION
     end
     if ns.OutfitUpdateButton then
-        ns.OutfitUpdateButton:SetAttribute("macrotext", body)
+        ns.OutfitUpdateButton:SetAttribute("macrotext", ACTION)
     end
     Macro.UpdateOutfitUpdateMacro()
     print("|cff00ff00Fitter:|r " .. string.format(L["Created macro '%s'."], Macro.OUTFIT_UPDATE_MACRO_NAME))
@@ -136,26 +126,18 @@ end
 function Macro.EnsureCharacterOutfitUpdateMacro()
     if InCombatLockdown() then return end
     Macro.MigrateLegacyNames()
-    -- Check only character macro slots (account macros occupy 1–MAX_ACCOUNT_MACROS)
     local _, numChar = GetNumMacros()
-    for i = Macro.MAX_ACCOUNT_MACROS + 1, Macro.MAX_ACCOUNT_MACROS + numChar do
-        local name = GetMacroInfo(i)
-        if name == Macro.OUTFIT_UPDATE_MACRO_NAME then
-            print("|cff00ff00Fitter:|r " .. string.format(L["Character macro '%s' already exists."], Macro.OUTFIT_UPDATE_MACRO_NAME))
-            return
-        end
+    if Macro.Exists(Macro.OUTFIT_UPDATE_MACRO_NAME, "character") then
+        print("|cff00ff00Fitter:|r " .. string.format(L["Character macro '%s' already exists."], Macro.OUTFIT_UPDATE_MACRO_NAME))
+        return
     end
     if numChar >= Macro.MAX_CHARACTER_MACROS then
         print("|cff00ff00Fitter:|r " .. L["Cannot create macro: maximum number of character macros reached."])
         return
     end
-    local body = "/run FitU()"
-    CreateMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, "INV_Misc_QuestionMark", body, true)
+    CreateMacro(Macro.OUTFIT_UPDATE_MACRO_NAME, "INV_Misc_QuestionMark", ACTION, true)
     if FitterCharacterSaved then
-        FitterCharacterSaved.LastOutfitUpdateMacroBody = body
-    end
-    if ns.OutfitUpdateButton then
-        ns.OutfitUpdateButton:SetAttribute("macrotext", body)
+        FitterCharacterSaved[CHARACTER_STORAGE_KEY] = ACTION
     end
     Macro.UpdateOutfitUpdateMacro()
     print("|cff00ff00Fitter:|r " .. string.format(L["Created character macro '%s'."], Macro.OUTFIT_UPDATE_MACRO_NAME))

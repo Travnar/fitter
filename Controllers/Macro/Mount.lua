@@ -2,6 +2,8 @@ local addonName, ns = ...
 
 local Macro = ns.Macro
 local G99_BREAKNECK_SPELL_ID = 1215279
+local SOAR_SPELL_ID = 369536
+local RUNNING_WILD_SPELL_ID = 87840
 
 local function OutfitGroundMountInfo()
     local outfitID = ns.GetMountOutfitID()
@@ -34,21 +36,15 @@ local function PreRollGroundIsRunningWild()
     return pick == "runningwild"
 end
 
-local function BuildMountMacroBody(mountID, includeTooltip)
-    -- Conditionals come first so they take precedence over every mount option.
-    local conditionalLines = ns.MountConditionals and ns.MountConditionals.GetMacroLines() or ""
-    local prefix = conditionalLines .. Macro.GetOutfitMacroPrefix()
+-- Returns the #showtooltip line (nil when there is none), the lines that
+-- summon the mount, and the macro icon.
+local function ResolveMountAction(mountID, showTooltip)
     local icon = Macro.MOUNT_MACRO_ICON
-    local showTooltip = includeTooltip ~= false and Macro.ShouldShowMountTooltip()
 
-    if mountID ~= "g99breakneck" and Macro.IsDruidMacroEnabled() then
-        return prefix .. Macro.GetDruidMacroBody(), icon
-    end
-    if mountID ~= "g99breakneck" and Macro.IsShamanMacroEnabled() then
-        return prefix .. Macro.GetShamanMacroBody(), icon
-    end
-    if mountID ~= "g99breakneck" and Macro.IsMonkMacroEnabled() then
-        return prefix .. Macro.GetMonkMacroBody(), icon
+    if mountID ~= "g99breakneck" then
+        if Macro.IsDruidMacroEnabled() then return nil, Macro.GetDruidMacroBody(), icon end
+        if Macro.IsShamanMacroEnabled() then return nil, Macro.GetShamanMacroBody(), icon end
+        if Macro.IsMonkMacroEnabled() then return nil, Macro.GetMonkMacroBody(), icon end
     end
 
     local checkFn, macroMod, noMacroMod = Macro.GetModifierCondition()
@@ -59,88 +55,89 @@ local function BuildMountMacroBody(mountID, includeTooltip)
     if checkFn then
         groundHasRunningWild, runningWildIsOnly = OutfitGroundMountInfo()
         if groundHasRunningWild then
-            local info = C_Spell.GetSpellInfo(87840)
-            runningWildName = (info and info.name) or "Running Wild"
+            runningWildName = Macro.SpellName(RUNNING_WILD_SPELL_ID, "Running Wild")
         end
     end
 
     -- For mixed ground lists, pre-roll whether this macro cycle uses Running Wild
-    local useRunningWildForMod = false
+    local useRunningWildForMod = runningWildIsOnly
     if groundHasRunningWild and not runningWildIsOnly then
         useRunningWildForMod = PreRollGroundIsRunningWild()
     end
 
-    if mountID == "g99breakneck" then
-        local info = C_Spell.GetSpellInfo(G99_BREAKNECK_SPELL_ID)
-        local spellName = (info and info.name) or "G-99 Breakneck"
+    local function SpellTooltip(spellID, fallback)
+        local info = C_Spell.GetSpellInfo(spellID)
+        local spellName = (info and info.name) or fallback
         icon = (info and info.iconID) or icon
-        local tooltip = showTooltip and ("#showtooltip " .. spellName .. "\n") or ""
+        return spellName, showTooltip and ("#showtooltip " .. spellName) or nil
+    end
+
+    if mountID == "g99breakneck" then
+        local spellName, tooltip = SpellTooltip(G99_BREAKNECK_SPELL_ID, "G-99 Breakneck")
         -- Other conditionals already stopped the macro; only Ground Mount
         -- modifiers reach this point.
         if checkFn then
-            return tooltip .. prefix
-                .. "/run if " .. checkFn .. "then FitM()end\n"
+            return tooltip, "/run if " .. checkFn .. "then FitM()end\n"
                 .. "/cast [" .. noMacroMod .. "]" .. spellName, icon
         end
-        return tooltip .. prefix .. "/cast " .. spellName, icon
+        return tooltip, "/cast " .. spellName, icon
     end
 
     if mountID == "soar" then
-        local info = C_Spell.GetSpellInfo(369536)
-        local spellName = (info and info.name) or "Soar"
-        icon = (info and info.iconID) or icon
-        local tooltip = showTooltip and ("#showtooltip " .. spellName .. "\n") or ""
-        if runningWildIsOnly then
-            return tooltip .. prefix
-                .. "/cast [mod:" .. macroMod .. "]" .. runningWildName .. "\n"
-                .. "/cast [" .. noMacroMod .. "]" .. spellName, icon
-        elseif useRunningWildForMod then
-            return tooltip .. prefix
-                .. "/cast [mod:" .. macroMod .. "]" .. runningWildName .. "\n"
+        local spellName, tooltip = SpellTooltip(SOAR_SPELL_ID, "Soar")
+        if useRunningWildForMod then
+            return tooltip, "/cast [mod:" .. macroMod .. "]" .. runningWildName .. "\n"
                 .. "/cast [" .. noMacroMod .. "]" .. spellName, icon
         elseif checkFn then
-            return tooltip .. prefix
-                .. "/run if " .. checkFn .. "then FitG()end\n"
+            return tooltip, "/run if " .. checkFn .. "then FitG()end\n"
                 .. "/cast [" .. noMacroMod .. "]" .. spellName, icon
         end
-        return tooltip .. prefix .. "/cast " .. spellName, icon
+        return tooltip, "/cast " .. spellName, icon
     end
+
     if mountID == "runningwild" then
-        local info = C_Spell.GetSpellInfo(87840)
-        local spellName = (info and info.name) or "Running Wild"
-        icon = (info and info.iconID) or icon
-        local tooltip = showTooltip and ("#showtooltip " .. spellName .. "\n") or ""
-        if checkFn and not runningWildIsOnly and not useRunningWildForMod then
+        local spellName, tooltip = SpellTooltip(RUNNING_WILD_SPELL_ID, "Running Wild")
+        if checkFn and not useRunningWildForMod then
             -- Modifier picked a regular mount this cycle
-            return tooltip .. prefix
-                .. "/run if " .. checkFn .. "then FitG()end\n"
+            return tooltip, "/run if " .. checkFn .. "then FitG()end\n"
                 .. "/cast " .. spellName, icon
         end
-        return tooltip .. prefix .. "/cast " .. spellName, icon
+        return tooltip, "/cast " .. spellName, icon
     end
 
     -- Regular mount case
-    local mountTooltip = ""
+    local tooltip
     if mountID and type(mountID) == "number" and showTooltip then
         local name, _, mountIcon = C_MountJournal.GetMountInfoByID(mountID)
         if name then
-            mountTooltip = "#showtooltip " .. name .. "\n"
+            tooltip = "#showtooltip " .. name
             icon = mountIcon or icon
         end
     end
-    if runningWildIsOnly then
-        return mountTooltip .. prefix
-            .. "/run if not(" .. checkFn .. ")then FitM()end\n"
-            .. "/cast [mod:" .. macroMod .. "]" .. runningWildName, icon
-    elseif useRunningWildForMod then
-        return mountTooltip .. prefix
-            .. "/run if not(" .. checkFn .. ")then FitM()end\n"
+    if useRunningWildForMod then
+        return tooltip, "/run if not(" .. checkFn .. ")then FitM()end\n"
             .. "/cast [mod:" .. macroMod .. "]" .. runningWildName, icon
     end
-    return mountTooltip .. prefix .. "/run FitM()", icon
+    return tooltip, "/run FitM()", icon
 end
 
-Macro.BuildMountMacroBody = BuildMountMacroBody
+-- The sections of the mount macro (see Macro.ComposeBody) and its icon.
+local function BuildMountSpec(mountID)
+    local tooltip, action, icon = ResolveMountAction(mountID, Macro.ShouldShowMountTooltip())
+    return {
+        tooltip = tooltip,
+        -- Conditionals come first so they take precedence over every mount option.
+        conditionals = ns.MountConditionals and ns.MountConditionals.GetMacroLines(),
+        outfit = Macro.GetOutfitMacroPrefix(),
+        action = action,
+    }, icon
+end
+
+function Macro.BuildMountMacroBody(mountID, includeTooltip)
+    local spec, icon = BuildMountSpec(mountID)
+    if includeTooltip == false then spec.tooltip = nil end
+    return Macro.ComposeBody(spec), icon
+end
 
 function Macro.UpdateMacroForMount(mountID, outfitIDOverride)
     if InCombatLockdown() then
@@ -153,31 +150,17 @@ function Macro.UpdateMacroForMount(mountID, outfitIDOverride)
     local resolvedToyOutfitID = outfitIDOverride or ns.GetMountOutfitID()
         or activeOutfitID or ns.state.outfitUpdateResolvedID
 
+    -- Built once so the macro and the key binding share any random roll.
+    local spec, icon = BuildMountSpec(mountID)
+    spec.hunterPet = ns.HunterPet and ns.HunterPet.GetMountMacroLines(resolvedToyOutfitID)
+    spec.cancel = ns.Toy and ns.Toy.GetCancelLines(resolvedToyOutfitID)
+    spec.toys = ns.Toy and ns.Toy.GetMacroLines(resolvedToyOutfitID)
+
     local index = GetMacroIndexByName(Macro.MOUNT_MACRO_NAME)
-    if index and index > 0 then
-        local rawBody, icon = BuildMountMacroBody(mountID)
-        local userLen = Macro.GetUserAdditionsLength(Macro.MOUNT_MACRO_NAME, "LastMountMacroBody")
-        local remaining = 255 - #rawBody - userLen
-        local hunterPetLines = ns.HunterPet
-            and ns.HunterPet.GetMountMacroLines(resolvedToyOutfitID)
-        if hunterPetLines and remaining > #hunterPetLines + 1 then
-            rawBody = hunterPetLines .. "\n" .. rawBody
-            remaining = remaining - #hunterPetLines - 1
-        end
-        local cancelLines = ns.Toy and remaining > 1 and ns.Toy.GetCancelLines(
-            resolvedToyOutfitID, remaining - 1)
-        if cancelLines then
-            remaining = remaining - #cancelLines - 1
-        end
-        local toyLines = ns.Toy and remaining > 1 and ns.Toy.GetMacroLines(
-            resolvedToyOutfitID, remaining - 1)
-        if toyLines then
-            rawBody = toyLines .. "\n" .. rawBody
-        end
-        if cancelLines then
-            rawBody = cancelLines .. "\n" .. rawBody
-        end
-        local body = Macro.ApplyPreservation(Macro.MOUNT_MACRO_NAME, rawBody, "LastMountMacroBody")
+    if index and index > 0 and Macro.CanEditMacros() then
+        local reserved = Macro.GetUserAdditionsLength(Macro.MOUNT_MACRO_NAME, "LastMountMacroBody")
+        local body = Macro.ApplyPreservation(Macro.MOUNT_MACRO_NAME,
+            Macro.ComposeBody(spec, reserved), "LastMountMacroBody")
         local _, currentIcon = GetMacroInfo(index)
         if GetMacroBody(index) ~= body or currentIcon ~= icon then
             EditMacro(index, Macro.MOUNT_MACRO_NAME, icon, body)
@@ -187,25 +170,8 @@ function Macro.UpdateMacroForMount(mountID, outfitIDOverride)
     -- The keybind is independent of the optional character macro, but its
     -- secure macrotext has the same 255-character limit.
     if ns.MountButton then
-        local btnBody, _ = BuildMountMacroBody(mountID, false)
-        local remaining = 255 - #btnBody
-        local hunterPetLines = ns.HunterPet
-            and ns.HunterPet.GetMountMacroLines(resolvedToyOutfitID)
-        if hunterPetLines and remaining > #hunterPetLines + 1 then
-            btnBody = hunterPetLines .. "\n" .. btnBody
-            remaining = remaining - #hunterPetLines - 1
-        end
-        local cancelLines = ns.Toy and remaining > 1
-            and ns.Toy.GetCancelLines(resolvedToyOutfitID, remaining - 1)
-        if cancelLines then remaining = remaining - #cancelLines - 1 end
-        local toyLines = ns.Toy and remaining > 1
-            and ns.Toy.GetMacroLines(resolvedToyOutfitID, remaining - 1)
-        if toyLines then
-            btnBody = toyLines .. "\n" .. btnBody
-        end
-        if cancelLines then
-            btnBody = cancelLines .. "\n" .. btnBody
-        end
+        spec.tooltip = nil
+        local btnBody = Macro.ComposeBody(spec)
         -- While falling, MountConditionals owns the macrotext and restores this on landing.
         ns.state.mountButtonBody = btnBody
         local fallingActive = ns.MountConditionals and ns.MountConditionals.IsFallingActive()
@@ -240,17 +206,13 @@ function Macro.EnsureMount()
     if InCombatLockdown() or GetNumMacros() >= Macro.MAX_ACCOUNT_MACROS then
         return nil
     end
-    local body
-    if Macro.IsDruidMacroEnabled() then
-        body = Macro.GetDruidMacroBody()
-    elseif Macro.IsShamanMacroEnabled() then
-        body = Macro.GetShamanMacroBody()
-    elseif Macro.IsMonkMacroEnabled() then
-        body = Macro.GetMonkMacroBody()
-    else
-        body = "/run FitterMount()"
-    end
+    local body = "/run FitM()"
     CreateMacro(Macro.MOUNT_MACRO_NAME, Macro.MOUNT_MACRO_ICON, body, nil)
+    -- Stored so the first update does not take this line for a player edit.
+    if FitterCharacterSaved then
+        FitterCharacterSaved.LastMountMacroBody = body
+    end
+    Macro.UpdateMacroForMount(ns.state.nextMountToSummon)
     index = GetMacroIndexByName(Macro.MOUNT_MACRO_NAME)
     return index and index > 0 and index or nil
 end

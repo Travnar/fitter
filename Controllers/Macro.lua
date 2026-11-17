@@ -27,11 +27,23 @@ local LEGACY_MACRO_NAMES = {
     ["Fitter Update"] = Macro.OUTFIT_UPDATE_MACRO_NAME,
 }
 
-local function MacroNameExistsInRange(name, first, last)
+local function FindIndexInRange(name, first, last)
     for i = first, last do
-        if GetMacroInfo(i) == name then return true end
+        if GetMacroInfo(i) == name then return i end
     end
-    return false
+end
+
+local function MacroNameExistsInRange(name, first, last)
+    return FindIndexInRange(name, first, last) ~= nil
+end
+
+-- Indexes of the account macro and the character macro with this name; each
+-- is nil when there is none.
+function Macro.FindIndexes(name)
+    local numAccount, numCharacter = GetNumMacros()
+    return FindIndexInRange(name, 1, numAccount),
+        FindIndexInRange(name, Macro.MAX_ACCOUNT_MACROS + 1,
+            Macro.MAX_ACCOUNT_MACROS + numCharacter)
 end
 
 -- scope: "account", "character", or nil for either.
@@ -49,7 +61,7 @@ end
 -- each rename. A legacy macro is left alone if its scope (account or
 -- character) already has one with the new name.
 function Macro.MigrateLegacyNames()
-    if Macro.legacyNamesMigrated or InCombatLockdown() then return end
+    if Macro.legacyNamesMigrated or InCombatLockdown() or Macro.IsEditorOpen() then return end
     local renamed
     repeat
         renamed = false
@@ -76,7 +88,6 @@ end
 
 local CAT_FORM_SPELL_ID = 768
 local TRAVEL_FORM_SPELL_ID = 783
-local MOUNT_FORM_SPELL_ID = 210053
 local AQUATIC_FORM_SPELL_ID = 1066
 local GHOST_WOLF_SPELL_ID = 2645
 local ZEN_FLIGHT_SPELL_ID = 125883
@@ -134,9 +145,8 @@ function Macro.GetDruidMacroBody()
     return "/stopmacro [flying,combat]\n"
         .. "/run FitM()\n"
         .. "/cast [indoors,noform:2]" .. SpellName(CAT_FORM_SPELL_ID, "Cat Form") .. ";"
-        .. "[nocombat,outdoors,advflyable,noform:3][swimming,noform:3]"
-        .. SpellName(TRAVEL_FORM_SPELL_ID, "Travel Form") .. ";"
-        .. "[outdoors,noform:3]" .. SpellName(MOUNT_FORM_SPELL_ID, "Mount Form")
+        .. "[swimming,noform:3][outdoors,noform:3]"
+        .. SpellName(TRAVEL_FORM_SPELL_ID, "Travel Form")
 end
 
 function Macro.GetShamanMacroBody()
@@ -151,9 +161,9 @@ function Macro.GetMonkMacroBody()
         .. "/cast [nochanneling]" .. SpellName(ZEN_FLIGHT_SPELL_ID, "Zen Flight")
 end
 
-local function GetUserAdditions(macroName, lastGenerated)
+local function GetUserAdditions(macroName, lastGenerated, index)
     if not lastGenerated then return nil end
-    local index = GetMacroIndexByName(macroName)
+    index = index or GetMacroIndexByName(macroName)
     if not index or index == 0 then return nil end
     local currentBody = GetMacroBody(index)
     if not currentBody or currentBody == lastGenerated then return nil end
@@ -188,16 +198,46 @@ local function GetUserAdditions(macroName, lastGenerated)
 end
 
 local function IsGeneratedToyUseLine(line)
-    local toyID = line and line:match("^%s*/use%s+item:(%d+)%s*$")
+    local toyID = line:match("^%s*/use%s+item:(%d+)%s*$")
     return toyID and ns.Toy and ns.Toy.IsCatalogToy(tonumber(toyID)) == true
 end
 
-local function StripGeneratedToyAdditions(additions)
+-- Blizzard's Macro window can save an older generated body back over a newer
+-- one, so a line Fitter writes itself is never kept as a player edit.
+-- Only the kinds of line Fitter writes into that macro count, so the player
+-- can still add, say, their own #showtooltip to the Outfit Update macro.
+local GENERATED_LINES = {
+    [Macro.MOUNT_MACRO_NAME] = {
+        tooltip = function() return Macro.ShouldShowMountTooltip() end,
+        outfit = true, run = true, toys = true,
+    },
+    [Macro.OUTFIT_UPDATE_MACRO_NAME] = {outfit = true, run = true, toys = true},
+    [Macro.HEARTHSTONE_MACRO_NAME] = {
+        tooltip = function() return Macro.ShouldShowHearthstoneTooltip() end,
+    },
+    [Macro.FISHING_MACRO_NAME] = {tooltip = true, outfit = true},
+    [Macro.SIT_MACRO_NAME] = {outfit = true, run = true},
+}
+
+local function IsGeneratedLine(macroName, line)
+    local kinds = GENERATED_LINES[macroName]
+    if not kinds then return false end
+    if line:match("^%s*#showtooltip") then
+        return kinds.tooltip == true or (kinds.tooltip and kinds.tooltip()) or false
+    end
+    return (kinds.outfit and line:match("^%s*/outfit%s+!?%d+%s*$") ~= nil)
+        or (kinds.run and line:match("^%s*/run%s.*Fit%a*%(%)") ~= nil)
+        or (kinds.toys and (line:match("^%s*/cancelaura%s") ~= nil
+            or IsGeneratedToyUseLine(line)))
+        or false
+end
+
+local function CleanPreservedAdditions(macroName, additions)
     if not additions then return nil end
 
     local filtered = {}
     for line in additions:gmatch("[^\n]+") do
-        if not IsGeneratedToyUseLine(line) then
+        if not IsGeneratedLine(macroName, line) then
             table.insert(filtered, line)
         end
     end
@@ -210,26 +250,20 @@ local function StripGeneratedToyAdditions(additions)
     return text
 end
 
-local function CleanPreservedAdditions(macroName, additions)
-    if macroName == Macro.MOUNT_MACRO_NAME
-        or macroName == Macro.OUTFIT_UPDATE_MACRO_NAME then
-        return StripGeneratedToyAdditions(additions)
-    end
-    return additions
-end
-
-function Macro.GetUserAdditionsLength(macroName, storageKey)
+-- index selects one macro when an account and a character macro share the name.
+function Macro.GetUserAdditionsLength(macroName, storageKey, index)
     if not FitterCharacterSaved then return 0 end
     if Macro.rebuildForCharacter then return 0 end
     if FitterSaved and FitterSaved.RemoveMacroChangesOnUpdate then return 0 end
     local lastGenerated = FitterCharacterSaved[storageKey]
-    local additions = CleanPreservedAdditions(macroName, GetUserAdditions(macroName, lastGenerated))
+    local additions = CleanPreservedAdditions(macroName,
+        GetUserAdditions(macroName, lastGenerated, index))
     if not additions then return 0 end
     -- +1 for the newline separator that ApplyPreservation inserts
     return #additions + 1
 end
 
-function Macro.ApplyPreservation(macroName, newBody, storageKey)
+function Macro.ApplyPreservation(macroName, newBody, storageKey, index)
     if not FitterCharacterSaved then FitterCharacterSaved = {} end
     local generated = newBody:sub(1, 255)
     local lastGenerated = FitterCharacterSaved[storageKey]
@@ -243,7 +277,8 @@ function Macro.ApplyPreservation(macroName, newBody, storageKey)
         return generated
     end
 
-    local additions = CleanPreservedAdditions(macroName, GetUserAdditions(macroName, lastGenerated))
+    local additions = CleanPreservedAdditions(macroName,
+        GetUserAdditions(macroName, lastGenerated, index))
     if not additions then return generated end
 
     local separator = ""
